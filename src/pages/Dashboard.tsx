@@ -122,25 +122,25 @@ export default function Dashboard() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-gray-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 pb-32">
-      <div className="max-w-4xl mx-auto p-4 pt-6">
-        <div className="mb-6">
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
+      <div className="max-w-4xl mx-auto p-2 sm:p-4 pt-4 sm:pt-6">
+        <div className="mb-4 sm:mb-6">
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white mb-2">
             CogniFlow
           </h1>
-          <p className="text-gray-600 dark:text-gray-400">
+          <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400">
             {format(new Date(), 'yyyy年MM月dd日 EEEE', { locale: zhCN })}
           </p>
         </div>
 
-        <div className="mb-6">
+        <div className="mb-4 sm:mb-6">
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 sm:h-5 sm:w-5 text-gray-400" />
             <Input
               type="text"
               placeholder="搜索笔记、任务、日程、链接..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10"
+              className="pl-9 sm:pl-10 text-sm sm:text-base"
             />
           </div>
         </div>
@@ -181,34 +181,37 @@ export default function Dashboard() {
           </div>
         ) : (
           <Tabs value={activeTab} onValueChange={setActiveTab}>
-            <TabsList className="grid w-full grid-cols-7 mb-6">
-              <TabsTrigger value="upcoming" className="flex items-center gap-2">
-                <CalendarDays className="h-4 w-4" />
-                即将发生
+            <TabsList className="grid w-full grid-cols-3 sm:grid-cols-4 md:grid-cols-7 mb-4 sm:mb-6 h-auto">
+              <TabsTrigger value="upcoming" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm px-1 sm:px-3 py-2">
+                <CalendarDays className="h-3 w-3 sm:h-4 sm:w-4" />
+                <span className="hidden sm:inline">即将发生</span>
+                <span className="sm:hidden">日程</span>
               </TabsTrigger>
-              <TabsTrigger value="todos" className="flex items-center gap-2">
-                <CheckCircle2 className="h-4 w-4" />
-                待办清单
+              <TabsTrigger value="todos" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm px-1 sm:px-3 py-2">
+                <CheckCircle2 className="h-3 w-3 sm:h-4 sm:w-4" />
+                <span className="hidden sm:inline">待办清单</span>
+                <span className="sm:hidden">待办</span>
               </TabsTrigger>
-              <TabsTrigger value="inbox" className="flex items-center gap-2">
-                <FileText className="h-4 w-4" />
-                笔记
+              <TabsTrigger value="inbox" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm px-1 sm:px-3 py-2">
+                <FileText className="h-3 w-3 sm:h-4 sm:w-4" />
+                <span>笔记</span>
               </TabsTrigger>
-              <TabsTrigger value="links" className="flex items-center gap-2">
-                <LinkIcon className="h-4 w-4" />
-                链接库
+              <TabsTrigger value="links" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm px-1 sm:px-3 py-2">
+                <LinkIcon className="h-3 w-3 sm:h-4 sm:w-4" />
+                <span className="hidden sm:inline">链接库</span>
+                <span className="sm:hidden">链接</span>
               </TabsTrigger>
-              <TabsTrigger value="archived" className="flex items-center gap-2">
-                <Archive className="h-4 w-4" />
-                归档
+              <TabsTrigger value="archived" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm px-1 sm:px-3 py-2">
+                <Archive className="h-3 w-3 sm:h-4 sm:w-4" />
+                <span>归档</span>
               </TabsTrigger>
-              <TabsTrigger value="topics" className="flex items-center gap-2">
-                <Tag className="h-4 w-4" />
-                主题
+              <TabsTrigger value="topics" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm px-1 sm:px-3 py-2">
+                <Tag className="h-3 w-3 sm:h-4 sm:w-4" />
+                <span>主题</span>
               </TabsTrigger>
-              <TabsTrigger value="report" className="flex items-center gap-2">
-                <FileText className="h-4 w-4" />
-                报告
+              <TabsTrigger value="report" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm px-1 sm:px-3 py-2">
+                <FileText className="h-3 w-3 sm:h-4 sm:w-4" />
+                <span>报告</span>
               </TabsTrigger>
             </TabsList>
 
@@ -254,12 +257,12 @@ export default function Dashboard() {
                 </div>
               ) : (
                 <div>
-                  <div className="mb-4 flex items-center justify-between">
+                  <div className="mb-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
                     <div>
-                      <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-1">
+                      <h3 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-gray-100 mb-1">
                         我的待办清单
                       </h3>
-                      <div className="flex items-center gap-4 text-sm text-gray-600 dark:text-gray-400">
+                      <div className="flex flex-wrap items-center gap-2 sm:gap-4 text-xs sm:text-sm text-gray-600 dark:text-gray-400">
                         <span>共 {todoItems.length} 个任务</span>
                         {todoItems.filter(item => item.priority === 'high').length > 0 && 
                           <span className="text-red-600 dark:text-red-400">
@@ -435,18 +438,19 @@ export default function Dashboard() {
                 <div>
                   {/* 二级Tab导航 */}
                   <Tabs value={topicsSubTab} onValueChange={setTopicsSubTab} className="mb-4">
-                    <TabsList className="grid w-full grid-cols-3">
-                      <TabsTrigger value="tags" className="flex items-center gap-2">
-                        <Tag className="h-4 w-4" />
-                        标签
+                    <TabsList className="grid w-full grid-cols-3 h-auto">
+                      <TabsTrigger value="tags" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm px-2 sm:px-3 py-2">
+                        <Tag className="h-3 w-3 sm:h-4 sm:w-4" />
+                        <span>标签</span>
                       </TabsTrigger>
-                      <TabsTrigger value="history" className="flex items-center gap-2">
-                        <History className="h-4 w-4" />
-                        历史记录
+                      <TabsTrigger value="history" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm px-2 sm:px-3 py-2">
+                        <History className="h-3 w-3 sm:h-4 sm:w-4" />
+                        <span className="hidden sm:inline">历史记录</span>
+                        <span className="sm:hidden">历史</span>
                       </TabsTrigger>
-                      <TabsTrigger value="calendar" className="flex items-center gap-2">
-                        <Calendar className="h-4 w-4" />
-                        日历
+                      <TabsTrigger value="calendar" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm px-2 sm:px-3 py-2">
+                        <Calendar className="h-3 w-3 sm:h-4 sm:w-4" />
+                        <span>日历</span>
                       </TabsTrigger>
                     </TabsList>
 
@@ -490,25 +494,26 @@ export default function Dashboard() {
                         </div>
                       ) : (
                         <div>
-                          <div className="mb-6">
-                            <div className="flex items-center justify-between mb-4">
+                          <div className="mb-4 sm:mb-6">
+                            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
                               <div>
-                                <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-1">
+                                <h3 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-gray-100 mb-1">
                                   全部历史记录
                                 </h3>
-                                <p className="text-sm text-gray-600 dark:text-gray-400">
+                                <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">
                                   共 {filteredHistoryItems.length > 0 ? filteredHistoryItems.length : historyItems.length} 条记录,按时间倒序排列
                                 </p>
                               </div>
-                              <div className="flex gap-2">
+                              <div className="flex flex-wrap gap-2">
                                 <Popover>
                                   <PopoverTrigger asChild>
-                                    <Button variant="outline" size="sm" className="gap-2">
-                                      <Filter className="h-4 w-4" />
-                                      {historyDateRange ? '已筛选' : '按日期筛选'}
+                                    <Button variant="outline" size="sm" className="gap-1 sm:gap-2 text-xs sm:text-sm">
+                                      <Filter className="h-3 w-3 sm:h-4 sm:w-4" />
+                                      <span className="hidden sm:inline">{historyDateRange ? '已筛选' : '按日期筛选'}</span>
+                                      <span className="sm:hidden">筛选</span>
                                     </Button>
                                   </PopoverTrigger>
-                                  <PopoverContent className="w-auto p-4" align="end">
+                                  <PopoverContent className="w-auto p-3 sm:p-4" align="end">
                                     <div className="space-y-3">
                                       <div className="space-y-2">
                                         <label className="text-sm font-medium">开始日期</label>

@@ -76,28 +76,28 @@ export default function Header() {
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <div className="container flex h-14 max-w-screen-2xl items-center">
-        <div className="mr-4 flex">
-          <Link to="/" className="mr-6 flex items-center space-x-2">
-            <span className="font-bold sm:inline-block">
+      <div className="container flex h-14 max-w-screen-2xl items-center px-2 sm:px-4">
+        <div className="mr-2 sm:mr-4 flex">
+          <Link to="/" className="mr-2 sm:mr-6 flex items-center space-x-2">
+            <span className="font-bold text-sm sm:text-base sm:inline-block">
               CogniFlow
             </span>
           </Link>
         </div>
-        <div className="flex flex-1 items-center justify-end space-x-2">
-          <nav className="flex items-center space-x-2">
+        <div className="flex flex-1 items-center justify-end space-x-1 sm:space-x-2">
+          <nav className="flex items-center space-x-1 sm:space-x-2">
             {user && isAdmin && (
-              <Button variant="ghost" size="sm" onClick={() => navigate('/admin')}>
-                <Shield className="h-4 w-4 mr-2" />
-                管理
+              <Button variant="ghost" size="sm" onClick={() => navigate('/admin')} className="hidden sm:flex">
+                <Shield className="h-4 w-4 sm:mr-2" />
+                <span className="hidden sm:inline">管理</span>
               </Button>
             )}
             {user && (
               <>
-                <Button variant="ghost" size="sm" onClick={handleExport} title="导出数据">
+                <Button variant="ghost" size="sm" onClick={handleExport} title="导出数据" className="px-2 sm:px-3">
                   <Download className="h-4 w-4" />
                 </Button>
-                <Button variant="ghost" size="sm" onClick={handleImport} title="导入数据">
+                <Button variant="ghost" size="sm" onClick={handleImport} title="导入数据" className="px-2 sm:px-3">
                   <Upload className="h-4 w-4" />
                 </Button>
               </>
