@@ -9,6 +9,9 @@ services:
       POSTGRES_PASSWORD: cogniflow_password_2024
       POSTGRES_HOST_AUTH_METHOD: scram-sha-256
       POSTGRES_INITDB_ARGS: --auth-host=scram-sha-256
+      # 设置时区为中国时区
+      TZ: Asia/Shanghai
+      PGTZ: Asia/Shanghai
     ports:
       - "5432:5432"
     volumes:

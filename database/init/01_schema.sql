@@ -3,6 +3,9 @@
 -- PostgreSQL 16+
 -- ============================================
 
+-- 设置数据库时区为中国时区
+SET timezone TO 'Asia/Shanghai';
+
 -- 创建数据库扩展
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 CREATE EXTENSION IF NOT EXISTS "pgcrypto";
