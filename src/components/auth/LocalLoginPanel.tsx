@@ -143,11 +143,11 @@ export function LocalLoginPanel({
           <TabsContent value="password" className="space-y-4">
             <form onSubmit={handlePasswordLogin} className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="login-username">用户名或邮箱</Label>
+                <Label htmlFor="login-username">用户名</Label>
                 <Input
                   id="login-username"
                   type="text"
-                  placeholder="请输入用户名或邮箱"
+                  placeholder="请输入用户名"
                   value={loginForm.username || ''}
                   onChange={(e) => handleInputChange('username', e.target.value)}
                   disabled={loading}
