@@ -261,6 +261,8 @@ cd "$SCRIPT_DIR/server"
 pnpm install --silent
 log_success "后端依赖安装完成"
 
+
+pnpm add -D tsx
 # ============================================
 # Step 7: 显示部署信息
 # ============================================
