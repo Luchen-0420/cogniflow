@@ -2,7 +2,17 @@
  * PostgreSQL 数据库连接配置
  */
 import pg from 'pg';
-const { Pool } = pg;
+const { Pool, types } = pg;
+
+// 确保数据库中的本地时间字段不会被自动转换成 UTC
+const TIMESTAMP_OID = 1114;
+types.setTypeParser(TIMESTAMP_OID, (value: string | null) => {
+  if (value === null) {
+    return null;
+  }
+  // PostgreSQL 默认返回 "YYYY-MM-DD HH:mm:ss"，我们转换为 ISO 本地格式
+  return value.replace(' ', 'T');
+});
 
 const pool = new Pool({
   host: process.env.POSTGRES_HOST || 'localhost',

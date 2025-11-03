@@ -7,6 +7,7 @@ import { LocalStorageManager, type UserData } from '@/services/localStorageManag
 import { localAuth } from './localAuth';
 import { generateUUID } from './indexeddb';
 import type { Profile, Item, ItemType } from '@/types/types';
+import { getLocalISOString } from '@/lib/utils';
 
 /**
  * 基础API类 - 处理用户数据隔离
@@ -152,8 +153,8 @@ export class UserItemApi extends BaseUserDataApi {
         ...item,
         id: generateUUID(),
         user_id: userId,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
+        created_at: getLocalISOString(),
+        updated_at: getLocalISOString()
       };
 
       console.log('➕ 创建新条目:', newItem);
@@ -263,7 +264,7 @@ export class UserItemApi extends BaseUserDataApi {
       userData.items[itemIndex] = {
         ...userData.items[itemIndex],
         ...updates,
-        updated_at: new Date().toISOString()
+        updated_at: getLocalISOString()
       };
 
       await this.saveCurrentUserData(userData);
@@ -300,7 +301,7 @@ export class UserItemApi extends BaseUserDataApi {
    */
   async archiveItem(id: string): Promise<boolean> {
     return this.updateItem(id, { 
-      archived_at: new Date().toISOString() 
+      archived_at: getLocalISOString() 
     });
   }
 
@@ -323,7 +324,7 @@ export class UserItemApi extends BaseUserDataApi {
       if (!userData) return 0;
 
       let updatedCount = 0;
-      const now = new Date().toISOString();
+      const now = getLocalISOString();
 
       for (const id of ids) {
         const itemIndex = userData.items.findIndex(item => item.id === id);

@@ -247,9 +247,14 @@ export async function processTextWithAI(text: string): Promise<AIProcessResult> 
   return new Promise((resolve, reject) => {
     let fullResponse = '';
 
-    // 获取当前日期时间信息
+    // 获取当前日期时间信息（使用本地时间，不使用 UTC）
     const now = new Date();
-    const currentDate = now.toISOString().split('T')[0]; // YYYY-MM-DD
+    // 生成本地时间的日期字符串，不使用 toISOString()（会转成 UTC）
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    const day = String(now.getDate()).padStart(2, '0');
+    const currentDate = `${year}-${month}-${day}`; // YYYY-MM-DD 格式的本地日期
+    
     const currentTime = now.toTimeString().split(' ')[0].substring(0, 5); // HH:mm
     const currentYear = now.getFullYear();
     const currentMonth = now.getMonth() + 1;
@@ -272,7 +277,11 @@ export async function processTextWithAI(text: string): Promise<AIProcessResult> 
     const daysUntilFriday = currentDayIndex <= 5 ? 5 - currentDayIndex : 7 - currentDayIndex + 5;
     const thisFriday = new Date(now);
     thisFriday.setDate(now.getDate() + daysUntilFriday);
-    const thisFridayStr = thisFriday.toISOString().split('T')[0];
+    // 使用本地时间格式，不要用 toISOString()
+    const friYear = thisFriday.getFullYear();
+    const friMonth = String(thisFriday.getMonth() + 1).padStart(2, '0');
+    const friDay = String(thisFriday.getDate()).padStart(2, '0');
+    const thisFridayStr = `${friYear}-${friMonth}-${friDay}`;
 
     const systemPrompt = `你是一个智能信息处理助手。用户会输入一段文本,你需要分析并返回JSON格式的结构化数据。
 

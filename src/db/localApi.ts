@@ -6,6 +6,7 @@
 import { IndexedDBHelper, STORES, generateUUID } from './indexeddb';
 import { localAuth } from './localAuth';
 import type { Profile, Item, ItemType, TagStats, QueryIntent } from '@/types/types';
+import { getLocalISOString } from '@/lib/utils';
 
 /**
  * 用户 API
@@ -69,8 +70,8 @@ export const itemApi = {
       const newItem: Item = {
         ...item,
         id: generateUUID(),
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
+        created_at: getLocalISOString(),
+        updated_at: getLocalISOString()
       };
 
       await IndexedDBHelper.add(STORES.ITEMS, newItem);
@@ -137,7 +138,11 @@ export const itemApi = {
 
       const today = new Date();
       today.setHours(0, 0, 0, 0);
-      const todayDateOnly = today.toISOString().split('T')[0]; // YYYY-MM-DD
+      // 使用本地日期格式
+      const year = today.getFullYear();
+      const month = String(today.getMonth() + 1).padStart(2, '0');
+      const day = String(today.getDate()).padStart(2, '0');
+      const todayDateOnly = `${year}-${month}-${day}`; // YYYY-MM-DD
 
       const items = await IndexedDBHelper.query<Item>(
         STORES.ITEMS,
@@ -187,13 +192,20 @@ export const itemApi = {
       if (!user) return [];
 
       const now = new Date();
-      const nowStr = now.toISOString();
+      const nowStr = getLocalISOString(now);
       
       // 计算未来日期
       const future = new Date();
       future.setDate(future.getDate() + days);
       future.setHours(23, 59, 59, 999);
-      const futureStr = future.toISOString();
+      const futureStr = getLocalISOString(future);
+
+      console.log('🔍 [即将发生] 时间范围:', {
+        当前时间: nowStr,
+        未来时间: futureStr,
+        当前Date对象: now.toString(),
+        未来Date对象: future.toString()
+      });
 
       const items = await IndexedDBHelper.query<Item>(
         STORES.ITEMS,
@@ -208,10 +220,24 @@ export const itemApi = {
           if (!dateToCheck) return false;
           
           // 只包括从现在开始到未来的事项（排除已过去的）
-          return dateToCheck > nowStr && dateToCheck <= futureStr;
+          const isInRange = dateToCheck > nowStr && dateToCheck <= futureStr;
+          
+          if (isInRange || dateToCheck.includes('16:00')) {
+            console.log('📌 [即将发生] 事项检查:', {
+              title: item.title,
+              dateToCheck,
+              nowStr,
+              比较结果: dateToCheck > nowStr,
+              是否在范围内: isInRange
+            });
+          }
+          
+          return isInRange;
         },
         { field: 'due_date', direction: 'asc' }
       );
+
+      console.log('✅ [即将发生] 找到事项数量:', items.length);
 
       return items;
     } catch (error) {
@@ -305,7 +331,7 @@ export const itemApi = {
       const updatedItem: Item = {
         ...item,
         ...updates,
-        updated_at: new Date().toISOString()
+        updated_at: getLocalISOString()
       };
 
       await IndexedDBHelper.update(STORES.ITEMS, updatedItem);
@@ -334,7 +360,7 @@ export const itemApi = {
    */
   async archiveItem(id: string): Promise<boolean> {
     return await this.updateItem(id, {
-      archived_at: new Date().toISOString()
+      archived_at: getLocalISOString()
     });
   },
 
@@ -385,7 +411,7 @@ export const itemApi = {
       if (!user) {
         return {
           total: 0,
-          byType: { task: 0, event: 0, note: 0, data: 0, url: 0 },
+          byType: { task: 0, event: 0, note: 0, data: 0, url: 0, collection: 0 },
           byStatus: {},
           completed: 0,
           pending: 0
@@ -425,7 +451,7 @@ export const itemApi = {
       console.error('获取统计信息失败:', error);
       return {
         total: 0,
-        byType: { task: 0, event: 0, note: 0, data: 0, url: 0 },
+        byType: { task: 0, event: 0, note: 0, data: 0, url: 0, collection: 0 },
         byStatus: {},
         completed: 0,
         pending: 0
@@ -600,12 +626,16 @@ export const itemApi = {
 
       // 根据查询类型过滤
       if (intent.queryType === 'today') {
-        const today = new Date().toISOString().split('T')[0];
+        const today = new Date();
+        const year = today.getFullYear();
+        const month = String(today.getMonth() + 1).padStart(2, '0');
+        const day = String(today.getDate()).padStart(2, '0');
+        const todayStr = `${year}-${month}-${day}`;
         items = items.filter(item => 
-          item.due_date && item.due_date.startsWith(today)
+          item.due_date && item.due_date.startsWith(todayStr)
         );
       } else if (intent.queryType === 'upcoming') {
-        const now = new Date().toISOString();
+        const now = getLocalISOString();
         items = items.filter(item => 
           item.due_date && item.due_date >= now
         );

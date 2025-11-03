@@ -5,6 +5,7 @@ import { ExternalLink, Calendar, Trash2 } from 'lucide-react';
 import { format } from 'date-fns';
 import { zhCN } from 'date-fns/locale';
 import type { Item } from '@/types/types';
+import { parseLocalDateTime } from '@/lib/utils';
 
 interface URLCardProps {
   item: Item;
@@ -109,7 +110,7 @@ export function URLCard({ item, onDelete }: URLCardProps) {
               <div className="flex items-center gap-1 ml-auto flex-shrink-0">
                 <Calendar className="w-3.5 h-3.5" />
                 <span className="text-xs">
-                  {format(new Date(item.created_at), 'MM-dd', { locale: zhCN })}
+                  {format(parseLocalDateTime(item.created_at), 'MM-dd', { locale: zhCN })}
                 </span>
               </div>
             </div>

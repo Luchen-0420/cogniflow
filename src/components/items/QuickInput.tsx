@@ -354,13 +354,31 @@ export default function QuickInput({
         // 确保类型不为空，默认使用 'task'
         const itemType = aiResult.type || 'task';
 
+        // 标准化时间格式：移除时区信息，确保使用本地时间格式
+        const normalizeTimeString = (timeStr: string | null | undefined): string | null => {
+          if (!timeStr) return null;
+          // 移除末尾的 'Z' 或时区偏移（如 +08:00）
+          const normalized = timeStr.replace(/Z$/, '').replace(/[+-]\d{2}:\d{2}$/, '');
+          console.log('🕐 [时间标准化]', { original: timeStr, normalized });
+          return normalized;
+        };
+
+        const normalizedDueDate = normalizeTimeString(aiResult.due_date);
+        const normalizedStartTime = normalizeTimeString(aiResult.start_time);
+        const normalizedEndTime = normalizeTimeString(aiResult.end_time);
+
+        console.log('📅 [创建事项] 时间信息:', {
+          原始: { due_date: aiResult.due_date, start_time: aiResult.start_time, end_time: aiResult.end_time },
+          标准化: { due_date: normalizedDueDate, start_time: normalizedStartTime, end_time: normalizedEndTime }
+        });
+
         // 创建条目
         const newItem = await itemApi.createItem({
           raw_text: inputText,
           type: itemType,
           title: aiResult.title,
           description: aiResult.description,
-          due_date: aiResult.due_date,
+          due_date: normalizedDueDate,
           priority: aiResult.priority,
           status: 'pending',
           tags: aiResult.tags,
@@ -372,8 +390,8 @@ export default function QuickInput({
           url_thumbnail: null,
           url_fetched_at: null,
           has_conflict: false,
-          start_time: aiResult.start_time || null,
-          end_time: aiResult.end_time || null,
+          start_time: normalizedStartTime,
+          end_time: normalizedEndTime,
           recurrence_rule: null,
           recurrence_end_date: null,
           master_item_id: null,

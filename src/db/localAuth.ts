@@ -7,6 +7,7 @@
 import { generateUUID, IndexedDBHelper, STORES } from './indexeddb';
 import type { Profile, UserRole } from '@/types/types';
 import { LocalStorageManager, type UserStorageRecord } from '@/services/localStorageManager';
+import { getLocalISOString } from '@/lib/utils';
 
 const CURRENT_USER_KEY = 'cogniflow_current_user';
 const DEFAULT_USER_ID = 'local-user-001';
@@ -88,7 +89,7 @@ class LocalAuth {
       phone: null,
       email: null,
       role: 'user',
-      created_at: new Date().toISOString()
+      created_at: getLocalISOString()
     };
 
     // 保存到 IndexedDB
@@ -257,7 +258,7 @@ class LocalAuth {
         phone: phone || null,
         email: email || null,
         role: 'user',
-        created_at: new Date().toISOString()
+        created_at: getLocalISOString()
       };
 
       await IndexedDBHelper.add(STORES.PROFILES, user);
