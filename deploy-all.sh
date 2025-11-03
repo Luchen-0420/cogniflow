@@ -157,8 +157,9 @@ log_header "Step 3/7: 启动 PostgreSQL 容器"
 log_step "启动 Docker Compose..."
 cd "$SCRIPT_DIR"
 docker-compose up -d postgres
-
 log_step "等待 PostgreSQL 启动..."
+docker-compose up -d pgadmin
+log_step "等待 PgAdmin 启动..."
 sleep 5
 
 # 等待数据库就绪
