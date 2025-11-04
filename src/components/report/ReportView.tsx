@@ -21,6 +21,7 @@ import type { Item, TagStats } from '@/types/types';
 import { format, startOfWeek, endOfWeek, startOfMonth, endOfMonth, startOfDay, endOfDay } from 'date-fns';
 import { zhCN } from 'date-fns/locale';
 import { generateSmartSummary } from '@/utils/ai';
+import SmartReportDisplay from './SmartReportDisplay';
 
 interface ReportData {
   totalItems: number;
@@ -383,11 +384,7 @@ export default function ReportView() {
                   </p>
                 </div>
               ) : smartSummary.content ? (
-                <div className="prose prose-gray dark:prose-invert max-w-none">
-                  <div className="whitespace-pre-wrap text-gray-700 dark:text-gray-300 leading-relaxed">
-                    {smartSummary.content}
-                  </div>
-                </div>
+                <SmartReportDisplay content={smartSummary.content} />
               ) : (
                 <div className="text-center py-12">
                   <Lightbulb className="h-16 w-16 text-gray-300 dark:text-gray-700 mx-auto mb-4" />

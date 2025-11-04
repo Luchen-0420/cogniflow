@@ -135,3 +135,80 @@ All colors MUST be HSL.
     }
   }
 }
+
+/* 智能报告 Markdown 样式增强 */
+.markdown-report {
+  /* 表格样式优化 */
+  table {
+    border-collapse: collapse;
+    width: 100%;
+    margin: 1.5rem 0;
+  }
+
+  table thead tr {
+    background: linear-gradient(to right, #f3f4f6, #e5e7eb);
+  }
+
+  .dark table thead tr {
+    background: linear-gradient(to right, #1f2937, #374151);
+  }
+
+  table tbody tr:hover {
+    @apply bg-gray-50 dark:bg-gray-800/50;
+    transition: background-color 0.2s ease;
+  }
+
+  /* 列表项间距优化 */
+  ul li, ol li {
+    @apply py-1;
+  }
+
+  /* 强调文本高亮 */
+  strong {
+    @apply bg-yellow-100 dark:bg-yellow-900/30 px-1 rounded;
+  }
+
+  /* 分隔线样式 */
+  hr {
+    @apply border-t-2 border-dashed border-gray-300 dark:border-gray-600 my-6;
+  }
+
+  /* 代码块滚动优化 */
+  code {
+    overflow-x: auto;
+  }
+}
+
+/* 自定义滚动条（用于代码块和长内容） */
+.markdown-report code::-webkit-scrollbar,
+.scrollbar-thin::-webkit-scrollbar {
+  height: 6px;
+  width: 6px;
+}
+
+.markdown-report code::-webkit-scrollbar-track,
+.scrollbar-thin::-webkit-scrollbar-track {
+  background-color: rgb(243 244 246); /* gray-100 */
+  border-radius: 0.25rem;
+}
+
+.dark .markdown-report code::-webkit-scrollbar-track,
+.dark .scrollbar-thin::-webkit-scrollbar-track {
+  background-color: rgb(31 41 55); /* gray-800 */
+}
+
+.markdown-report code::-webkit-scrollbar-thumb,
+.scrollbar-thin::-webkit-scrollbar-thumb {
+  background-color: rgb(156 163 175); /* gray-400 */
+  border-radius: 0.25rem;
+}
+
+.dark .markdown-report code::-webkit-scrollbar-thumb,
+.dark .scrollbar-thin::-webkit-scrollbar-thumb {
+  background-color: rgb(75 85 99); /* gray-600 */
+}
+
+.markdown-report code::-webkit-scrollbar-thumb:hover,
+.scrollbar-thin::-webkit-scrollbar-thumb:hover {
+  background-color: rgb(107 114 128); /* gray-500 */
+}
