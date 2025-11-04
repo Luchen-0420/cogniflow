@@ -199,6 +199,13 @@ export class PostgresAuth {
   }
 
   /**
+   * 获取认证 token
+   */
+  getToken(): string | null {
+    return this.token;
+  }
+
+  /**
    * 设置当前用户（兼容接口，但在 PostgreSQL 模式下不应直接使用）
    */
   setCurrentUser(user: LocalUser | null): void {

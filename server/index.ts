@@ -10,6 +10,7 @@ import pool from './db/pool.js';
 import itemsRouter from './routes/items.js';
 import usersRouter from './routes/users.js';
 import templatesRouter from './routes/templates.js';
+import attachmentsRouter from './routes/attachments.js';
 import { authMiddleware } from './middleware/auth.js';
 
 // 加载环境变量
@@ -51,6 +52,8 @@ app.get('/api', (req, res) => {
       auth: '/api/auth/*',
       items: '/api/items/*',
       users: '/api/users/*',
+      attachments: '/api/attachments/*',
+      templates: '/api/templates/*',
       tags: '/api/tags/*',
       statistics: '/api/statistics/*'
     }
@@ -64,6 +67,7 @@ app.use('/api/auth', usersRouter); // 注册和登录
 app.use('/api/items', authMiddleware, itemsRouter);
 app.use('/api/users', authMiddleware, usersRouter);
 app.use('/api/templates', authMiddleware, templatesRouter);
+app.use('/api/attachments', attachmentsRouter);
 
 // 错误处理中间件
 app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {

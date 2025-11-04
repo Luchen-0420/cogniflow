@@ -1,11 +1,12 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
-import { Send, Search } from 'lucide-react';
+import { Send, Search, Paperclip, X, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { processTextWithAI, generateNoteTitle } from '@/utils/ai';
 import { detectURL, isMainlyURL, fetchURLContent, generateURLSummary } from '@/utils/urlProcessor';
 import { detectQueryIntent, removeQueryPrefix, parseQueryIntent, generateQuerySummary } from '@/utils/queryProcessor';
+import { uploadAttachment } from '@/utils/attachmentUtils';
 import { itemApi, auth, templateApi } from '@/db/api';
 import { QueryResultPanel } from '@/components/query/QueryResultPanel';
 import { TemplateInputModal } from './TemplateInputModal';
@@ -44,6 +45,11 @@ export default function QuickInput({
   const [templates, setTemplates] = useState<UserTemplate[]>([]);
   const [selectedTemplate, setSelectedTemplate] = useState<UserTemplate | null>(null);
   const [showTemplateModal, setShowTemplateModal] = useState(false);
+  
+  // 附件相关状态
+  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+  const [isUploading, setIsUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // 加载用户模板
   useEffect(() => {
@@ -154,6 +160,48 @@ export default function QuickInput({
     setText(''); // 清空输入框
   };
 
+  // 文件处理函数
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    
+    // 验证文件类型和大小
+    const validFiles = files.filter(file => {
+      const allowedTypes = [
+        'image/png', 'image/jpeg', 'image/jpg', 'image/gif', 'image/webp',
+        'application/pdf', 'text/plain', 'text/markdown',
+        'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        'application/msword'
+      ];
+      
+      if (!allowedTypes.includes(file.type)) {
+        toast.error(`不支持的文件类型: ${file.name}`);
+        return false;
+      }
+      
+      const maxSize = 10 * 1024 * 1024; // 10MB
+      if (file.size > maxSize) {
+        toast.error(`文件过大: ${file.name} (最大10MB)`);
+        return false;
+      }
+      
+      return true;
+    });
+    
+    if (validFiles.length > 0) {
+      setSelectedFiles(prev => [...prev, ...validFiles]);
+      toast.success(`已选择 ${validFiles.length} 个文件`);
+    }
+    
+    // 清空input以允许重复选择同一文件
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
+
+  const handleRemoveFile = (index: number) => {
+    setSelectedFiles(prev => prev.filter((_, i) => i !== index));
+  };
+
   const handleTemplateSave = async (data: {
     title: string;
     description: string;
@@ -226,12 +274,18 @@ export default function QuickInput({
   };
 
   const handleSubmit = async () => {
-    if (!text.trim()) {
-      toast.error('请输入内容');
+    if (!text.trim() && selectedFiles.length === 0) {
+      toast.error('请输入内容或选择文件');
       return;
     }
 
     const inputText = text.trim();
+    
+    // 如果有附件，先上传附件
+    if (selectedFiles.length > 0) {
+      await handleFilesUpload(inputText);
+      return;
+    }
     
     // 检测是否为查询意图
     const isQuery = detectQueryIntent(inputText);
@@ -242,6 +296,46 @@ export default function QuickInput({
     } else {
       // 处理普通输入
       await handleNormalInput(inputText);
+    }
+  };
+
+  // 处理文件上传
+  const handleFilesUpload = async (inputText: string) => {
+    setIsUploading(true);
+    setText('');
+    
+    try {
+      const uploadResults = [];
+      
+      // 上传所有文件
+      for (const file of selectedFiles) {
+        try {
+          const result = await uploadAttachment(file);
+          uploadResults.push(result.attachment);
+          toast.success(`${file.name} 上传成功`);
+        } catch (error: any) {
+          console.error('文件上传失败:', error);
+          toast.error(`${file.name} 上传失败: ${error.message}`);
+        }
+      }
+      
+      // 清空已选文件
+      setSelectedFiles([]);
+      
+      if (uploadResults.length > 0) {
+        // 如果有输入文本，创建一个包含附件的条目
+        if (inputText) {
+          await handleNormalInput(inputText);
+        }
+        
+        toast.success(`成功上传 ${uploadResults.length} 个文件，AI 正在分析中...`);
+        onItemCreated?.();
+      }
+    } catch (error: any) {
+      console.error('上传处理失败:', error);
+      toast.error('上传处理失败');
+    } finally {
+      setIsUploading(false);
     }
   };
 
@@ -617,26 +711,78 @@ export default function QuickInput({
           )}
           
           <div className="flex gap-2">
-            <Textarea
-              value={text}
-              onChange={(e) => handleTextChange(e.target.value)}
-              onKeyDown={handleKeyDown}
-              placeholder={
-                isQueryMode 
-                  ? "🔍 查询模式: 输入查询内容 (如: 今天有什么事? 查询本周的会议)" 
-                  : "输入任何想法、任务、日程或URL链接... (输入 / 使用智能模板, ? 或 /q 开启查询模式, Enter发送)"
-              }
-              className={`min-h-[60px] max-h-[120px] resize-none ${
-                isQueryMode ? 'border-primary' : ''
-              }`}
-            />
+            {/* 附件上传按钮 */}
+            <div className="flex items-start">
+              <Button
+                type="button"
+                variant="outline"
+                size="lg"
+                onClick={() => fileInputRef.current?.click()}
+                className="h-[60px] px-3"
+                disabled={isQuerying || isUploading}
+              >
+                <Paperclip className="h-5 w-5" />
+              </Button>
+              
+              {/* 隐藏的文件输入 */}
+              <input
+                ref={fileInputRef}
+                type="file"
+                className="hidden"
+                accept="image/*,.pdf,.txt,.md,.doc,.docx"
+                multiple
+                onChange={handleFileSelect}
+              />
+            </div>
+            
+            <div className="flex-1 flex flex-col gap-2">
+              {/* 已选择的文件预览 */}
+              {selectedFiles.length > 0 && (
+                <div className="flex flex-wrap gap-2 p-2 bg-muted rounded-lg">
+                  {selectedFiles.map((file, index) => (
+                    <div
+                      key={index}
+                      className="relative flex items-center gap-2 bg-background rounded px-2 py-1 pr-6"
+                    >
+                      <span className="text-xs truncate max-w-[150px]">
+                        {file.name}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveFile(index)}
+                        className="absolute top-0 right-0 p-1 hover:bg-destructive hover:text-destructive-foreground rounded"
+                      >
+                        <X className="h-3 w-3" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+              
+              <Textarea
+                value={text}
+                onChange={(e) => handleTextChange(e.target.value)}
+                onKeyDown={handleKeyDown}
+                placeholder={
+                  isQueryMode 
+                    ? "🔍 查询模式: 输入查询内容 (如: 今天有什么事? 查询本周的会议)" 
+                    : "输入任何想法、任务、日程或URL链接... (输入 / 使用智能模板, ? 或 /q 开启查询模式, Enter发送)"
+                }
+                className={`min-h-[60px] max-h-[120px] resize-none ${
+                  isQueryMode ? 'border-primary' : ''
+                }`}
+              />
+            </div>
+            
             <Button
               onClick={handleSubmit}
-              disabled={!text.trim() || isQuerying}
+              disabled={(!text.trim() && selectedFiles.length === 0) || isQuerying || isUploading}
               size="lg"
-              className="px-6"
+              className="px-6 h-[60px]"
             >
-              {isQueryMode ? (
+              {isUploading ? (
+                <Loader2 className="h-5 w-5 animate-spin" />
+              ) : isQueryMode ? (
                 <Search className="h-5 w-5" />
               ) : (
                 <Send className="h-5 w-5" />

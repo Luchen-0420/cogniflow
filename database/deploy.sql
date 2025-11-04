@@ -16,7 +16,7 @@
 -- Step 0: 设置时区
 -- ============================================
 \echo ''
-\echo '🌏 Step 0/6: 设置数据库时区...'
+\echo '🌏 Step 0/7: 设置数据库时区...'
 SET timezone TO 'Asia/Shanghai';
 ALTER DATABASE cogniflow SET timezone TO 'Asia/Shanghai';
 \echo '✅ 时区设置完成: Asia/Shanghai'
@@ -25,7 +25,7 @@ ALTER DATABASE cogniflow SET timezone TO 'Asia/Shanghai';
 -- Step 1: 创建数据库扩展
 -- ============================================
 \echo ''
-\echo '📦 Step 1/6: 创建数据库扩展...'
+\echo '📦 Step 1/7: 创建数据库扩展...'
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 \echo '✅ 扩展创建完成'
@@ -34,7 +34,7 @@ CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 -- Step 2: 创建核心表结构
 -- ============================================
 \echo ''
-\echo '🏗️  Step 2/6: 创建核心表结构...'
+\echo '🏗️  Step 2/7: 创建核心表结构...'
 
 -- 1. 用户表 (users)
 CREATE TABLE IF NOT EXISTS users (
@@ -316,7 +316,7 @@ CREATE INDEX IF NOT EXISTS idx_backups_status ON backups(status);
 -- Step 3: 创建触发器和函数
 -- ============================================
 \echo ''
-\echo '⚙️  Step 3/6: 创建触发器和函数...'
+\echo '⚙️  Step 3/7: 创建触发器和函数...'
 
 -- 自动更新 updated_at 触发器函数
 CREATE OR REPLACE FUNCTION update_updated_at_column()
@@ -358,9 +358,9 @@ CREATE TRIGGER update_user_templates_updated_at BEFORE UPDATE ON user_templates
 -- Step 4: 创建视图
 -- ============================================
 \echo ''
-\echo '👁️  Step 4/6: 创建视图...'
+\echo '👁️  Step 4/7: 创建视图...'
 
--- 活跃用户统计视图
+-- 用户统计视图
 CREATE OR REPLACE VIEW active_users_stats AS
 SELECT 
     DATE(created_at) as date,
@@ -395,9 +395,9 @@ GROUP BY u.id, u.username, u.email, u.role, u.status, u.created_at, u.last_login
 -- Step 5: 插入初始数据
 -- ============================================
 \echo ''
-\echo '💾 Step 5/6: 插入初始数据...'
+\echo '💾 Step 5/7: 插入初始数据...'
 
--- 插入默认管理员用户
+-- 创建默认管理员账号
 INSERT INTO users (username, email, password_hash, role)
 VALUES (
     'admin',
@@ -419,7 +419,7 @@ ON CONFLICT (user_id) DO NOTHING;
 -- Step 6: 为所有用户创建默认模板
 -- ============================================
 \echo ''
-\echo '📋 Step 6/6: 创建默认智能模板...'
+\echo '📋 Step 6/7: 创建默认智能模板...'
 
 DO $$
 DECLARE
@@ -483,6 +483,106 @@ END $$;
 \echo '✅ 默认模板创建完成'
 
 -- ============================================
+-- Step 7: 创建附件表和配置
+-- ============================================
+\echo ''
+\echo '📎 Step 7/7: 创建附件支持...'
+
+-- 附件表
+CREATE TABLE IF NOT EXISTS attachments (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    item_id UUID REFERENCES items(id) ON DELETE CASCADE,
+    
+    -- 文件信息
+    original_filename VARCHAR(500) NOT NULL,
+    stored_filename VARCHAR(500) NOT NULL,
+    file_path TEXT NOT NULL,
+    file_size BIGINT NOT NULL,
+    mime_type VARCHAR(100) NOT NULL,
+    file_type VARCHAR(50) NOT NULL CHECK (file_type IN ('image', 'document', 'video', 'audio', 'other')),
+    
+    -- 文件元数据
+    width INTEGER,
+    height INTEGER,
+    duration INTEGER,
+    
+    -- AI 分析结果
+    ai_analysis JSONB DEFAULT '{}',
+    ai_description TEXT,
+    ai_tags TEXT[] DEFAULT '{}',
+    ai_processed_at TIMESTAMP WITH TIME ZONE,
+    
+    -- 缩略图
+    thumbnail_path TEXT,
+    
+    -- 状态
+    status VARCHAR(20) DEFAULT 'pending' CHECK (status IN ('pending', 'processing', 'completed', 'failed')),
+    upload_status VARCHAR(20) DEFAULT 'completed' CHECK (upload_status IN ('uploading', 'completed', 'failed')),
+    
+    -- 时间戳
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 附件表索引
+CREATE INDEX IF NOT EXISTS idx_attachments_user_id ON attachments(user_id);
+CREATE INDEX IF NOT EXISTS idx_attachments_item_id ON attachments(item_id);
+CREATE INDEX IF NOT EXISTS idx_attachments_file_type ON attachments(file_type);
+CREATE INDEX IF NOT EXISTS idx_attachments_status ON attachments(status);
+CREATE INDEX IF NOT EXISTS idx_attachments_created_at ON attachments(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_attachments_ai_tags ON attachments USING GIN(ai_tags);
+
+-- 附件配置表
+CREATE TABLE IF NOT EXISTS attachment_configs (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    config_key VARCHAR(100) UNIQUE NOT NULL,
+    config_value TEXT NOT NULL,
+    description TEXT,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 插入默认配置
+INSERT INTO attachment_configs (config_key, config_value, description) VALUES
+    ('max_file_size', '10485760', '最大文件大小（字节）- 默认10MB'),
+    ('allowed_image_types', 'image/png,image/jpeg,image/jpg,image/gif,image/webp', '允许的图片类型'),
+    ('allowed_document_types', 'application/pdf,text/plain,text/markdown,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/msword', '允许的文档类型'),
+    ('storage_path', './uploads', '附件存储路径'),
+    ('thumbnail_max_width', '300', '缩略图最大宽度'),
+    ('thumbnail_max_height', '300', '缩略图最大高度')
+ON CONFLICT (config_key) DO NOTHING;
+
+-- 更新时间触发器
+CREATE OR REPLACE FUNCTION update_attachment_updated_at()
+RETURNS TRIGGER AS $$
+BEGIN
+    NEW.updated_at = CURRENT_TIMESTAMP;
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER trigger_attachments_updated_at
+    BEFORE UPDATE ON attachments
+    FOR EACH ROW
+    EXECUTE FUNCTION update_attachment_updated_at();
+
+-- 附件统计视图
+CREATE OR REPLACE VIEW user_attachment_stats AS
+SELECT 
+    user_id,
+    COUNT(*) as total_attachments,
+    COUNT(CASE WHEN file_type = 'image' THEN 1 END) as image_count,
+    COUNT(CASE WHEN file_type = 'document' THEN 1 END) as document_count,
+    SUM(file_size) as total_storage_used,
+    MAX(created_at) as last_upload_at
+FROM attachments
+WHERE upload_status = 'completed' AND status != 'failed'
+GROUP BY user_id;
+
+\echo '✅ 附件支持创建完成'
+
+-- ============================================
 -- 完成部署
 -- ============================================
 \echo ''
@@ -503,7 +603,11 @@ SELECT 'user_templates', COUNT(*) FROM user_templates
 UNION ALL
 SELECT 'items', COUNT(*) FROM items
 UNION ALL
-SELECT 'tags', COUNT(*) FROM tags;
+SELECT 'tags', COUNT(*) FROM tags
+UNION ALL
+SELECT 'attachments', COUNT(*) FROM attachments
+UNION ALL
+SELECT 'attachment_configs', COUNT(*) FROM attachment_configs;
 
 \echo ''
 \echo '👤 默认管理员账号:'
