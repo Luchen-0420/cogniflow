@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Send, Search } from 'lucide-react';
 import { toast } from 'sonner';
-import { processTextWithAI } from '@/utils/ai';
+import { processTextWithAI, generateNoteTitle } from '@/utils/ai';
 import { detectURL, isMainlyURL, fetchURLContent } from '@/utils/urlProcessor';
 import { detectQueryIntent, removeQueryPrefix, parseQueryIntent, generateQuerySummary } from '@/utils/queryProcessor';
 import { itemApi, auth, templateApi } from '@/db/api';
@@ -300,6 +300,63 @@ export default function QuickInput({
       const detectedURL = detectURL(inputText);
       const isURL = detectedURL && isMainlyURL(inputText);
 
+      // 检测用户声明的类型（支持多种前缀）
+      const typePatterns = {
+        note: [
+          /^笔记[：:]\s*/i,
+          /^@笔记\s*/i,
+          /^note[：:]\s*/i,
+          /^@note\s*/i,
+        ],
+        task: [
+          /^任务[：:]\s*/i,
+          /^@任务\s*/i,
+          /^task[：:]\s*/i,
+          /^@task\s*/i,
+          /^待办[：:]\s*/i,
+          /^@待办\s*/i,
+          /^todo[：:]\s*/i,
+          /^@todo\s*/i,
+        ],
+        event: [
+          /^日程[：:]\s*/i,
+          /^@日程\s*/i,
+          /^event[：:]\s*/i,
+          /^@event\s*/i,
+          /^活动[：:]\s*/i,
+          /^@活动\s*/i,
+          /^会议[：:]\s*/i,
+          /^@会议\s*/i,
+        ],
+        data: [
+          /^资料[：:]\s*/i,
+          /^@资料\s*/i,
+          /^data[：:]\s*/i,
+          /^@data\s*/i,
+          /^文档[：:]\s*/i,
+          /^@文档\s*/i,
+        ],
+      };
+
+      // 检测用户指定的类型
+      let userSpecifiedType: 'note' | 'task' | 'event' | 'data' | null = null;
+      let contentWithoutPrefix = inputText;
+
+      for (const [type, patterns] of Object.entries(typePatterns)) {
+        for (const pattern of patterns) {
+          if (pattern.test(inputText)) {
+            userSpecifiedType = type as 'note' | 'task' | 'event' | 'data';
+            contentWithoutPrefix = inputText.replace(pattern, '').trim();
+            console.log(`🏷️ 检测到用户指定类型: ${type}`);
+            break;
+          }
+        }
+        if (userSpecifiedType) break;
+      }
+      
+      const isNote = userSpecifiedType === 'note';
+      let noteContent = contentWithoutPrefix;
+
       if (isURL && detectedURL) {
         // 处理URL类型
         console.log('🔗 检测到URL,开始抓取内容...');
@@ -347,12 +404,69 @@ export default function QuickInput({
           toast.error('抓取网页内容失败,请检查URL是否有效');
           onProcessingError?.(processingId);
         }
-      } else {
-        // 普通文本,使用AI处理
-        const aiResult = await processTextWithAI(inputText);
+      } else if (isNote) {
+        // 笔记类型：使用 AI 生成标题，但内容保持原文
+        console.log('📝 检测到笔记，生成标题...');
+        toast.info('正在生成标题...');
+        
+        try {
+          // 使用 AI 生成简洁的标题
+          const generatedTitle = await generateNoteTitle(noteContent);
+          
+          // 创建笔记类型的条目
+          const newItem = await itemApi.createItem({
+            raw_text: noteContent, // 保存去除前缀后的原始内容
+            type: 'note',
+            title: generatedTitle, // 使用 AI 生成的标题
+            description: noteContent, // 完整内容作为描述（保持原文）
+            due_date: null,
+            priority: 'medium',
+            status: 'pending',
+            tags: ['笔记'],
+            entities: {},
+            archived_at: null,
+            url: null,
+            url_title: null,
+            url_summary: null,
+            url_thumbnail: null,
+            url_fetched_at: null,
+            has_conflict: false,
+            start_time: null,
+            end_time: null,
+            recurrence_rule: null,
+            recurrence_end_date: null,
+            master_item_id: null,
+            is_master: false
+          });
 
-        // 确保类型不为空，默认使用 'task'
-        const itemType = aiResult.type || 'task';
+          if (newItem) {
+            toast.success('笔记已保存');
+            onProcessingComplete?.(processingId);
+            onItemCreated?.();
+          } else {
+            toast.error('保存失败,请重试');
+            onProcessingError?.(processingId);
+          }
+        } catch (error) {
+          console.error('笔记保存失败:', error);
+          toast.error('笔记保存失败');
+          onProcessingError?.(processingId);
+        }
+      } else {
+        // 其他类型：使用 AI 处理（如果用户指定了类型，优先使用用户指定的类型）
+        const textToProcess = userSpecifiedType ? contentWithoutPrefix : inputText;
+        const aiResult = await processTextWithAI(textToProcess);
+
+        // 如果用户指定了类型，使用用户指定的类型；否则使用 AI 识别的类型
+        const itemType = userSpecifiedType || aiResult.type || 'task';
+        
+        console.log('🤖 AI 处理结果:', {
+          用户指定类型: userSpecifiedType,
+          AI识别类型: aiResult.type,
+          最终类型: itemType,
+          原始文本: inputText,
+          处理文本: textToProcess
+        });
 
         // 标准化时间格式：移除时区信息，确保使用本地时间格式
         const normalizeTimeString = (timeStr: string | null | undefined): string | null => {

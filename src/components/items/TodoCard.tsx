@@ -4,8 +4,6 @@ import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { 
-  Circle, 
-  Clock, 
   AlertCircle, 
   CheckCircle2, 
   Edit, 
@@ -57,20 +55,6 @@ const statusLabels = {
   completed: '已完成'
 };
 
-const statusColors = {
-  pending: 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400',
-  'in-progress': 'bg-blue-100 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400',
-  blocked: 'bg-red-100 dark:bg-red-900/20 text-red-600 dark:text-red-400',
-  completed: 'bg-green-100 dark:bg-green-900/20 text-green-600 dark:text-green-400'
-};
-
-const statusIcons = {
-  pending: Circle,
-  'in-progress': Clock,
-  blocked: AlertCircle,
-  completed: CheckCircle2
-};
-
 const priorityColors = {
   high: 'bg-red-100 dark:bg-red-900/20 text-red-600 dark:text-red-400 border-red-200 dark:border-red-800',
   medium: 'bg-yellow-100 dark:bg-yellow-900/20 text-yellow-600 dark:text-yellow-400 border-yellow-200 dark:border-yellow-800',
@@ -86,8 +70,6 @@ const priorityLabels = {
 export default function TodoCard({ item, onUpdate }: TodoCardProps) {
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
-
-  const StatusIcon = statusIcons[item.status as TaskStatus] || Circle;
   
   // 过期判断：只有截止日期在今天之前（不包括今天）才算过期
   const isOverdue = item.due_date && (() => {
@@ -148,6 +130,31 @@ export default function TodoCard({ item, onUpdate }: TodoCardProps) {
     }
   };
 
+  const handleToggleComplete = async (e: React.MouseEvent) => {
+    e.stopPropagation(); // 防止触发其他点击事件
+    
+    if (isUpdatingStatus) return;
+    
+    const newStatus: TaskStatus = item.status === 'completed' ? 'pending' : 'completed';
+    
+    setIsUpdatingStatus(true);
+    try {
+      await itemApi.updateItem(item.id, {
+        ...item,
+        status: newStatus,
+        updated_at: new Date().toISOString()
+      });
+      
+      toast.success(newStatus === 'completed' ? '任务已完成' : '任务已标记为待处理');
+      onUpdate();
+    } catch (error) {
+      console.error('更新任务状态失败:', error);
+      toast.error('更新任务状态失败');
+    } finally {
+      setIsUpdatingStatus(false);
+    }
+  };
+
   return (
     <>
       <Card className={`transition-all hover:shadow-md ${
@@ -159,12 +166,32 @@ export default function TodoCard({ item, onUpdate }: TodoCardProps) {
           <div className="flex items-start justify-between gap-3">
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2 mb-2">
-                <StatusIcon className={`h-4 w-4 ${
-                  item.status === 'completed' ? 'text-green-600' :
-                  item.status === 'in-progress' ? 'text-blue-600' :
-                  item.status === 'blocked' ? 'text-red-600' :
-                  'text-gray-400'
-                }`} />
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <button
+                        onClick={handleToggleComplete}
+                        disabled={isUpdatingStatus}
+                        className={`
+                          flex items-center justify-center w-5 h-5 rounded-full border-2 cursor-pointer 
+                          transition-all duration-200 hover:scale-110 disabled:cursor-not-allowed disabled:opacity-50
+                          ${item.status === 'completed' 
+                            ? 'bg-green-500 border-green-500 hover:bg-green-600 hover:border-green-600' 
+                            : 'border-gray-300 hover:border-blue-400 hover:bg-blue-50 dark:border-gray-600 dark:hover:border-blue-500 dark:hover:bg-blue-900/20'
+                          }
+                        `}
+                        aria-label={item.status === 'completed' ? '标记为未完成' : '标记为已完成'}
+                      >
+                        {item.status === 'completed' && (
+                          <CheckCircle2 className="h-3 w-3 text-white" />
+                        )}
+                      </button>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>{item.status === 'completed' ? '标记为未完成' : '标记为已完成'}</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
                 <h3 className={`font-medium text-sm ${
                   item.status === 'completed' ? 'line-through text-gray-500' : 'text-gray-900 dark:text-gray-100'
                 }`}>

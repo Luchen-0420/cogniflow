@@ -71,6 +71,7 @@ const priorityColors = {
 
 export default function ItemCard({ item, onUpdate }: ItemCardProps) {
   const [isEditOpen, setIsEditOpen] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(false);
 
   const isCompleted = item.status === 'completed';
   // 过期判断：只有截止日期在今天之前（不包括今天）才算过期
@@ -302,9 +303,35 @@ export default function ItemCard({ item, onUpdate }: ItemCardProps) {
         </CardHeader>
         <CardContent className="py-0 pb-3 px-4 space-y-2">
           {item.description && (
-            <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed pl-8">
-              {item.description}
-            </p>
+            <>
+              {item.type === 'note' ? (
+                // 笔记类型：显示原始内容，支持折叠展开
+                <div className="pl-8">
+                  <div 
+                    className={`text-sm text-gray-700 dark:text-gray-300 leading-relaxed whitespace-pre-wrap ${
+                      !isExpanded && item.raw_text && item.raw_text.split('\n').length > 3 ? 'line-clamp-3' : ''
+                    }`}
+                  >
+                    {item.raw_text || item.description}
+                  </div>
+                  {item.raw_text && item.raw_text.split('\n').length > 3 && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setIsExpanded(!isExpanded)}
+                      className="mt-2 h-7 px-3 text-xs text-blue-600 hover:text-blue-700 hover:bg-blue-50 dark:text-blue-400 dark:hover:text-blue-300 dark:hover:bg-blue-950/30"
+                    >
+                      {isExpanded ? '收起' : '展开全部'}
+                    </Button>
+                  )}
+                </div>
+              ) : (
+                // 其他类型：显示 AI 处理后的描述
+                <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed pl-8">
+                  {item.description}
+                </p>
+              )}
+            </>
           )}
           {item.tags && item.tags.length > 0 && (
             <div className="flex flex-wrap gap-1.5 pl-8">

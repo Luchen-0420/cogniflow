@@ -510,3 +510,67 @@ export async function processTextWithAI(text: string): Promise<AIProcessResult> 
     });
   });
 }
+
+/**
+ * 为笔记生成简洁的标题
+ * @param noteContent 笔记的完整内容
+ * @returns 生成的标题（10-20个字）
+ */
+export async function generateNoteTitle(noteContent: string): Promise<string> {
+  return new Promise((resolve, reject) => {
+    let fullResponse = '';
+
+    const systemPrompt = `你是一个专业的标题生成助手。用户会提供笔记内容，你需要为这段内容生成一个简洁、准确的标题。
+
+要求：
+1. 标题长度：10-20个字
+2. 准确概括笔记的核心内容
+3. 使用简洁的语言，避免冗长
+4. 不要添加任何前缀（如"笔记："、"关于"等）
+5. 直接返回标题文本，不要使用引号或其他标记
+6. 如果内容是技术相关，使用专业术语
+7. 如果内容是日常记录，使用通俗易懂的语言
+
+示例：
+输入："今天学习了 React Hooks，特别是 useEffect 的依赖数组机制很重要，需要注意清理副作用"
+输出：React Hooks 学习笔记
+
+输入："明天要去超市买菜，需要购买：西红柿、鸡蛋、面条、牛奶"
+输出：购物清单
+
+输入："项目进度：前端开发已完成80%，后端API接口还需要优化，预计下周完成"
+输出：项目进度跟踪`;
+
+    const userContent = `请为以下笔记内容生成一个简洁的标题：
+
+${noteContent}
+
+只返回标题文本，不要包含任何其他内容。`;
+
+    sendChatStream({
+      messages: [
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: userContent }
+      ],
+      onUpdate: (content: string) => {
+        fullResponse = content;
+      },
+      onComplete: () => {
+        // 清理可能的引号和多余空格
+        const title = fullResponse.trim().replace(/^["']|["']$/g, '');
+        // 如果标题过长，截取前20个字
+        const finalTitle = title.length > 20 ? title.substring(0, 20) : title;
+        resolve(finalTitle);
+      },
+      onError: (error: Error) => {
+        console.error('生成笔记标题失败:', error);
+        // 如果 AI 失败，使用简单的截取作为后备方案
+        const fallbackTitle = noteContent.length > 15 
+          ? noteContent.substring(0, 15) + '...' 
+          : noteContent;
+        resolve(fallbackTitle);
+      },
+      temperature: 0.7 // 使用较低的温度以获得更稳定的输出
+    });
+  });
+}
