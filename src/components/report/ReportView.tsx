@@ -159,8 +159,8 @@ export default function ReportView() {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-12">
-        <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
-        <span className="ml-2 text-gray-600 dark:text-gray-400">加载报告数据...</span>
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        <span className="ml-2 text-muted-foreground">加载报告数据...</span>
       </div>
     );
   }
@@ -170,8 +170,8 @@ export default function ReportView() {
       {/* 头部控制 */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold text-gray-900 dark:text-white">智能报告</h2>
-          <p className="text-gray-600 dark:text-gray-400 mt-1">
+          <h2 className="text-2xl font-bold text-foreground">智能报告</h2>
+          <p className="text-muted-foreground mt-1">
             数据统计与智能汇总 · {getPeriodLabel()}
           </p>
         </div>
@@ -316,14 +316,14 @@ export default function ReportView() {
                   <CardContent>
                     <div className="space-y-3">
                       {reportData.tags.length === 0 ? (
-                        <p className="text-sm text-gray-500 dark:text-gray-400 text-center py-4">
+                        <p className="text-sm text-muted-foreground text-center py-4">
                           暂无标签数据
                         </p>
                       ) : (
                         reportData.tags.map((tag, index) => (
                           <div key={tag.tag} className="flex items-center justify-between">
                             <div className="flex items-center gap-2">
-                              <span className="text-xs bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 px-2 py-1 rounded">
+                              <span className="text-xs bg-muted text-muted-foreground px-2 py-1 rounded">
                                 #{index + 1}
                               </span>
                               <span className="text-sm">{tag.tag}</span>
@@ -375,11 +375,11 @@ export default function ReportView() {
             <CardContent>
               {!reportData || reportData.totalItems === 0 ? (
                 <div className="text-center py-12">
-                  <FileText className="h-16 w-16 text-gray-300 dark:text-gray-700 mx-auto mb-4" />
-                  <p className="text-gray-500 dark:text-gray-400">
+                  <FileText className="h-16 w-16 text-muted-foreground/30 mx-auto mb-4" />
+                  <p className="text-muted-foreground">
                     该时间段内暂无数据
                   </p>
-                  <p className="text-sm text-gray-400 dark:text-gray-500 mt-2">
+                  <p className="text-sm text-muted-foreground/80 mt-2">
                     请选择其他时间段或添加一些内容
                   </p>
                 </div>
@@ -387,8 +387,8 @@ export default function ReportView() {
                 <SmartReportDisplay content={smartSummary.content} />
               ) : (
                 <div className="text-center py-12">
-                  <Lightbulb className="h-16 w-16 text-gray-300 dark:text-gray-700 mx-auto mb-4" />
-                  <p className="text-gray-500 dark:text-gray-400 mb-4">
+                  <Lightbulb className="h-16 w-16 text-muted-foreground/30 mx-auto mb-4" />
+                  <p className="text-muted-foreground mb-4">
                     点击"生成报告"按钮，让 AI 为您生成智能汇总
                   </p>
                   <Button onClick={generateReport} disabled={smartSummary.isGenerating}>

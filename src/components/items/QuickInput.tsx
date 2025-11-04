@@ -577,11 +577,11 @@ export default function QuickInput({
       )}
 
       {/* 输入框 */}
-      <div className="fixed bottom-0 left-0 right-0 bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-800 p-4 shadow-lg z-50">
+      <div className="fixed bottom-0 left-0 right-0 bg-background border-t border-border p-4 shadow-lg z-50">
         <div className="max-w-4xl mx-auto">
           {/* 模板菜单 */}
           {showTemplateMenu && (
-            <div className="mb-2 bg-white dark:bg-gray-800 border rounded-lg shadow-lg overflow-hidden">
+            <div className="mb-2 bg-card border rounded-lg shadow-lg overflow-hidden">
               <Command className="rounded-lg border-0">
                 <CommandInput placeholder="搜索模板..." />
                 <CommandList>
@@ -646,7 +646,7 @@ export default function QuickInput({
           
           {/* 提示文本 */}
           {isQueryMode && (
-            <div className="mt-2 text-xs text-gray-500 dark:text-gray-400">
+            <div className="mt-2 text-xs text-muted-foreground">
               💡 提示: 可以查询"今天的任务"、"本周的会议"、"标签:工作"等
             </div>
           )}
