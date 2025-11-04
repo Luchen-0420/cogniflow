@@ -140,6 +140,35 @@ export async function getItemAttachments(itemId: string): Promise<Attachment[]> 
 }
 
 /**
+ * 更新附件关联的条目ID
+ */
+export async function updateAttachmentItemId(
+  attachmentId: string,
+  itemId: string
+): Promise<void> {
+  const user = auth.getCurrentUser();
+  if (!user) {
+    throw new Error('用户未登录');
+  }
+
+  const token = getAuthToken();
+
+  const response = await fetch(`${API_BASE_URL}/attachments/${attachmentId}/item`, {
+    method: 'PATCH',
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ itemId }),
+  });
+
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.error || '更新附件关联失败');
+  }
+}
+
+/**
  * 删除附件
  */
 export async function deleteAttachment(attachmentId: string): Promise<void> {

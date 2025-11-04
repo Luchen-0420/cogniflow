@@ -11,6 +11,7 @@ import { toast } from 'sonner';
 import { useState, useEffect } from 'react';
 import EditItemDialog from './EditItemDialog';
 import { generateURLSummary } from '@/utils/urlProcessor';
+import { AttachmentImages } from '@/components/attachments/AttachmentImages';
 
 interface URLCardProps {
   item: Item;
@@ -275,6 +276,11 @@ export default function URLCard({ item, onUpdate }: URLCardProps) {
                   ))}
                 </div>
               )}
+
+              {/* 附件图片展示 */}
+              <div className="mb-3">
+                <AttachmentImages itemId={item.id} maxDisplay={3} />
+              </div>
 
               {/* 时间戳 */}
               <div className="flex items-center gap-2 text-xs text-gray-400 dark:text-gray-600">

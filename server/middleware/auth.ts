@@ -99,6 +99,59 @@ export function optionalAuthMiddleware(req: AuthRequest, res: Response, next: Ne
 }
 
 /**
+ * 文件访问认证中间件
+ * 支持从 Authorization header 或 query 参数中获取 token
+ * 用于图片等资源的访问，因为 <img> 标签无法设置 Authorization 头
+ */
+export function fileAuthMiddleware(req: AuthRequest, res: Response, next: NextFunction) {
+  try {
+    // 优先从 Authorization header 中获取 token
+    let token = '';
+    const authHeader = req.headers.authorization;
+    
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+      token = authHeader.replace('Bearer ', '');
+    } else if (req.query.token) {
+      // 从 query 参数中获取 token
+      token = req.query.token as string;
+    }
+
+    if (!token) {
+      return res.status(401).json({ 
+        error: '未授权：缺少认证令牌' 
+      });
+    }
+
+    // 验证 token
+    try {
+      const decoded = jwt.verify(token, JWT_SECRET) as {
+        userId: string;
+        username: string;
+        role: string;
+      };
+
+      // 将用户信息添加到请求对象
+      req.user = {
+        id: decoded.userId,
+        username: decoded.username,
+        role: decoded.role
+      };
+
+      next();
+    } catch (jwtError) {
+      return res.status(401).json({ 
+        error: '未授权：无效的认证令牌' 
+      });
+    }
+  } catch (error) {
+    console.error('文件认证中间件错误:', error);
+    return res.status(500).json({ 
+      error: '服务器内部错误' 
+    });
+  }
+}
+
+/**
  * 管理员权限中间件
  * 必须先经过 authMiddleware
  */

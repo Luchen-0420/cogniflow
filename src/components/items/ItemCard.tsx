@@ -11,6 +11,7 @@ import { toast } from 'sonner';
 import { useState } from 'react';
 import EditItemDialog from './EditItemDialog';
 import URLCard from './URLCard';
+import { AttachmentImages } from '@/components/attachments/AttachmentImages';
 
 /**
  * 将不带时区的ISO时间字符串解析为本地时间
@@ -339,6 +340,12 @@ export default function ItemCard({ item, onUpdate }: ItemCardProps) {
               )}
             </>
           )}
+
+          {/* 附件图片展示 */}
+          <div className="pl-8">
+            <AttachmentImages itemId={item.id} maxDisplay={4} />
+          </div>
+
           {item.tags && item.tags.length > 0 && (
             <div className="flex flex-wrap gap-1.5 pl-8">
               {item.tags.map((tag, index) => (

@@ -19,6 +19,7 @@ import { itemApi } from '@/db/api';
 import { toast } from 'sonner';
 import { useState } from 'react';
 import EditItemDialog from './EditItemDialog';
+import { AttachmentImages } from '@/components/attachments/AttachmentImages';
 
 /**
  * 将不带时区的ISO时间字符串解析为本地时间
@@ -311,6 +312,11 @@ export default function TodoCard({ item, onUpdate }: TodoCardProps) {
             </p>
           </CardContent>
         )}
+
+        {/* 附件图片展示 */}
+        <CardContent className="pt-0 pb-3">
+          <AttachmentImages itemId={item.id} maxDisplay={3} compact />
+        </CardContent>
       </Card>
 
       <EditItemDialog

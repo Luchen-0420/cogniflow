@@ -6,7 +6,7 @@ import { toast } from 'sonner';
 import { processTextWithAI, generateNoteTitle } from '@/utils/ai';
 import { detectURL, isMainlyURL, fetchURLContent, generateURLSummary } from '@/utils/urlProcessor';
 import { detectQueryIntent, removeQueryPrefix, parseQueryIntent, generateQuerySummary } from '@/utils/queryProcessor';
-import { uploadAttachment } from '@/utils/attachmentUtils';
+import { uploadAttachment, updateAttachmentItemId } from '@/utils/attachmentUtils';
 import { itemApi, auth, templateApi } from '@/db/api';
 import { QueryResultPanel } from '@/components/query/QueryResultPanel';
 import { TemplateInputModal } from './TemplateInputModal';
@@ -325,10 +325,34 @@ export default function QuickInput({
       if (uploadResults.length > 0) {
         // 如果有输入文本，创建一个包含附件的条目
         if (inputText) {
-          await handleNormalInput(inputText);
+          console.log(`📎 创建条目并关联 ${uploadResults.length} 个附件`);
+          
+          // 先创建条目
+          const newItem = await handleNormalInput(inputText);
+          
+          // 如果条目创建成功，将附件关联到条目
+          if (newItem && newItem.id) {
+            console.log(`📎 将 ${uploadResults.length} 个附件关联到条目 ${newItem.id}`);
+            
+            let successCount = 0;
+            for (const attachment of uploadResults) {
+              try {
+                await updateAttachmentItemId(attachment.id, newItem.id);
+                successCount++;
+                console.log(`✅ 附件 ${attachment.id} 已关联到条目 ${newItem.id}`);
+              } catch (error: any) {
+                console.error(`❌ 关联附件 ${attachment.id} 失败:`, error);
+              }
+            }
+            
+            if (successCount > 0) {
+              toast.success(`成功关联 ${successCount} 个附件到条目，AI 正在分析中...`);
+            }
+          }
+        } else {
+          toast.success(`成功上传 ${uploadResults.length} 个文件，AI 正在分析中...`);
         }
         
-        toast.success(`成功上传 ${uploadResults.length} 个文件，AI 正在分析中...`);
         onItemCreated?.();
       }
     } catch (error: any) {
@@ -372,7 +396,7 @@ export default function QuickInput({
     }
   };
 
-  const handleNormalInput = async (inputText: string) => {
+  const handleNormalInput = async (inputText: string): Promise<Item | null> => {
     const processingId = `processing-${Date.now()}`;
     
     // 立即清空输入框,让用户可以继续输入
@@ -387,7 +411,7 @@ export default function QuickInput({
       if (!user) {
         toast.error('用户未初始化');
         onProcessingError?.(processingId);
-        return;
+        return null;
       }
 
       // 检测是否为URL
@@ -497,14 +521,17 @@ export default function QuickInput({
             toast.success('链接已保存到链接库');
             onProcessingComplete?.(processingId);
             onItemCreated?.();
+            return newItem;
           } else {
             toast.error('保存失败,请重试');
             onProcessingError?.(processingId);
+            return null;
           }
         } catch (error) {
           console.error('URL处理失败:', error);
           toast.error('抓取网页内容失败,请检查URL是否有效');
           onProcessingError?.(processingId);
+          return null;
         }
       } else if (isNote) {
         // 笔记类型：使用 AI 生成标题，但内容保持原文
@@ -545,14 +572,17 @@ export default function QuickInput({
             toast.success('笔记已保存');
             onProcessingComplete?.(processingId);
             onItemCreated?.();
+            return newItem;
           } else {
             toast.error('保存失败,请重试');
             onProcessingError?.(processingId);
+            return null;
           }
         } catch (error) {
           console.error('笔记保存失败:', error);
           toast.error('笔记保存失败');
           onProcessingError?.(processingId);
+          return null;
         }
       } else {
         // 其他类型：使用 AI 处理（如果用户指定了类型，优先使用用户指定的类型）
@@ -620,16 +650,19 @@ export default function QuickInput({
           onProcessingComplete?.(processingId);
           onItemCreated?.();
           console.log('🔄 已调用数据刷新回调');
+          return newItem;
         } else {
           console.error('❌ 创建条目返回 null');
           toast.error('创建失败,请重试');
           onProcessingError?.(processingId);
+          return null;
         }
       }
     } catch (error) {
       console.error('处理失败:', error);
       toast.error('处理失败,请重试');
       onProcessingError?.(processingId);
+      return null;
     }
   };
 

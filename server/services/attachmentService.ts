@@ -225,6 +225,26 @@ export async function updateAIAnalysis(
 }
 
 /**
+ * 更新附件关联的条目ID
+ */
+export async function updateAttachmentItemId(
+  attachmentId: string,
+  itemId: string,
+  userId: string
+): Promise<boolean> {
+  const query = `
+    UPDATE attachments
+    SET 
+      item_id = $1,
+      updated_at = CURRENT_TIMESTAMP
+    WHERE id = $2 AND user_id = $3
+  `;
+  
+  const result = await pool.query(query, [itemId, attachmentId, userId]);
+  return (result.rowCount || 0) > 0;
+}
+
+/**
  * 删除附件
  */
 export async function deleteAttachment(attachmentId: string, userId: string): Promise<boolean> {
@@ -259,7 +279,13 @@ export async function deleteAttachment(attachmentId: string, userId: string): Pr
  * 获取文件的实际路径
  */
 export function getFilePath(relativePath: string): string {
-  return path.join(UPLOAD_BASE_DIR, relativePath);
+  const fullPath = path.join(UPLOAD_BASE_DIR, relativePath);
+  console.log(`[AttachmentService] getFilePath:`, {
+    UPLOAD_BASE_DIR,
+    relativePath,
+    fullPath
+  });
+  return fullPath;
 }
 
 /**

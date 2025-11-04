@@ -6,7 +6,7 @@
 import express, { Response, NextFunction } from 'express';
 import multer, { FileFilterCallback } from 'multer';
 import path from 'path';
-import { authMiddleware, AuthRequest } from '../middleware/auth.js';
+import { authMiddleware, fileAuthMiddleware, AuthRequest } from '../middleware/auth.js';
 import * as attachmentService from '../services/attachmentService.js';
 import * as aiVisionService from '../services/aiVisionService.js';
 
@@ -178,8 +178,9 @@ router.get('/:id', authMiddleware, async (req: AuthRequest, res: Response) => {
 /**
  * GET /api/attachments/:id/file
  * 下载附件文件
+ * 使用 fileAuthMiddleware 支持从 query 参数获取 token（用于 <img> 标签）
  */
-router.get('/:id/file', authMiddleware, async (req: AuthRequest, res: Response) => {
+router.get('/:id/file', fileAuthMiddleware, async (req: AuthRequest, res: Response) => {
   try {
     const userId = req.user?.id;
     if (!userId) {
@@ -187,14 +188,17 @@ router.get('/:id/file', authMiddleware, async (req: AuthRequest, res: Response) 
     }
     
     const attachmentId = req.params.id;
+    console.log(`[Attachments API] 用户 ${userId} 请求下载附件 ${attachmentId}`);
 
     const attachment = await attachmentService.getAttachment(attachmentId, userId);
     
     if (!attachment) {
+      console.log(`[Attachments API] 附件 ${attachmentId} 不存在或无权限`);
       return res.status(404).json({ error: '附件不存在' });
     }
 
     const fullPath = attachmentService.getFilePath(attachment.file_path);
+    console.log(`[Attachments API] 文件路径: ${fullPath}`);
     
     res.download(fullPath, attachment.original_filename, (err) => {
       if (err) {
@@ -202,6 +206,8 @@ router.get('/:id/file', authMiddleware, async (req: AuthRequest, res: Response) 
         if (!res.headersSent) {
           res.status(500).json({ error: '文件下载失败' });
         }
+      } else {
+        console.log(`[Attachments API] 文件 ${attachment.original_filename} 下载成功`);
       }
     });
   } catch (error: any) {
@@ -222,13 +228,57 @@ router.get('/item/:itemId', authMiddleware, async (req: AuthRequest, res: Respon
     }
     
     const itemId = req.params.itemId;
+    console.log(`[Attachments API] 获取条目 ${itemId} 的附件列表`);
 
     const attachments = await attachmentService.getItemAttachments(itemId, userId);
+    console.log(`[Attachments API] 条目 ${itemId} 有 ${attachments.length} 个附件`);
+    
+    if (attachments.length > 0) {
+      console.log(`[Attachments API] 附件类型:`, attachments.map(a => ({
+        id: a.id,
+        filename: a.original_filename,
+        type: a.file_type,
+        mime: a.mime_type
+      })));
+    }
     
     res.json(attachments);
   } catch (error: any) {
     console.error('获取附件列表失败:', error);
     res.status(500).json({ error: error.message || '获取附件列表失败' });
+  }
+});
+
+/**
+ * PATCH /api/attachments/:id/item
+ * 更新附件关联的条目ID
+ */
+router.patch('/:id/item', authMiddleware, async (req: AuthRequest, res: Response) => {
+  try {
+    const userId = req.user?.id;
+    if (!userId) {
+      return res.status(401).json({ error: '用户未认证' });
+    }
+    
+    const attachmentId = req.params.id;
+    const { itemId } = req.body;
+
+    if (!itemId) {
+      return res.status(400).json({ error: '缺少 itemId 参数' });
+    }
+
+    console.log(`[Attachments API] 更新附件 ${attachmentId} 的 item_id 为 ${itemId}`);
+
+    const success = await attachmentService.updateAttachmentItemId(attachmentId, itemId, userId);
+    
+    if (!success) {
+      return res.status(404).json({ error: '附件不存在或无权限' });
+    }
+
+    res.json({ success: true, message: '附件已关联到条目' });
+  } catch (error: any) {
+    console.error('更新附件关联失败:', error);
+    res.status(500).json({ error: error.message || '更新附件关联失败' });
   }
 });
 
