@@ -469,7 +469,7 @@ export class UserItemApi extends BaseUserDataApi {
   }
 
   /**
-   * 获取收件箱条目（只显示笔记类型）
+   * 获取收件箱条目（笔记和资料类型）
    * 收件箱定位：记录性内容的专属空间
    */
   async getInboxItems(): Promise<Item[]> {
@@ -479,7 +479,7 @@ export class UserItemApi extends BaseUserDataApi {
       
       const filtered = items.filter(item => 
         !item.archived_at && 
-        item.type === 'note'  // 只显示笔记类型
+        (item.type === 'note' || item.type === 'data')  // 包含笔记和资料类型
       );
       
       console.log('✅ getInboxItems 过滤后:', filtered.length);

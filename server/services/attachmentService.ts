@@ -12,9 +12,21 @@ import pool from '../db/pool.js';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// 上传目录配置
-const UPLOAD_BASE_DIR = path.join(__dirname, '../../uploads');
+// 上传目录配置 - 支持环境变量配置
+// 优先使用环境变量，否则使用默认的相对路径
+const UPLOAD_BASE_DIR = process.env.UPLOAD_DIR 
+  ? (path.isAbsolute(process.env.UPLOAD_DIR) 
+      ? process.env.UPLOAD_DIR 
+      : path.resolve(process.cwd(), process.env.UPLOAD_DIR))
+  : path.join(__dirname, '../../uploads');
+
 const THUMBNAIL_DIR = path.join(UPLOAD_BASE_DIR, 'thumbnails');
+
+console.log('📁 [AttachmentService] 上传目录配置:');
+console.log('   UPLOAD_BASE_DIR:', UPLOAD_BASE_DIR);
+console.log('   THUMBNAIL_DIR:', THUMBNAIL_DIR);
+console.log('   当前工作目录:', process.cwd());
+console.log('   环境变量 UPLOAD_DIR:', process.env.UPLOAD_DIR || '(未设置)');
 
 // 确保目录存在
 async function ensureDirectories() {

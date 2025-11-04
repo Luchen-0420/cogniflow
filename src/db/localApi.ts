@@ -460,7 +460,7 @@ export const itemApi = {
   },
 
   /**
-   * 获取收件箱条目（无日期的待办任务和笔记）
+   * 获取收件箱条目（笔记和资料类型）
    */
   async getInboxItems(): Promise<Item[]> {
     try {
@@ -472,9 +472,7 @@ export const itemApi = {
         (item) => 
           item.user_id === user.id &&
           item.archived_at === null &&
-          item.due_date === null &&
-          (item.type === 'task' || item.type === 'note') &&
-          item.status === 'pending'
+          (item.type === 'note' || item.type === 'data')  // 包含笔记和资料类型
       );
 
       return items.sort((a, b) => 

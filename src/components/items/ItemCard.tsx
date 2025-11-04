@@ -311,8 +311,8 @@ export default function ItemCard({ item, onUpdate }: ItemCardProps) {
         <CardContent className="py-0 pb-3 px-4 space-y-2">
           {item.description && (
             <>
-              {item.type === 'note' ? (
-                // 笔记类型：显示原始内容，支持折叠展开
+              {(item.type === 'note' || item.type === 'data') ? (
+                // 笔记和资料类型：显示原始内容，支持折叠展开
                 <div className="pl-8">
                   <div 
                     className={`text-sm text-gray-700 dark:text-gray-300 leading-relaxed whitespace-pre-wrap ${

@@ -273,11 +273,13 @@ export class PostgresItemApi {
   }
 
   /**
-   * 获取收件箱条目（note类型）
+   * 获取收件箱条目（note和data类型）
    */
   async getInboxItems(): Promise<Item[]> {
     try {
-      return await this.getItems({ type: 'note', archived: false });
+      const items = await this.getItems({ archived: false });
+      // 包含笔记和资料类型
+      return items.filter(item => item.type === 'note' || item.type === 'data');
     } catch (error) {
       console.error('❌ 获取收件箱条目失败:', error);
       return [];

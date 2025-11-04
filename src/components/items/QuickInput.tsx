@@ -7,6 +7,7 @@ import { processTextWithAI, generateNoteTitle } from '@/utils/ai';
 import { detectURL, isMainlyURL, fetchURLContent, generateURLSummary } from '@/utils/urlProcessor';
 import { detectQueryIntent, removeQueryPrefix, parseQueryIntent, generateQuerySummary } from '@/utils/queryProcessor';
 import { uploadAttachment, updateAttachmentItemId } from '@/utils/attachmentUtils';
+import { isImageFile, readMultipleDocuments } from '@/utils/fileReader';
 import { itemApi, auth, templateApi } from '@/db/api';
 import { QueryResultPanel } from '@/components/query/QueryResultPanel';
 import { TemplateInputModal } from './TemplateInputModal';
@@ -305,9 +306,53 @@ export default function QuickInput({
     setText('');
     
     try {
+      // 分离图片文件和文档文件
+      const imageFiles: File[] = [];
+      const documentFiles: File[] = [];
+      
+      for (const file of selectedFiles) {
+        if (isImageFile(file)) {
+          imageFiles.push(file);
+        } else {
+          documentFiles.push(file);
+        }
+      }
+      
+      console.log(`📁 文件分类: ${imageFiles.length} 个图片, ${documentFiles.length} 个文档`);
+      
+      // 读取文档文件的内容
+      let extractedText = '';
+      if (documentFiles.length > 0) {
+        console.log('📄 开始读取文档内容...');
+        try {
+          const { textContent, hasUnsupportedFiles, unsupportedFiles } = 
+            await readMultipleDocuments(documentFiles);
+          
+          extractedText = textContent;
+          
+          if (hasUnsupportedFiles) {
+            toast.warning(`以下文件类型暂不支持文本提取: ${unsupportedFiles.join(', ')}`);
+          }
+          
+          if (textContent) {
+            console.log(`✅ 成功提取 ${textContent.length} 字符的文本内容`);
+          }
+        } catch (error: any) {
+          console.error('读取文档内容失败:', error);
+          toast.error('读取文档内容失败');
+        }
+      }
+      
+      // 合并用户输入和提取的文本
+      const combinedText = inputText 
+        ? (extractedText ? `${inputText}\n\n${extractedText}` : inputText)
+        : extractedText;
+      
+      console.log(`📝 合并后的文本长度: ${combinedText.length} 字符`);
+      
       const uploadResults = [];
       
-      // 上传所有文件
+      // 上传所有文件（包括图片和文档）
       for (const file of selectedFiles) {
         try {
           const result = await uploadAttachment(file);
@@ -322,16 +367,66 @@ export default function QuickInput({
       // 清空已选文件
       setSelectedFiles([]);
       
-      if (uploadResults.length > 0) {
-        // 如果有输入文本，创建一个包含附件的条目
-        if (inputText) {
-          console.log(`📎 创建条目并关联 ${uploadResults.length} 个附件`);
+      // 创建条目（使用合并后的文本）
+      if (combinedText || uploadResults.length > 0) {
+        if (combinedText) {
+          console.log(`📎 创建条目 (文本长度: ${combinedText.length}, 附件数: ${uploadResults.length})`);
           
-          // 先创建条目
-          const newItem = await handleNormalInput(inputText);
+          // 判断是否有文档内容提取
+          const hasExtractedText = documentFiles.length > 0 && extractedText;
+          
+          // 如果有文档内容，创建资料类型条目（不经过 AI 处理）
+          let newItem: Item | null = null;
+          
+          if (hasExtractedText) {
+            // 有文档内容：创建资料类型，不经过 AI
+            console.log('📚 有文档内容，创建资料类型条目（不经过AI）');
+            toast.info('正在生成标题...');
+            
+            try {
+              // 使用 AI 仅生成标题
+              const generatedTitle = await generateNoteTitle(combinedText);
+              
+              newItem = await itemApi.createItem({
+                raw_text: combinedText, // 保存原始文本（用户输入 + 文档内容）
+                type: 'data',
+                title: generatedTitle,
+                description: combinedText, // 完整内容作为描述（保持原文）
+                due_date: null,
+                priority: 'medium',
+                status: 'pending',
+                tags: ['资料'],
+                entities: {},
+                archived_at: null,
+                url: null,
+                url_title: null,
+                url_summary: null,
+                url_thumbnail: null,
+                url_fetched_at: null,
+                has_conflict: false,
+                start_time: null,
+                end_time: null,
+                recurrence_rule: null,
+                recurrence_end_date: null,
+                master_item_id: null,
+                is_master: false
+              });
+              
+              if (newItem) {
+                toast.success('资料已保存');
+              }
+            } catch (error) {
+              console.error('资料创建失败:', error);
+              toast.error('资料创建失败');
+            }
+          } else {
+            // 无文档内容：按原逻辑处理（可能经过 AI）
+            console.log('📝 无文档内容，按原逻辑处理');
+            newItem = await handleNormalInput(combinedText);
+          }
           
           // 如果条目创建成功，将附件关联到条目
-          if (newItem && newItem.id) {
+          if (newItem && newItem.id && uploadResults.length > 0) {
             console.log(`📎 将 ${uploadResults.length} 个附件关联到条目 ${newItem.id}`);
             
             let successCount = 0;
@@ -346,10 +441,14 @@ export default function QuickInput({
             }
             
             if (successCount > 0) {
-              toast.success(`成功关联 ${successCount} 个附件到条目，AI 正在分析中...`);
+              const message = documentFiles.length > 0
+                ? `已创建条目并关联 ${successCount} 个附件，文档内容已提取`
+                : `成功关联 ${successCount} 个附件到条目，AI 正在分析中...`;
+              toast.success(message);
             }
           }
-        } else {
+        } else if (uploadResults.length > 0) {
+          // 只有附件没有文本
           toast.success(`成功上传 ${uploadResults.length} 个文件，AI 正在分析中...`);
         }
         
@@ -473,6 +572,7 @@ export default function QuickInput({
       }
       
       const isNote = userSpecifiedType === 'note';
+      const isData = userSpecifiedType === 'data';
       let noteContent = contentWithoutPrefix;
 
       if (isURL && detectedURL) {
@@ -581,6 +681,57 @@ export default function QuickInput({
         } catch (error) {
           console.error('笔记保存失败:', error);
           toast.error('笔记保存失败');
+          onProcessingError?.(processingId);
+          return null;
+        }
+      } else if (isData) {
+        // 资料类型：使用 AI 生成标题，但内容保持原文
+        console.log('📚 检测到资料，生成标题...');
+        toast.info('正在生成标题...');
+        
+        try {
+          // 使用 AI 生成简洁的标题
+          const generatedTitle = await generateNoteTitle(contentWithoutPrefix);
+          
+          // 创建资料类型的条目
+          const newItem = await itemApi.createItem({
+            raw_text: contentWithoutPrefix, // 保存去除前缀后的原始内容
+            type: 'data',
+            title: generatedTitle, // 使用 AI 生成的标题
+            description: contentWithoutPrefix, // 完整内容作为描述（保持原文）
+            due_date: null,
+            priority: 'medium',
+            status: 'pending',
+            tags: ['资料'],
+            entities: {},
+            archived_at: null,
+            url: null,
+            url_title: null,
+            url_summary: null,
+            url_thumbnail: null,
+            url_fetched_at: null,
+            has_conflict: false,
+            start_time: null,
+            end_time: null,
+            recurrence_rule: null,
+            recurrence_end_date: null,
+            master_item_id: null,
+            is_master: false
+          });
+
+          if (newItem) {
+            toast.success('资料已保存');
+            onProcessingComplete?.(processingId);
+            onItemCreated?.();
+            return newItem;
+          } else {
+            toast.error('保存失败,请重试');
+            onProcessingError?.(processingId);
+            return null;
+          }
+        } catch (error) {
+          console.error('资料保存失败:', error);
+          toast.error('资料保存失败');
           onProcessingError?.(processingId);
           return null;
         }

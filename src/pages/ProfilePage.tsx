@@ -47,7 +47,7 @@ export default function ProfilePage() {
           totalItems: userData.items.length,
           todoItems: userData.items.filter(item => item.type === 'task' && item.status !== 'completed').length,
           completedItems: userData.items.filter(item => item.status === 'completed').length,
-          noteItems: userData.items.filter(item => item.type === 'note').length,
+          noteItems: userData.items.filter(item => item.type === 'note' || item.type === 'data').length,  // 包含笔记和资料
           urlItems: userData.items.filter(item => item.type === 'url').length,
           tags: new Set(userData.items.flatMap(item => item.tags)).size
         };
