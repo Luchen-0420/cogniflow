@@ -10,6 +10,7 @@ import { itemApi } from '@/db/api';
 import { toast } from 'sonner';
 import { useState } from 'react';
 import EditItemDialog from './EditItemDialog';
+import URLCard from './URLCard';
 
 /**
  * 将不带时区的ISO时间字符串解析为本地时间
@@ -72,6 +73,11 @@ const priorityColors = {
 export default function ItemCard({ item, onUpdate }: ItemCardProps) {
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
+
+  // 如果是 URL 类型，使用专门的 URLCard 组件
+  if (item.type === 'url') {
+    return <URLCard item={item} onUpdate={onUpdate} />;
+  }
 
   const isCompleted = item.status === 'completed';
   // 过期判断：只有截止日期在今天之前（不包括今天）才算过期

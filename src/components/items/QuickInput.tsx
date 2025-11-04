@@ -4,7 +4,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Send, Search } from 'lucide-react';
 import { toast } from 'sonner';
 import { processTextWithAI, generateNoteTitle } from '@/utils/ai';
-import { detectURL, isMainlyURL, fetchURLContent } from '@/utils/urlProcessor';
+import { detectURL, isMainlyURL, fetchURLContent, generateURLSummary } from '@/utils/urlProcessor';
 import { detectQueryIntent, removeQueryPrefix, parseQueryIntent, generateQuerySummary } from '@/utils/queryProcessor';
 import { itemApi, auth, templateApi } from '@/db/api';
 import { QueryResultPanel } from '@/components/query/QueryResultPanel';
@@ -365,6 +365,14 @@ export default function QuickInput({
         try {
           const urlResult = await fetchURLContent(detectedURL);
 
+          // 使用 AI 生成更智能的梗概
+          toast.info('正在生成智能梗概...');
+          const aiSummary = await generateURLSummary(
+            urlResult.url,
+            urlResult.title,
+            inputText
+          );
+
           // 创建URL类型的条目
           const newItem = await itemApi.createItem({
             raw_text: inputText,
@@ -379,7 +387,7 @@ export default function QuickInput({
             archived_at: null,
             url: urlResult.url,
             url_title: urlResult.title,
-            url_summary: urlResult.summary,
+            url_summary: aiSummary, // 使用 AI 生成的梗概
             url_thumbnail: urlResult.thumbnail || null,
             url_fetched_at: new Date().toISOString(),
             has_conflict: false,
