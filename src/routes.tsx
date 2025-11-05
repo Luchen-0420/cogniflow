@@ -19,11 +19,7 @@ const routes: RouteConfig[] = [
   {
     name: '仪表盘',
     path: '/',
-    element: (
-      <ProtectedRoute>
-        <Dashboard />
-      </ProtectedRoute>
-    ),
+    element: <Dashboard />,
     visible: false
   },
   {

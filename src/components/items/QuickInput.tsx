@@ -9,6 +9,7 @@ import { detectQueryIntent, removeQueryPrefix, parseQueryIntent, generateQuerySu
 import { uploadAttachment, updateAttachmentItemId } from '@/utils/attachmentUtils';
 import { isImageFile, readMultipleDocuments } from '@/utils/fileReader';
 import { itemApi, auth, templateApi } from '@/db/api';
+import { useAuth } from '@/db/apiAdapter';
 import { QueryResultPanel } from '@/components/query/QueryResultPanel';
 import { TemplateInputModal } from './TemplateInputModal';
 import {
@@ -27,6 +28,7 @@ interface QuickInputProps {
   onProcessingComplete?: (id: string) => void;
   onProcessingError?: (id: string) => void;
   onDeleteURL?: (id: string) => void;
+  onFirstInput?: () => void;
 }
 
 export default function QuickInput({ 
@@ -34,8 +36,10 @@ export default function QuickInput({
   onProcessingStart,
   onProcessingComplete,
   onProcessingError,
-  onDeleteURL
+  onDeleteURL,
+  onFirstInput
 }: QuickInputProps) {
+  const { isAuthenticated } = useAuth();
   const [text, setText] = useState('');
   const [isQuerying, setIsQuerying] = useState(false);
   const [queryResults, setQueryResults] = useState<Item[] | null>(null);
@@ -120,6 +124,13 @@ export default function QuickInput({
   };
 
   const loadTemplates = async () => {
+    // 未登录时直接使用默认模板
+    if (!isAuthenticated) {
+      console.log('📝 未登录，使用默认模板');
+      setTemplates(getDefaultTemplates());
+      return;
+    }
+
     try {
       // 从 API 获取用户模板
       const userTemplates = await templateApi.getAll();
@@ -134,13 +145,18 @@ export default function QuickInput({
       }
     } catch (error) {
       console.error('❌ 加载模板失败:', error);
-      // 如果加载失败，使用默认模板
-      toast.error('加载模板失败，使用默认模板');
+      // 如果加载失败，使用默认模板（不显示错误提示）
+      console.log('📝 加载失败，使用默认模板');
       setTemplates(getDefaultTemplates());
     }
   };
 
   const handleTextChange = (value: string) => {
+    // 如果是首次输入（从空到有内容），触发回调
+    if (!text && value && onFirstInput) {
+      onFirstInput();
+    }
+    
     setText(value);
     
     // 检测是否输入了 /

@@ -13,6 +13,8 @@ import TagCard from '@/components/tags/TagCard';
 import { URLCard } from '@/components/url/URLCard';
 import CalendarView from '@/components/calendar/CalendarView';
 import ReportView from '@/components/report/ReportView';
+import { LoginDialog } from '@/components/auth/LoginDialog';
+import { useAuth } from '@/db/apiAdapter';
 import { itemApi } from '@/db/api';
 import type { Item, TagStats } from '@/types/types';
 import { format } from 'date-fns';
@@ -24,6 +26,10 @@ interface ProcessingItem {
 }
 
 export default function Dashboard() {
+  const { isAuthenticated } = useAuth();
+  const [showLoginDialog, setShowLoginDialog] = useState(false);
+  const [hasInteracted, setHasInteracted] = useState(false);
+  
   const [activeTab, setActiveTab] = useState('upcoming');
   const [topicsSubTab, setTopicsSubTab] = useState('tags'); // 'tags' | 'history' | 'calendar'
   const [upcomingItems, setUpcomingItems] = useState<Item[]>([]);
@@ -117,6 +123,14 @@ export default function Dashboard() {
     const success = await itemApi.deleteItem(id);
     if (success) {
       loadData();
+    }
+  };
+
+  // 处理首次输入时的登录提示
+  const handleFirstInput = () => {
+    if (!isAuthenticated && !hasInteracted) {
+      setHasInteracted(true);
+      setShowLoginDialog(true);
     }
   };
 
@@ -612,6 +626,14 @@ export default function Dashboard() {
         onProcessingComplete={handleProcessingComplete}
         onProcessingError={handleProcessingError}
         onDeleteURL={handleDeleteURL}
+        onFirstInput={handleFirstInput}
+      />
+
+      {/* 登录弹窗 */}
+      <LoginDialog 
+        open={showLoginDialog} 
+        onOpenChange={setShowLoginDialog}
+        onSuccess={loadData}
       />
     </div>
   );

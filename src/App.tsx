@@ -1,4 +1,4 @@
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { Toaster } from '@/components/ui/sonner';
 import { useEffect, useState } from 'react';
 import { localAuth } from '@/db/localAuth';
@@ -84,7 +84,6 @@ export default function App() {
             element={route.element}
           />
         ))}
-        <Route path="/login" element={<Navigate to="/" replace />} />
       </Routes>
     </Router>
   );

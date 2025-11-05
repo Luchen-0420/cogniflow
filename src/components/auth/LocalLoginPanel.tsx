@@ -13,7 +13,7 @@ import { useAuth } from '@/db/apiAdapter';
 import type { LoginUserData } from '@/db/localAuth';
 import { RegisterPanel } from './RegisterPanel';
 import { toast } from 'sonner';
-import { Eye, EyeOff } from 'lucide-react';
+import { Eye, EyeOff, Zap } from 'lucide-react';
 
 interface LocalLoginPanelProps {
   title?: string;
@@ -39,13 +39,9 @@ export function LocalLoginPanel({
   });
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [activeTab, setActiveTab] = useState<'password' | 'quick' | 'register'>('password');
-  
-  // 快速登录状态（保持向后兼容）
-  const [phone, setPhone] = useState('');
-  const [email, setEmail] = useState('');
+  const [activeTab, setActiveTab] = useState<'password' | 'register'>('password');
 
-  const { login, loginWithPassword, isAuthenticated } = useAuth();
+  const { loginWithPassword, register, isAuthenticated } = useAuth();
   const navigate = useNavigate();
 
   // 如果已经登录，直接跳转到首页
@@ -83,38 +79,32 @@ export function LocalLoginPanel({
     }
   };
 
-  // 快速登录处理（保持向后兼容）
-  const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (!phone && !email) {
-      toast.error('请输入手机号或邮箱');
-      return;
-    }
-
+  // 快速体验（创建临时账号）
+  const handleQuickExperience = async () => {
     setLoading(true);
     try {
-      await login(phone || undefined, email || undefined);
-      toast.success('登录成功');
+      // 生成随机用户名和密码
+      const timestamp = Date.now();
+      const randomStr = Math.random().toString(36).substring(2, 8);
+      const username = `guest_${timestamp}_${randomStr}`;
+      const password = `${randomStr}${timestamp}`;
+      
+      // 注册临时账号
+      await register({
+        username,
+        password,
+        email: ''
+      });
+      
+      toast.success('体验账号创建成功！', {
+        description: `用户名：${username}\n密码：${password}\n请妥善保存以便下次登录`,
+        duration: 8000
+      });
+      
       navigate('/');
     } catch (error) {
-      console.error('登录失败:', error);
-      toast.error('登录失败，请重试');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleQuickLogin = async () => {
-    setLoading(true);
-    try {
-      // 使用默认用户直接登录
-      await login();
-      toast.success('登录成功');
-      navigate('/');
-    } catch (error) {
-      console.error('快速登录失败:', error);
-      toast.error('登录失败，请重试');
+      console.error('创建体验账号失败:', error);
+      toast.error('创建体验账号失败，请重试');
     } finally {
       setLoading(false);
     }
@@ -133,9 +123,8 @@ export function LocalLoginPanel({
       </CardHeader>
       <CardContent>
         <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as any)} className="w-full">
-          <TabsList className="grid w-full grid-cols-3">
-            <TabsTrigger value="password">密码登录</TabsTrigger>
-            <TabsTrigger value="quick">快速登录</TabsTrigger>
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="password">登录</TabsTrigger>
             <TabsTrigger value="register">注册</TabsTrigger>
           </TabsList>
 
@@ -190,55 +179,30 @@ export function LocalLoginPanel({
               >
                 {loading ? '登录中...' : '登录'}
               </Button>
-            </form>
-          </TabsContent>
-
-          {/* 快速登录 */}
-          <TabsContent value="quick" className="space-y-4">
-            <form onSubmit={handleLogin} className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="phone">手机号（可选）</Label>
-                <Input
-                  id="phone"
-                  type="tel"
-                  placeholder="请输入手机号"
-                  value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
-                  disabled={loading}
-                />
-              </div>
               
-              <div className="space-y-2">
-                <Label htmlFor="email">邮箱（可选）</Label>
-                <Input
-                  id="email"
-                  type="email"
-                  placeholder="请输入邮箱"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  disabled={loading}
-                />
+              <div className="relative">
+                <div className="absolute inset-0 flex items-center">
+                  <span className="w-full border-t" />
+                </div>
+                <div className="relative flex justify-center text-xs uppercase">
+                  <span className="bg-background px-2 text-muted-foreground">或</span>
+                </div>
               </div>
 
-              <div className="space-y-2">
-                <Button
-                  type="submit"
-                  className="w-full"
-                  disabled={loading}
-                >
-                  {loading ? '登录中...' : '登录'}
-                </Button>
-                
-                <Button
-                  type="button"
-                  variant="outline"
-                  className="w-full"
-                  disabled={loading}
-                  onClick={handleQuickLogin}
-                >
-                  {loading ? '登录中...' : '快速登录（使用默认用户）'}
-                </Button>
-              </div>
+              <Button
+                type="button"
+                variant="outline"
+                className="w-full"
+                disabled={loading}
+                onClick={handleQuickExperience}
+              >
+                <Zap className="mr-2 h-4 w-4" />
+                {loading ? '创建中...' : '快速体验（自动创建账号）'}
+              </Button>
+              
+              <p className="text-xs text-center text-muted-foreground mt-2">
+                快速体验将自动创建一个临时账号，请保存好账号信息
+              </p>
             </form>
           </TabsContent>
 
