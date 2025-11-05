@@ -25,8 +25,65 @@ const getAuthToken = (): string | null => {
   }
 };
 
-// 通用请求方法
-async function fetchAPI(endpoint: string, options: RequestInit = {}) {
+// Token 刷新状态
+let isRefreshingToken = false;
+let refreshPromise: Promise<string | null> | null = null;
+
+// 刷新 token
+async function refreshAuthToken(): Promise<string | null> {
+  // 如果正在刷新，返回现有的 Promise
+  if (isRefreshingToken && refreshPromise) {
+    return refreshPromise;
+  }
+
+  isRefreshingToken = true;
+  refreshPromise = (async () => {
+    try {
+      const currentToken = getAuthToken();
+      if (!currentToken) {
+        console.log('⚠️ 没有 token，无法刷新');
+        return null;
+      }
+
+      console.log('🔄 开始刷新 token...');
+      const response = await fetch(`${API_BASE_URL}/auth/refresh`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${currentToken}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        console.error('❌ Token 刷新失败:', response.status);
+        // 清除无效的认证信息
+        localStorage.removeItem('cogniflow_auth_token');
+        localStorage.removeItem('cogniflow_current_user');
+        return null;
+      }
+
+      const data = await response.json();
+      const newToken = data.token;
+      
+      // 保存新 token
+      localStorage.setItem('cogniflow_auth_token', newToken);
+      console.log('✅ Token 刷新成功');
+      
+      return newToken;
+    } catch (error) {
+      console.error('❌ Token 刷新异常:', error);
+      return null;
+    } finally {
+      isRefreshingToken = false;
+      refreshPromise = null;
+    }
+  })();
+
+  return refreshPromise;
+}
+
+// 通用请求方法（带 token 自动刷新）
+async function fetchAPI(endpoint: string, options: RequestInit = {}, retryCount = 0) {
   const token = getAuthToken();
   
   const headers: HeadersInit = {
@@ -39,6 +96,37 @@ async function fetchAPI(endpoint: string, options: RequestInit = {}) {
     ...options,
     headers,
   });
+
+  // 如果是 401 错误且还没重试过，尝试刷新 token 后重试
+  if (response.status === 401 && retryCount === 0) {
+    console.log('🔄 收到 401 响应，尝试刷新 token...');
+    const newToken = await refreshAuthToken();
+    
+    if (newToken) {
+      console.log('✅ Token 刷新成功，重试请求...');
+      // 使用新 token 重试请求
+      const newHeaders: HeadersInit = {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${newToken}`,
+        ...options.headers,
+      };
+      
+      const retryResponse = await fetch(`${API_BASE_URL}${endpoint}`, {
+        ...options,
+        headers: newHeaders,
+      });
+      
+      if (!retryResponse.ok) {
+        const error = await retryResponse.json().catch(() => ({ error: 'Network error' }));
+        throw new Error(error.error || `HTTP ${retryResponse.status}`);
+      }
+      
+      return retryResponse.json();
+    } else {
+      console.error('❌ Token 刷新失败，请重新登录');
+      throw new Error('登录已过期，请重新登录');
+    }
+  }
 
   if (!response.ok) {
     const error = await response.json().catch(() => ({ error: 'Network error' }));

@@ -80,12 +80,42 @@ export class PostgresAuth {
         });
 
         if (!response.ok) {
-          // Token 无效，清除认证信息
+          // Token 无效或过期，尝试刷新
+          console.log('🔄 Token 无效，尝试刷新...');
+          
+          // 如果是 401 错误，尝试刷新 token
+          if (response.status === 401) {
+            try {
+              const refreshResponse = await fetch(`${API_BASE_URL}/auth/refresh`, {
+                method: 'POST',
+                headers: {
+                  'Authorization': `Bearer ${this.token}`
+                }
+              });
+
+              if (refreshResponse.ok) {
+                const data = await refreshResponse.json();
+                // 更新 token
+                this.token = data.token;
+                localStorage.setItem('cogniflow_auth_token', data.token);
+                console.log('✅ Token 刷新成功');
+                return;
+              }
+            } catch (refreshError) {
+              console.error('❌ Token 刷新失败:', refreshError);
+            }
+          }
+          
+          // 刷新失败，清除认证信息
+          console.log('⚠️ Token 无法刷新，清除登录状态');
           this.clearAuth();
+        } else {
+          console.log('✅ Token 验证成功');
         }
       } catch (error) {
         console.error('验证 token 失败:', error);
         // 网络错误时保留 token，不清除
+        console.log('⚠️ 网络错误，保留当前登录状态');
       }
     }
   }

@@ -26,11 +26,15 @@ async function detectTimeConflicts(
 
   try {
     // 查询与给定时间范围重叠的事项
+    // 只检测"活跃"的事项：未删除、未归档、未完成、未过期
     let sql = `
       SELECT id, title, start_time, end_time
       FROM items
       WHERE user_id = $1
         AND deleted_at IS NULL
+        AND archived_at IS NULL
+        AND status != 'completed'
+        AND end_time >= CURRENT_TIMESTAMP
         AND type = 'event'
         AND start_time IS NOT NULL
         AND end_time IS NOT NULL
@@ -62,6 +66,7 @@ async function detectTimeConflicts(
 /**
  * 更新所有相关事项的冲突状态
  * 当事项被创建、更新或删除时调用
+ * 只对"活跃"的事项进行冲突检测：未删除、未归档、未完成、未过期
  */
 async function updateConflictStatus(userId: string): Promise<void> {
   try {
@@ -72,13 +77,17 @@ async function updateConflictStatus(userId: string): Promise<void> {
       [userId]
     );
 
-    // 查询所有有时间信息的事项
+    // 查询所有"活跃"的有时间信息的事项
+    // 只包括：未删除、未归档、未完成、未过期的事项
     const result = await query(
       `SELECT id, start_time, end_time
        FROM items
        WHERE user_id = $1
          AND type = 'event'
          AND deleted_at IS NULL
+         AND archived_at IS NULL
+         AND status != 'completed'
+         AND end_time >= CURRENT_TIMESTAMP
          AND start_time IS NOT NULL
          AND end_time IS NOT NULL
        ORDER BY start_time`,

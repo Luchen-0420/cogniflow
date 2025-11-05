@@ -118,11 +118,11 @@ router.post('/register', async (req: Request, res: Response, next: NextFunction)
       // 不中断注册流程，只记录错误
     }
 
-    // 生成 JWT token
+    // 生成 JWT token (30天有效期)
     const token = jwt.sign(
       { userId: user.id, username: user.username, role: user.role },
       JWT_SECRET,
-      { expiresIn: '7d' }
+      { expiresIn: '30d' }
     );
 
     res.status(201).json({
@@ -179,11 +179,11 @@ router.post('/login', async (req: Request, res: Response, next: NextFunction) =>
       [user.id]
     );
 
-    // 生成 JWT token
+    // 生成 JWT token (30天有效期)
     const token = jwt.sign(
       { userId: user.id, username: user.username, role: user.role },
       JWT_SECRET,
-      { expiresIn: '7d' }
+      { expiresIn: '30d' }
     );
 
     res.json({
@@ -195,6 +195,51 @@ router.post('/login', async (req: Request, res: Response, next: NextFunction) =>
         role: user.role
       },
       token
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
+/**
+ * 刷新 token
+ * POST /api/auth/refresh
+ * 需要认证
+ */
+router.post('/refresh', async (req: AuthRequest, res: Response, next: NextFunction) => {
+  try {
+    const userId = req.user?.id;
+    const username = req.user?.username;
+    const role = req.user?.role;
+
+    if (!userId || !username || !role) {
+      return res.status(401).json({ error: '未授权' });
+    }
+
+    // 验证用户仍然存在且状态正常
+    const result = await query(
+      'SELECT id, status FROM users WHERE id = $1',
+      [userId]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: '用户不存在' });
+    }
+
+    if (result.rows[0].status !== 'active') {
+      return res.status(403).json({ error: '账户已被禁用' });
+    }
+
+    // 生成新的 JWT token (30天有效期)
+    const newToken = jwt.sign(
+      { userId, username, role },
+      JWT_SECRET,
+      { expiresIn: '30d' }
+    );
+
+    res.json({
+      message: 'Token 刷新成功',
+      token: newToken
     });
   } catch (error) {
     next(error);
