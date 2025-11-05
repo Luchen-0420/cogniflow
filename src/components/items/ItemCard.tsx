@@ -149,7 +149,7 @@ export default function ItemCard({ item, onUpdate }: ItemCardProps) {
   return (
     <>
       <Card className={`
-        group relative max-w-3xl
+        group relative
         ${borderClass} 
         ${isCompleted ? 'opacity-50' : ''} 
         hover:shadow-lg hover:scale-[1.01] 
@@ -192,7 +192,7 @@ export default function ItemCard({ item, onUpdate }: ItemCardProps) {
           </Button>
         </div>
 
-        <CardHeader className="pb-3 pt-3 sm:pt-4 px-3 sm:px-4">
+        <CardHeader className="pb-2 pt-2.5 px-3 sm:px-4">
           <div className="flex items-start gap-2 sm:gap-3 pr-20 sm:pr-24">
             {(item.type === 'task' || item.type === 'event') && (
               <Button
@@ -209,7 +209,7 @@ export default function ItemCard({ item, onUpdate }: ItemCardProps) {
               </Button>
             )}
             <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-1 sm:gap-2 mb-1 sm:mb-2 flex-wrap">
+              <div className="flex items-center gap-1 sm:gap-2 mb-1 flex-wrap">
                 <CardTitle className={`text-sm sm:text-base font-medium break-words ${isCompleted ? 'line-through text-gray-400' : 'text-gray-900 dark:text-gray-100'}`}>
                   {item.title || '无标题'}
                 </CardTitle>
@@ -233,7 +233,7 @@ export default function ItemCard({ item, onUpdate }: ItemCardProps) {
               
               {/* 日程类型：显示完整的日期时间信息 */}
               {item.type === 'event' && (item.start_time || item.due_date) && (
-                <div className="mb-2 sm:mb-3 p-2 sm:p-3 rounded-lg bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-950/30 dark:to-indigo-950/30 border border-blue-100 dark:border-blue-900/50">
+                <div className="mb-1.5 sm:mb-2 p-1.5 sm:p-2 rounded-lg bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-950/30 dark:to-indigo-950/30 border border-blue-100 dark:border-blue-900/50">
                   <div className="flex items-start sm:items-center gap-2 sm:gap-3">
                     <Calendar className="h-4 w-4 sm:h-5 sm:w-5 text-blue-600 dark:text-blue-400 flex-shrink-0 mt-0.5 sm:mt-0" />
                     <div className="flex-1 min-w-0">
@@ -308,12 +308,12 @@ export default function ItemCard({ item, onUpdate }: ItemCardProps) {
             </div>
           </div>
         </CardHeader>
-        <CardContent className="py-0 pb-3 px-4 space-y-2">
+        <CardContent className="py-0 pb-2.5 px-3 sm:px-4 space-y-1.5">
           {item.description && (
             <>
               {(item.type === 'note' || item.type === 'data') ? (
                 // 笔记和资料类型：显示原始内容，支持折叠展开
-                <div className="pl-8">
+                <div className="pl-7">
                   <div 
                     className={`text-sm text-gray-700 dark:text-gray-300 leading-relaxed whitespace-pre-wrap ${
                       !isExpanded && item.raw_text && item.raw_text.split('\n').length > 3 ? 'line-clamp-3' : ''
@@ -326,7 +326,7 @@ export default function ItemCard({ item, onUpdate }: ItemCardProps) {
                       variant="ghost"
                       size="sm"
                       onClick={() => setIsExpanded(!isExpanded)}
-                      className="mt-2 h-7 px-3 text-xs text-blue-600 hover:text-blue-700 hover:bg-blue-50 dark:text-blue-400 dark:hover:text-blue-300 dark:hover:bg-blue-950/30"
+                      className="mt-1 h-6 px-2 text-xs text-blue-600 hover:text-blue-700 hover:bg-blue-50 dark:text-blue-400 dark:hover:text-blue-300 dark:hover:bg-blue-950/30"
                     >
                       {isExpanded ? '收起' : '展开全部'}
                     </Button>
@@ -334,7 +334,7 @@ export default function ItemCard({ item, onUpdate }: ItemCardProps) {
                 </div>
               ) : (
                 // 其他类型：显示 AI 处理后的描述
-                <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed pl-8">
+                <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed pl-7">
                   {item.description}
                 </p>
               )}
@@ -342,12 +342,12 @@ export default function ItemCard({ item, onUpdate }: ItemCardProps) {
           )}
 
           {/* 附件图片展示 */}
-          <div className="pl-8">
+          <div className="pl-7">
             <AttachmentImages itemId={item.id} maxDisplay={4} />
           </div>
 
           {item.tags && item.tags.length > 0 && (
-            <div className="flex flex-wrap gap-1.5 pl-8">
+            <div className="flex flex-wrap gap-1.5 pl-7">
               {item.tags.map((tag, index) => (
                 <Badge 
                   key={index} 
@@ -359,7 +359,7 @@ export default function ItemCard({ item, onUpdate }: ItemCardProps) {
               ))}
             </div>
           )}
-          <div className="pt-1 pl-8">
+          <div className="pt-0.5 pl-7">
             <span className="text-xs text-gray-400 dark:text-gray-600">
               {format(parseLocalDateTime(item.created_at), 'yyyy-MM-dd HH:mm', { locale: zhCN })}
             </span>

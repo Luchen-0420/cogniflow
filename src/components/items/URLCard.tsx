@@ -112,7 +112,7 @@ export default function URLCard({ item, onUpdate }: URLCardProps) {
   return (
     <>
       <Card className={`
-        group relative max-w-3xl
+        group relative
         hover:shadow-xl hover:scale-[1.02]
         transition-all duration-300 ease-out
         border-2 border-cyan-200 dark:border-cyan-800
@@ -159,8 +159,8 @@ export default function URLCard({ item, onUpdate }: URLCardProps) {
           </Button>
         </div>
 
-        <CardContent className="p-4 sm:p-6">
-          <div className="flex gap-4">
+        <CardContent className="p-3 sm:p-4">
+          <div className="flex gap-3">
             {/* 左侧：缩略图/图标 */}
             <div className="flex-shrink-0">
               {item.url_thumbnail ? (
@@ -192,7 +192,7 @@ export default function URLCard({ item, onUpdate }: URLCardProps) {
             {/* 右侧：内容信息 */}
             <div className="flex-1 min-w-0 pr-20 sm:pr-24">
               {/* 标题和域名 */}
-              <div className="mb-2">
+              <div className="mb-1.5">
                 <h3 
                   className="text-base sm:text-lg font-semibold text-gray-900 dark:text-gray-100 mb-1 line-clamp-2 cursor-pointer hover:text-cyan-600 dark:hover:text-cyan-400 transition-colors"
                   onClick={openURL}
@@ -210,7 +210,7 @@ export default function URLCard({ item, onUpdate }: URLCardProps) {
               </div>
 
               {/* AI 梗概 */}
-              <div className="mb-3">
+              <div className="mb-2">
                 {localSummary ? (
                   <div className="relative">
                     <p className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed line-clamp-3">
@@ -244,7 +244,7 @@ export default function URLCard({ item, onUpdate }: URLCardProps) {
               </div>
 
               {/* URL 和操作按钮 */}
-              <div className="flex items-center gap-2 mb-3">
+              <div className="flex items-center gap-2 mb-2">
                 <Button
                   variant="outline"
                   size="sm"

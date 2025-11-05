@@ -229,7 +229,7 @@ export default function Dashboard() {
               </TabsTrigger>
             </TabsList>
 
-            <TabsContent value="upcoming" className="space-y-3">
+            <TabsContent value="upcoming" className="space-y-2">
               {processingItems.map((item) => (
                 <ProcessingCard key={item.id} text={item.text} />
               ))}
@@ -260,7 +260,7 @@ export default function Dashboard() {
               )}
             </TabsContent>
 
-            <TabsContent value="todos" className="space-y-3">
+            <TabsContent value="todos" className="space-y-2">
               {todoItems.length === 0 ? (
                 <div className="text-center py-12">
                   <CheckCircle2 className="h-16 w-16 text-gray-300 dark:text-gray-700 mx-auto mb-4" />
@@ -296,7 +296,7 @@ export default function Dashboard() {
                       </div>
                     </div>
                   </div>
-                  <div className="space-y-3">
+                  <div className="space-y-2">
                     {todoItems.map((item) => (
                       <TodoCard key={item.id} item={item} onUpdate={loadData} />
                     ))}
@@ -305,7 +305,7 @@ export default function Dashboard() {
               )}
             </TabsContent>
 
-            <TabsContent value="inbox" className="space-y-3">
+            <TabsContent value="inbox" className="space-y-2">
               {inboxItems.length === 0 ? (
                 <div className="text-center py-12">
                   <Inbox className="h-16 w-16 text-gray-300 dark:text-gray-700 mx-auto mb-4" />
@@ -333,7 +333,7 @@ export default function Dashboard() {
               )}
             </TabsContent>
 
-            <TabsContent value="links" className="space-y-3">
+            <TabsContent value="links" className="space-y-2">
               {urlItems.length === 0 ? (
                 <div className="text-center py-12">
                   <LinkIcon className="h-16 w-16 text-gray-300 dark:text-gray-700 mx-auto mb-4" />
@@ -361,7 +361,7 @@ export default function Dashboard() {
               )}
             </TabsContent>
 
-            <TabsContent value="archived" className="space-y-3">
+            <TabsContent value="archived" className="space-y-2">
               {archivedItems.length === 0 ? (
                 <div className="text-center py-12">
                   <Archive className="h-16 w-16 text-gray-300 dark:text-gray-700 mx-auto mb-4" />

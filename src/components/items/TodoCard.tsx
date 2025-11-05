@@ -163,7 +163,7 @@ export default function TodoCard({ item, onUpdate }: TodoCardProps) {
         item.priority === 'medium' ? 'border-l-4 border-l-yellow-500' :
         'border-l-4 border-l-green-500'
       }`}>
-        <CardHeader className="pb-3">
+        <CardHeader className="pb-2 pt-2.5 px-3 sm:px-4">
           <div className="flex items-start justify-between gap-3">
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2 mb-2">
@@ -304,7 +304,7 @@ export default function TodoCard({ item, onUpdate }: TodoCardProps) {
         </CardHeader>
 
         {item.description && (
-          <CardContent className="pt-0 pb-3">
+          <CardContent className="pt-0 pb-2 px-3 sm:px-4">
             <p className={`text-sm ${
               item.status === 'completed' ? 'line-through text-gray-500' : 'text-gray-600 dark:text-gray-300'
             }`}>
@@ -314,7 +314,7 @@ export default function TodoCard({ item, onUpdate }: TodoCardProps) {
         )}
 
         {/* 附件图片展示 */}
-        <CardContent className="pt-0 pb-3">
+        <CardContent className="pt-0 pb-2.5 px-3 sm:px-4">
           <AttachmentImages itemId={item.id} maxDisplay={3} compact />
         </CardContent>
       </Card>
