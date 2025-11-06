@@ -14,6 +14,7 @@ export class PostgresAuth {
   private currentUser: LocalUser | null = null;
   private token: string | null = null;
   private listeners: Array<(user: LocalUser | null) => void> = [];
+  private initialized: boolean = false; // 添加初始化标志
 
   constructor() {
     this.loadStoredAuth();
@@ -70,53 +71,63 @@ export class PostgresAuth {
    * 初始化（兼容 localAuth 接口）
    */
   async initialize(): Promise<void> {
+    // 防止重复初始化
+    if (this.initialized) {
+      return;
+    }
+    this.initialized = true;
+
+    // 只有在有 token 的情况下才验证
+    if (!this.token) {
+      // 没有 token，说明用户未登录，无需验证
+      return;
+    }
+
     // 如果有 token，验证是否有效
-    if (this.token) {
-      try {
-        const response = await fetch(`${API_BASE_URL}/users/me`, {
-          headers: {
-            'Authorization': `Bearer ${this.token}`
-          }
-        });
-
-        if (!response.ok) {
-          // Token 无效或过期，尝试刷新
-          console.log('🔄 Token 无效，尝试刷新...');
-          
-          // 如果是 401 错误，尝试刷新 token
-          if (response.status === 401) {
-            try {
-              const refreshResponse = await fetch(`${API_BASE_URL}/auth/refresh`, {
-                method: 'POST',
-                headers: {
-                  'Authorization': `Bearer ${this.token}`
-                }
-              });
-
-              if (refreshResponse.ok) {
-                const data = await refreshResponse.json();
-                // 更新 token
-                this.token = data.token;
-                localStorage.setItem('cogniflow_auth_token', data.token);
-                console.log('✅ Token 刷新成功');
-                return;
-              }
-            } catch (refreshError) {
-              console.error('❌ Token 刷新失败:', refreshError);
-            }
-          }
-          
-          // 刷新失败，清除认证信息
-          console.log('⚠️ Token 无法刷新，清除登录状态');
-          this.clearAuth();
-        } else {
-          console.log('✅ Token 验证成功');
+    try {
+      const response = await fetch(`${API_BASE_URL}/users/me`, {
+        headers: {
+          'Authorization': `Bearer ${this.token}`
         }
-      } catch (error) {
-        console.error('验证 token 失败:', error);
-        // 网络错误时保留 token，不清除
-        console.log('⚠️ 网络错误，保留当前登录状态');
+      });
+
+      if (!response.ok) {
+        // Token 无效或过期，尝试刷新
+        console.log('🔄 Token 无效，尝试刷新...');
+        
+        // 如果是 401 错误，尝试刷新 token
+        if (response.status === 401) {
+          try {
+            const refreshResponse = await fetch(`${API_BASE_URL}/auth/refresh`, {
+              method: 'POST',
+              headers: {
+                'Authorization': `Bearer ${this.token}`
+              }
+            });
+
+            if (refreshResponse.ok) {
+              const data = await refreshResponse.json();
+              // 更新 token
+              this.token = data.token;
+              localStorage.setItem('cogniflow_auth_token', data.token);
+              console.log('✅ Token 刷新成功');
+              return;
+            }
+          } catch (refreshError) {
+            console.error('❌ Token 刷新失败:', refreshError);
+          }
+        }
+        
+        // 刷新失败，清除认证信息
+        console.log('⚠️ Token 无法刷新，清除登录状态');
+        this.clearAuth();
+      } else {
+        console.log('✅ Token 验证成功');
       }
+    } catch (error) {
+      console.error('验证 token 失败:', error);
+      // 网络错误时保留 token，不清除
+      console.log('⚠️ 网络错误，保留当前登录状态');
     }
   }
 

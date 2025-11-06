@@ -76,7 +76,7 @@ router.post('/upload', authMiddleware, upload.single('file'), async (req: AuthRe
     });
 
     // 异步处理 AI 分析
-    processAIAnalysis(attachment.id, fileType, filePath, file.originalname).catch(error => {
+    processAIAnalysis(attachment.id, fileType, filePath, file.originalname, userId).catch(error => {
       console.error('AI分析失败:', error);
     });
 
@@ -104,7 +104,8 @@ async function processAIAnalysis(
   attachmentId: string,
   fileType: string,
   filePath: string,
-  originalFilename: string
+  originalFilename: string,
+  userId: string
 ) {
   try {
     const fullPath = attachmentService.getFilePath(filePath);
@@ -113,7 +114,7 @@ async function processAIAnalysis(
     if (fileType === 'image') {
       // 图片分析
       const base64Image = await aiVisionService.imageToBase64(fullPath);
-      analysisResult = await aiVisionService.analyzeImageWithAI(base64Image);
+      analysisResult = await aiVisionService.analyzeImageWithAI(base64Image, undefined, userId);
     } else if (fileType === 'document') {
       // 文档分析
       let documentText = '';
@@ -128,7 +129,8 @@ async function processAIAnalysis(
       if (documentText) {
         analysisResult = await aiVisionService.analyzeDocumentWithAI(
           documentText,
-          originalFilename
+          originalFilename,
+          userId
         );
       }
     }

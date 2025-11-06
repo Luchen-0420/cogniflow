@@ -68,13 +68,19 @@ log_step() {
 # ============================================
 
 clear
-log_header "CogniFlow 完整一键部署脚本"
+log_header "CogniFlow 完整一键部署脚本 v1.2.0"
 echo -e "${CYAN}此脚本将执行以下操作:${NC}"
 echo -e "  1. 停止并删除旧容器和数据卷"
 echo -e "  2. 启动新的 PostgreSQL 容器"
 echo -e "  3. 初始化数据库和所有表"
 echo -e "  4. 安装项目依赖"
 echo -e "  5. 配置环境变量"
+echo ""
+echo -e "${MAGENTA}📦 v1.2.0 新功能:${NC}"
+echo -e "  • 用户个人 API Key 配置"
+echo -e "  • 注册用户默认 100 次 API 调用"
+echo -e "  • 快速登录用户默认 50 次 API 调用"
+echo -e "  • 配置个人 API Key 后无限制使用"
 echo ""
 echo -e "${RED}警告: 此操作将删除所有现有数据！${NC}"
 echo ""
@@ -212,6 +218,15 @@ else
     exit 1
 fi
 
+# 验证新功能是否部署成功
+log_step "验证 API Key 功能..."
+PERSONAL_API_KEY_COLUMN=$(docker exec "$CONTAINER_NAME" psql -U "$DB_USER" -d "$DB_NAME" -t -c "SELECT column_name FROM information_schema.columns WHERE table_name = 'users' AND column_name = 'personal_api_key';" | tr -d ' ')
+if [ "$PERSONAL_API_KEY_COLUMN" == "personal_api_key" ]; then
+    log_success "个人 API Key 功能已部署"
+else
+    log_warning "个人 API Key 字段未找到，可能需要手动迁移"
+fi
+
 # ============================================
 # Step 5: 配置环境变量
 # ============================================
@@ -287,6 +302,15 @@ echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━�
 echo -e "  用户名: ${GREEN}admin${NC}"
 echo -e "  密码:   ${GREEN}admin123${NC}"
 echo -e "  ${RED}⚠️  请登录后立即修改密码！${NC}"
+echo ""
+echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+echo -e "${YELLOW}🔑 API 使用说明 (v1.2.0)${NC}"
+echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+echo -e "  • 注册用户默认: ${GREEN}100 次${NC} API 调用"
+echo -e "  • 快速登录用户: ${GREEN}50 次${NC} API 调用"
+echo -e "  • 配置个人 API Key 后: ${GREEN}无限制${NC} 使用"
+echo -e "  • 配置入口: 个人资料页面 → API 配置"
+echo -e "  • 获取 API Key: ${BLUE}https://open.bigmodel.cn/${NC}"
 echo ""
 echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
 echo -e "${YELLOW}📋 数据库统计${NC}"

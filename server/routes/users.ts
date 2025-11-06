@@ -19,7 +19,7 @@ const SALT_ROUNDS = 10;
  */
 router.post('/register', async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const { username, password, email } = req.body;
+    const { username, password, email, personalApiKey } = req.body;
 
     // 验证必填字段
     if (!username || !password) {
@@ -41,10 +41,10 @@ router.post('/register', async (req: Request, res: Response, next: NextFunction)
 
     // 创建用户（触发器会自动设置 account_type, api_usage_count, max_api_usage）
     const result = await query(
-      `INSERT INTO users (username, password_hash, email, role)
-       VALUES ($1, $2, $3, $4)
+      `INSERT INTO users (username, password_hash, email, role, personal_api_key)
+       VALUES ($1, $2, $3, $4, $5)
        RETURNING id, username, email, role, account_type, api_usage_count, max_api_usage, created_at`,
-      [username, passwordHash, email || null, 'user']
+      [username, passwordHash, email || null, 'user', personalApiKey || null]
     );
 
     const user = result.rows[0];
@@ -511,6 +511,97 @@ router.post('/:userId/reset-api-usage', async (req: AuthRequest, res: Response, 
     }
 
     res.json({ message: 'API 使用次数已重置' });
+  } catch (error) {
+    next(error);
+  }
+});
+
+/**
+ * 获取用户 API 使用情况
+ * GET /api/users/api-usage
+ */
+router.get('/api-usage', async (req: AuthRequest, res, next) => {
+  try {
+    const userId = req.user?.id;
+
+    if (!userId) {
+      return res.status(401).json({ error: '未授权' });
+    }
+
+    // 调用数据库函数获取使用情况
+    const result = await query(
+      'SELECT * FROM get_user_api_usage($1)',
+      [userId]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: '用户不存在' });
+    }
+
+    const usage = result.rows[0];
+    
+    res.json({
+      current: usage.current_usage,
+      max: usage.max_usage,
+      remaining: usage.remaining,
+      hasPersonalKey: usage.has_personal_key,
+      accountType: usage.account_type,
+      usageResetAt: usage.usage_reset_at
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
+/**
+ * 更新用户个人 API Key
+ * PUT /api/users/api-key
+ */
+router.put('/api-key', async (req: AuthRequest, res, next) => {
+  try {
+    const userId = req.user?.id;
+    const { personalApiKey } = req.body;
+
+    if (!userId) {
+      return res.status(401).json({ error: '未授权' });
+    }
+
+    // 验证 API Key 格式（基本验证）
+    if (personalApiKey && personalApiKey.length < 20) {
+      return res.status(400).json({ error: 'API Key 格式不正确' });
+    }
+
+    // 更新用户的个人 API Key
+    await query(
+      'UPDATE users SET personal_api_key = $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2',
+      [personalApiKey || null, userId]
+    );
+
+    res.json({ message: 'API Key 更新成功' });
+  } catch (error) {
+    next(error);
+  }
+});
+
+/**
+ * 删除用户个人 API Key
+ * DELETE /api/users/api-key
+ */
+router.delete('/api-key', async (req: AuthRequest, res, next) => {
+  try {
+    const userId = req.user?.id;
+
+    if (!userId) {
+      return res.status(401).json({ error: '未授权' });
+    }
+
+    // 删除用户的个人 API Key
+    await query(
+      'UPDATE users SET personal_api_key = NULL, updated_at = CURRENT_TIMESTAMP WHERE id = $1',
+      [userId]
+    );
+
+    res.json({ message: 'API Key 已删除' });
   } catch (error) {
     next(error);
   }

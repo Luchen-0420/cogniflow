@@ -53,6 +53,9 @@ CREATE TABLE IF NOT EXISTS users (
     max_api_usage INTEGER DEFAULT 100,
     usage_reset_at TIMESTAMP WITH TIME ZONE,
     
+    -- 个人 API Key 字段 (v1.2.0)
+    personal_api_key VARCHAR(500),
+    
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     last_login_at TIMESTAMP WITH TIME ZONE
@@ -66,6 +69,13 @@ CREATE INDEX IF NOT EXISTS idx_users_status ON users(status);
 CREATE INDEX IF NOT EXISTS idx_users_created_at ON users(created_at);
 CREATE INDEX IF NOT EXISTS idx_users_account_type ON users(account_type);
 CREATE INDEX IF NOT EXISTS idx_users_api_usage ON users(api_usage_count, max_api_usage);
+CREATE INDEX IF NOT EXISTS idx_users_personal_api_key ON users(personal_api_key) WHERE personal_api_key IS NOT NULL;
+
+-- 用户表字段注释
+COMMENT ON COLUMN users.personal_api_key IS '用户个人的智谱 API Key，配置后将优先使用，不受次数限制';
+COMMENT ON COLUMN users.api_usage_count IS 'API 使用次数计数器';
+COMMENT ON COLUMN users.max_api_usage IS 'API 最大使用次数限制（注册用户100次，快速登录50次）';
+COMMENT ON COLUMN users.account_type IS '账户类型：registered（注册用户）、quick_login（快速登录）';
 
 -- 2. 用户配置表 (user_settings)
 CREATE TABLE IF NOT EXISTS user_settings (
@@ -397,18 +407,43 @@ CREATE OR REPLACE FUNCTION check_and_increment_api_usage(
 DECLARE
     v_current_usage INTEGER;
     v_max_usage INTEGER;
+    v_has_personal_key BOOLEAN;
 BEGIN
-    -- 获取当前使用次数和限制
-    SELECT api_usage_count, max_api_usage 
-    INTO v_current_usage, v_max_usage
-    FROM users 
+    -- 获取用户的 API 使用情况和是否有个人 API Key
+    SELECT 
+        api_usage_count,
+        max_api_usage,
+        personal_api_key IS NOT NULL AND personal_api_key != ''
+    INTO v_current_usage, v_max_usage, v_has_personal_key
+    FROM users
     WHERE id = p_user_id;
     
-    -- 检查是否超出限制
+    IF NOT FOUND THEN
+        success := FALSE;
+        remaining := 0;
+        message := '用户不存在';
+        RETURN;
+    END IF;
+    
+    -- 如果用户有个人 API Key，不限制使用次数
+    IF v_has_personal_key THEN
+        -- 仍然增加计数，用于统计
+        UPDATE users 
+        SET api_usage_count = api_usage_count + 1,
+            updated_at = CURRENT_TIMESTAMP
+        WHERE id = p_user_id;
+        
+        success := TRUE;
+        remaining := -1; -- -1 表示无限制
+        message := '使用个人 API Key，无限制';
+        RETURN;
+    END IF;
+    
+    -- 检查是否达到限制
     IF v_current_usage >= v_max_usage THEN
         success := FALSE;
         remaining := 0;
-        message := '已达到 API 使用次数上限';
+        message := '已达到使用限制，请配置个人 API Key';
         RETURN;
     END IF;
     
@@ -431,6 +466,7 @@ RETURNS TABLE(
     current_usage INTEGER,
     max_usage INTEGER,
     remaining INTEGER,
+    has_personal_key BOOLEAN,
     account_type VARCHAR(20)
 ) AS $$
 BEGIN
@@ -438,7 +474,11 @@ BEGIN
     SELECT 
         u.api_usage_count,
         u.max_api_usage,
-        u.max_api_usage - u.api_usage_count as remaining,
+        CASE 
+            WHEN u.personal_api_key IS NOT NULL AND u.personal_api_key != '' THEN -1
+            ELSE u.max_api_usage - u.api_usage_count
+        END as remaining,
+        (u.personal_api_key IS NOT NULL AND u.personal_api_key != '') as has_personal_key,
         u.account_type
     FROM users u
     WHERE u.id = p_user_id;

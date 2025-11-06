@@ -31,9 +31,11 @@ export function RegisterPanel({
     phone: '',
     password: ''
   });
+  const [personalApiKey, setPersonalApiKey] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [showApiKey, setShowApiKey] = useState(false);
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
@@ -120,7 +122,8 @@ export function RegisterPanel({
         username: formData.username,
         email: formData.email,
         phone: formData.phone || undefined,
-        password: formData.password
+        password: formData.password,
+        personalApiKey: personalApiKey || undefined
       });
 
       toast.success('注册成功！欢迎使用 CogniFlow');
@@ -284,6 +287,41 @@ export function RegisterPanel({
             {errors.confirmPassword && (
               <p className="text-sm text-red-500">{errors.confirmPassword}</p>
             )}
+          </div>
+
+          {/* 个人 API Key（可选） */}
+          <div className="space-y-2">
+            <Label htmlFor="personalApiKey">
+              智谱 AI API Key（可选）
+            </Label>
+            <div className="relative">
+              <Input
+                id="personalApiKey"
+                type={showApiKey ? 'text' : 'password'}
+                placeholder="配置后将不受使用次数限制"
+                value={personalApiKey}
+                onChange={(e) => setPersonalApiKey(e.target.value)}
+                disabled={loading}
+                className="pr-10"
+              />
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                className="absolute right-1 top-1/2 h-7 w-7 -translate-y-1/2"
+                onClick={() => setShowApiKey(!showApiKey)}
+                tabIndex={-1}
+              >
+                {showApiKey ? (
+                  <EyeOff className="h-4 w-4" />
+                ) : (
+                  <Eye className="h-4 w-4" />
+                )}
+              </Button>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              提供个人 API Key 后将不受调用次数限制。可在注册后在个人资料中配置。
+            </p>
           </div>
 
           {/* 密码强度提示 */}

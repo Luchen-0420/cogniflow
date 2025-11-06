@@ -32,6 +32,7 @@ export interface RegisterUserData {
   email: string;
   phone?: string;
   password: string;
+  personalApiKey?: string;
 }
 
 /**

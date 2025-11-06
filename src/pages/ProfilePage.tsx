@@ -15,7 +15,8 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useAuth, userProfileApi, userSettingsApi } from '@/db/api';
 import { LocalStorageManager } from '@/services/localStorageManager';
 import { toast } from 'sonner';
-import { ArrowLeft, Save, Download, Upload, Trash2, RefreshCw } from 'lucide-react';
+import { ArrowLeft, Save, Download, Upload, Trash2, RefreshCw, Eye, EyeOff, Key } from 'lucide-react';
+import { Progress } from '@/components/ui/progress';
 
 export default function ProfilePage() {
   const { user, logout } = useAuth();
@@ -26,6 +27,13 @@ export default function ProfilePage() {
     email: user?.email || '',
     phone: user?.phone || ''
   });
+  const [personalApiKey, setPersonalApiKey] = useState('');
+  const [showApiKey, setShowApiKey] = useState(false);
+  const [apiUsage, setApiUsage] = useState<{
+    current: number;
+    max: number;
+    hasPersonalKey: boolean;
+  } | null>(null);
   const [, setSettings] = useState<Record<string, any>>({});
   const [loading, setLoading] = useState(false);
   const [statsData, setStatsData] = useState<any>(null);
@@ -39,6 +47,28 @@ export default function ProfilePage() {
     try {
       const userSettings = await userSettingsApi.getSettings();
       setSettings(userSettings);
+      
+      // 获取 API 使用情况（从服务器或本地）
+      try {
+        const response = await fetch('/api/users/api-usage', {
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('token')}`
+          }
+        });
+        if (response.ok) {
+          const usage = await response.json();
+          setApiUsage(usage);
+          setPersonalApiKey(usage.hasPersonalKey ? '••••••••••••••••' : '');
+        }
+      } catch (error) {
+        console.error('获取API使用情况失败:', error);
+        // 如果是本地模式，设置默认值
+        setApiUsage({
+          current: 0,
+          max: 100,
+          hasPersonalKey: false
+        });
+      }
       
       // 获取统计数据
       const userData = await LocalStorageManager.getUserData(user?.id || '');
@@ -257,6 +287,179 @@ export default function ProfilePage() {
                     {loading ? '保存中...' : '保存更改'}
                   </Button>
                 </form>
+              </CardContent>
+            </Card>
+
+            {/* API Key 配置 */}
+            <Card>
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Key className="h-5 w-5" />
+                    <CardTitle>API 配置</CardTitle>
+                  </div>
+                  {apiUsage?.hasPersonalKey && (
+                    <Badge className="bg-green-500 text-white">
+                      已配置个人 API
+                    </Badge>
+                  )}
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {/* API 使用统计 */}
+                {apiUsage && (
+                  <div className="space-y-3">
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm font-medium">API 调用次数</span>
+                      {apiUsage.hasPersonalKey ? (
+                        <Badge variant="outline" className="text-green-600">
+                          无限制
+                        </Badge>
+                      ) : (
+                        <span className="text-sm text-muted-foreground">
+                          {apiUsage.current} / {apiUsage.max}
+                        </span>
+                      )}
+                    </div>
+                    {!apiUsage.hasPersonalKey && (
+                      <>
+                        <Progress 
+                          value={(apiUsage.current / apiUsage.max) * 100} 
+                          className="h-2"
+                        />
+                        <Alert>
+                          <AlertDescription className="text-xs">
+                            {apiUsage.current >= apiUsage.max ? (
+                              <span className="text-red-600 font-medium">
+                                ⚠️ 已达到使用限制，请配置个人 API Key 以继续使用
+                              </span>
+                            ) : (
+                              <span>
+                                剩余 {apiUsage.max - apiUsage.current} 次调用机会
+                              </span>
+                            )}
+                          </AlertDescription>
+                        </Alert>
+                      </>
+                    )}
+                  </div>
+                )}
+
+                <Separator />
+
+                {/* API Key 输入 */}
+                <div className="space-y-2">
+                  <Label htmlFor="personalApiKey">
+                    智谱 AI API Key
+                  </Label>
+                  <div className="relative">
+                    <Input
+                      id="personalApiKey"
+                      type={showApiKey ? 'text' : 'password'}
+                      placeholder="配置后将不受使用次数限制"
+                      value={personalApiKey}
+                      onChange={(e) => setPersonalApiKey(e.target.value)}
+                      className="pr-10"
+                    />
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      className="absolute right-1 top-1/2 h-7 w-7 -translate-y-1/2"
+                      onClick={() => setShowApiKey(!showApiKey)}
+                    >
+                      {showApiKey ? (
+                        <EyeOff className="h-4 w-4" />
+                      ) : (
+                        <Eye className="h-4 w-4" />
+                      )}
+                    </Button>
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    配置个人 API Key 后将不受调用次数限制。
+                    <a 
+                      href="https://open.bigmodel.cn/" 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="text-primary hover:underline ml-1"
+                    >
+                      获取 API Key
+                    </a>
+                  </p>
+                </div>
+
+                <Button 
+                  onClick={async () => {
+                    setLoading(true);
+                    try {
+                      const response = await fetch('/api/users/api-key', {
+                        method: 'PUT',
+                        headers: {
+                          'Content-Type': 'application/json',
+                          'Authorization': `Bearer ${localStorage.getItem('token')}`
+                        },
+                        body: JSON.stringify({ personalApiKey })
+                      });
+
+                      if (response.ok) {
+                        toast.success('API Key 更新成功');
+                        await loadUserData();
+                      } else {
+                        const error = await response.json();
+                        toast.error(error.error || 'API Key 更新失败');
+                      }
+                    } catch (error) {
+                      console.error('更新 API Key 失败:', error);
+                      toast.error('更新失败');
+                    } finally {
+                      setLoading(false);
+                    }
+                  }}
+                  disabled={loading}
+                  className="w-full"
+                >
+                  <Save className="h-4 w-4 mr-2" />
+                  {loading ? '保存中...' : '保存 API Key'}
+                </Button>
+
+                {apiUsage?.hasPersonalKey && (
+                  <Button 
+                    onClick={async () => {
+                      if (!confirm('确定要删除个人 API Key 吗？删除后将使用默认配额限制。')) {
+                        return;
+                      }
+                      
+                      setLoading(true);
+                      try {
+                        const response = await fetch('/api/users/api-key', {
+                          method: 'DELETE',
+                          headers: {
+                            'Authorization': `Bearer ${localStorage.getItem('token')}`
+                          }
+                        });
+
+                        if (response.ok) {
+                          toast.success('API Key 已删除');
+                          setPersonalApiKey('');
+                          await loadUserData();
+                        } else {
+                          toast.error('删除失败');
+                        }
+                      } catch (error) {
+                        console.error('删除 API Key 失败:', error);
+                        toast.error('删除失败');
+                      } finally {
+                        setLoading(false);
+                      }
+                    }}
+                    disabled={loading}
+                    variant="outline"
+                    className="w-full"
+                  >
+                    <Trash2 className="h-4 w-4 mr-2" />
+                    删除 API Key
+                  </Button>
+                )}
               </CardContent>
             </Card>
 

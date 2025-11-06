@@ -5,6 +5,7 @@
 
 import fs from 'fs/promises';
 import dotenv from 'dotenv';
+import { query } from '../db/pool.js';
 
 dotenv.config();
 
@@ -20,6 +21,29 @@ interface ImageAnalysisResult {
 }
 
 /**
+ * 获取用户的 API Key（优先使用个人 API Key）
+ */
+async function getUserApiKey(userId: string): Promise<string> {
+  try {
+    const result = await query(
+      'SELECT personal_api_key FROM users WHERE id = $1',
+      [userId]
+    );
+    
+    if (result.rows.length > 0 && result.rows[0].personal_api_key) {
+      console.log('使用用户个人 API Key');
+      return result.rows[0].personal_api_key;
+    }
+  } catch (error) {
+    console.error('获取用户 API Key 失败:', error);
+  }
+  
+  // 如果没有个人 API Key，使用系统默认的
+  console.log('使用系统默认 API Key');
+  return ZHIPU_API_KEY;
+}
+
+/**
  * 将图片转换为 Base64
  */
 export async function imageToBase64(filePath: string): Promise<string> {
@@ -32,9 +56,13 @@ export async function imageToBase64(filePath: string): Promise<string> {
  */
 export async function analyzeImageWithAI(
   imageBase64: string,
-  prompt?: string
+  prompt?: string,
+  userId?: string
 ): Promise<ImageAnalysisResult> {
-  if (!ZHIPU_API_KEY) {
+  // 获取 API Key（优先使用用户个人的）
+  const apiKey = userId ? await getUserApiKey(userId) : ZHIPU_API_KEY;
+  
+  if (!apiKey) {
     throw new Error('ZHIPU_API_KEY 未配置');
   }
 
@@ -63,7 +91,7 @@ export async function analyzeImageWithAI(
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${ZHIPU_API_KEY}`,
+        'Authorization': `Bearer ${apiKey}`,
       },
       body: JSON.stringify({
         model: 'glm-4v-flash', // 使用 GLM-4V 视觉模型
@@ -156,9 +184,13 @@ function extractTagsFromText(text: string): string[] {
  */
 export async function analyzeDocumentWithAI(
   documentText: string,
-  filename: string
+  filename: string,
+  userId?: string
 ): Promise<ImageAnalysisResult> {
-  if (!ZHIPU_API_KEY) {
+  // 获取 API Key（优先使用用户个人的）
+  const apiKey = userId ? await getUserApiKey(userId) : ZHIPU_API_KEY;
+  
+  if (!apiKey) {
     throw new Error('ZHIPU_API_KEY 未配置');
   }
 
@@ -180,7 +212,7 @@ ${documentText.substring(0, 2000)} ${documentText.length > 2000 ? '...' : ''}
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${ZHIPU_API_KEY}`,
+        'Authorization': `Bearer ${apiKey}`,
       },
       body: JSON.stringify({
         model: 'glm-4-flash',
