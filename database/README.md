@@ -1,53 +1,102 @@
 # CogniFlow 数据库脚本
 
-本目录包含 CogniFlow 项目的数据库部署和管理脚本。
+本目录包含 CogniFlow 项目的数据库相关脚本和配置。
 
-## 🚀 快速开始
+## ⚠️ 重要说明
 
-### 一键部署（推荐）
+**请使用项目根目录的统一部署脚本：**
 
 ```bash
 # 在项目根目录执行
-./database/deploy-database.sh
+./deploy-all.sh
 ```
+
+这是**唯一推荐的部署方式**，包含完整的数据库初始化、环境配置和依赖安装。
+
+## 📁 目录结构
+
+```
+database/
+├── deploy.sql                      # 完整的数据库 SQL 脚本
+├── init/                           # 初始化脚本（被 deploy.sql 包含）
+│   ├── 01_schema.sql              # 数据库架构
+│   └── 02_test_data.sql           # 测试数据
+├── migrations/                     # 历史迁移记录
+├── backups/                        # 备份目录
+├── verify-deployment-docker.sh    # 部署验证脚本（Docker 版本）
+└── clear-data-docker.sh           # 清空数据脚本（Docker 版本）
+```
+
+## 🚀 快速部署
+
+### 使用统一部署脚本（推荐）
+
+```bash
+# 在项目根目录执行
+./deploy-all.sh
+```
+
+此脚本会：
+1. ✅ 停止并删除旧容器
+2. ✅ 清理旧数据
+3. ✅ 启动 PostgreSQL 容器
+4. ✅ 执行 `database/deploy.sql` 初始化数据库
+5. ✅ 安装依赖并配置环境
 
 ### 验证部署
 
 ```bash
-./database/verify-deployment.sh
+./database/verify-deployment-docker.sh
 ```
 
-## 📁 文件说明
+## 📋 数据库内容
 
-| 文件 | 说明 |
-|------|------|
-| `deploy.sql` | 完整的数据库部署 SQL 脚本 |
-| `deploy-database.sh` | 自动化部署脚本（带备份功能） |
-| `verify-deployment.sh` | 部署验证脚本 |
-| `init_default_templates.sql` | 默认模板初始化脚本（已集成到 deploy.sql） |
-| `clear_data.sql` | 清空数据脚本（谨慎使用） |
+`deploy.sql` 包含完整的数据库定义：
 
-## 📋 部署内容
-
-部署脚本会自动创建：
-
-### 核心表（10个）
-- ✅ `users` - 用户表
+### 核心表（12个）
+- ✅ `users` - 用户表（包含 API 使用次数限制）
 - ✅ `user_settings` - 用户配置
-- ✅ `items` - 条目表（支持任务、事件、笔记、URL、集合）
+- ✅ `items` - 条目表（任务、事件、笔记、URL、集合）
 - ✅ `user_templates` - 智能模板表
 - ✅ `tags` - 标签表
+- ✅ `attachments` - 附件表
 - ✅ `activity_logs` - 活动日志
 - ✅ `user_statistics` - 统计数据
 - ✅ `system_logs` - 系统日志
 - ✅ `sessions` - 会话管理
 - ✅ `backups` - 备份记录
+- ✅ `attachment_configs` - 附件配置
+
+### 功能特性
+
+#### 1. API 使用次数限制 🆕
+- 注册用户：100 次 AI 功能调用
+- 快捷登录用户：50 次 AI 功能调用
+- 自动识别用户类型
+- 使用次数统计和管理函数
+
+#### 2. 智能模板
+- 默认 3 个模板（日报、会议、月报）
+- 自定义模板支持
+- 子项目管理
+
+#### 3. 附件支持
+- 图片、文档、音频、视频
+- 自动生成缩略图
+- AI 图片分析
+
+#### 4. 冲突检测
+- 日程时间冲突检测
+- 自动标记冲突事项
+
+### 性能优化
+- ✅ 40+ 个索引优化查询
+- ✅ 自动更新时间戳触发器
+- ✅ 统计视图优化报表查询
 
 ### 默认数据
-- ✅ 管理员账号（admin / admin123）
-- ✅ 3个智能模板（日报、会议、月报）
-- ✅ 40+ 个索引优化查询性能
-- ✅ 6个触发器自动更新时间戳
+- ✅ 管理员账号：`admin` / `admin123`
+- ✅ 3 个智能模板
 
 ## 🔐 默认账号
 

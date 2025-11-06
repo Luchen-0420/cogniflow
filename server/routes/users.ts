@@ -39,11 +39,11 @@ router.post('/register', async (req: Request, res: Response, next: NextFunction)
     // 加密密码
     const passwordHash = await bcrypt.hash(password, SALT_ROUNDS);
 
-    // 创建用户
+    // 创建用户（触发器会自动设置 account_type, api_usage_count, max_api_usage）
     const result = await query(
       `INSERT INTO users (username, password_hash, email, role)
        VALUES ($1, $2, $3, $4)
-       RETURNING id, username, email, role, created_at`,
+       RETURNING id, username, email, role, account_type, api_usage_count, max_api_usage, created_at`,
       [username, passwordHash, email || null, 'user']
     );
 
@@ -400,6 +400,117 @@ router.get('/stats', async (req: AuthRequest, res: Response, next: NextFunction)
       statistics: statsResult.rows[0] || null,
       itemStats: itemsResult.rows[0]
     });
+  } catch (error) {
+    next(error);
+  }
+});
+
+/**
+ * 获取用户 API 使用情况
+ * GET /api/users/api-usage
+ * 需要认证
+ */
+router.get('/api-usage', async (req: AuthRequest, res: Response, next: NextFunction) => {
+  try {
+    const userId = req.user?.id;
+
+    if (!userId) {
+      return res.status(401).json({ error: '未授权' });
+    }
+
+    // 调用数据库函数获取 API 使用情况
+    const result = await query(
+      'SELECT * FROM get_user_api_usage($1)',
+      [userId]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: '用户不存在' });
+    }
+
+    const usage = result.rows[0];
+    res.json({
+      currentUsage: usage.current_usage,
+      maxUsage: usage.max_usage,
+      remaining: usage.remaining,
+      accountType: usage.account_type
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
+/**
+ * 检查并扣减 API 使用次数
+ * POST /api/users/check-api-usage
+ * 需要认证
+ * 用于在调用 AI 功能前检查并扣减使用次数
+ */
+router.post('/check-api-usage', async (req: AuthRequest, res: Response, next: NextFunction) => {
+  try {
+    const userId = req.user?.id;
+
+    if (!userId) {
+      return res.status(401).json({ error: '未授权' });
+    }
+
+    // 调用数据库函数检查并扣减使用次数
+    const result = await query(
+      'SELECT * FROM check_and_increment_api_usage($1)',
+      [userId]
+    );
+
+    const usage = result.rows[0];
+    
+    if (!usage.success) {
+      return res.status(403).json({ 
+        error: usage.message,
+        remaining: usage.remaining,
+        success: false
+      });
+    }
+
+    res.json({
+      success: true,
+      remaining: usage.remaining,
+      message: usage.message
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
+/**
+ * 重置用户 API 使用次数（管理员功能）
+ * POST /api/users/:userId/reset-api-usage
+ * 需要管理员权限
+ */
+router.post('/:userId/reset-api-usage', async (req: AuthRequest, res: Response, next: NextFunction) => {
+  try {
+    const currentUserId = req.user?.id;
+    const currentUserRole = req.user?.role;
+    const targetUserId = req.params.userId;
+
+    if (!currentUserId) {
+      return res.status(401).json({ error: '未授权' });
+    }
+
+    // 检查是否为管理员
+    if (currentUserRole !== 'admin') {
+      return res.status(403).json({ error: '需要管理员权限' });
+    }
+
+    // 调用数据库函数重置使用次数
+    const result = await query(
+      'SELECT reset_user_api_usage($1) as success',
+      [targetUserId]
+    );
+
+    if (!result.rows[0].success) {
+      return res.status(404).json({ error: '用户不存在' });
+    }
+
+    res.json({ message: 'API 使用次数已重置' });
   } catch (error) {
     next(error);
   }

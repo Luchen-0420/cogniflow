@@ -22,6 +22,8 @@ import { format, startOfWeek, endOfWeek, startOfMonth, endOfMonth, startOfDay, e
 import { zhCN } from 'date-fns/locale';
 import { generateSmartSummary } from '@/utils/ai';
 import SmartReportDisplay from './SmartReportDisplay';
+import { checkApiUsageBeforeAction } from '@/services/apiUsageService';
+import { toast } from 'sonner';
 
 interface ReportData {
   totalItems: number;
@@ -116,6 +118,14 @@ export default function ReportView() {
     setSmartSummary({ content: '', isGenerating: true });
 
     try {
+      // 检查 API 使用次数
+      const usageCheck = await checkApiUsageBeforeAction('智能报告生成');
+      if (!usageCheck.canProceed) {
+        toast.error(usageCheck.message || 'API 使用次数已达上限');
+        setSmartSummary({ content: '', isGenerating: false });
+        return;
+      }
+
       const periodName = {
         today: '今日',
         week: '本周',
@@ -124,6 +134,11 @@ export default function ReportView() {
 
       const summary = await generateSmartSummary(reportData.items, periodName);
       setSmartSummary({ content: summary, isGenerating: false });
+      
+      // 显示剩余次数提示
+      if (usageCheck.remaining !== undefined) {
+        toast.success(`报告生成成功！${usageCheck.message}`);
+      }
     } catch (error) {
       console.error('生成智能报告失败:', error);
       setSmartSummary({ 

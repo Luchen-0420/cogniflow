@@ -274,9 +274,14 @@ export function LoginDialog({ open, onOpenChange, onSuccess }: LoginDialogProps)
               {loading ? '创建中...' : '快速体验（自动创建账号）'}
             </Button>
 
-            <p className="text-xs text-center text-muted-foreground">
-              登录后可在多设备间同步您的笔记数据
-            </p>
+            <div className="space-y-1">
+              <p className="text-xs text-center text-muted-foreground">
+                登录后可在多设备间同步您的笔记数据
+              </p>
+              <p className="text-[10px] text-center text-muted-foreground/70">
+                * 注册用户可使用 100 次 AI 功能，快捷登录用户可使用 50 次
+              </p>
+            </div>
           </TabsContent>
 
           {/* 注册 */}
@@ -399,9 +404,14 @@ export function LoginDialog({ open, onOpenChange, onSuccess }: LoginDialogProps)
                 {loading ? '注册中...' : '注册'}
               </Button>
 
-              <p className="text-xs text-center text-muted-foreground">
-                注册后即可在多设备间同步您的笔记数据
-              </p>
+              <div className="space-y-1">
+                <p className="text-xs text-center text-muted-foreground">
+                  注册后即可在多设备间同步您的笔记数据
+                </p>
+                <p className="text-[10px] text-center text-muted-foreground/70">
+                  * 注册用户可使用 100 次 AI 功能（包括卡片记录和智能报告）
+                </p>
+              </div>
             </form>
           </TabsContent>
         </Tabs>

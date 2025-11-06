@@ -46,6 +46,13 @@ CREATE TABLE IF NOT EXISTS users (
     role VARCHAR(20) NOT NULL DEFAULT 'user' CHECK (role IN ('user', 'admin')),
     avatar_url TEXT,
     status VARCHAR(20) DEFAULT 'active' CHECK (status IN ('active', 'inactive', 'suspended')),
+    
+    -- API 使用次数限制字段 (v1.1.0)
+    account_type VARCHAR(20) DEFAULT 'registered' CHECK (account_type IN ('registered', 'quick_login')),
+    api_usage_count INTEGER DEFAULT 0,
+    max_api_usage INTEGER DEFAULT 100,
+    usage_reset_at TIMESTAMP WITH TIME ZONE,
+    
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     last_login_at TIMESTAMP WITH TIME ZONE
@@ -57,6 +64,8 @@ CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
 CREATE INDEX IF NOT EXISTS idx_users_phone ON users(phone);
 CREATE INDEX IF NOT EXISTS idx_users_status ON users(status);
 CREATE INDEX IF NOT EXISTS idx_users_created_at ON users(created_at);
+CREATE INDEX IF NOT EXISTS idx_users_account_type ON users(account_type);
+CREATE INDEX IF NOT EXISTS idx_users_api_usage ON users(api_usage_count, max_api_usage);
 
 -- 2. 用户配置表 (user_settings)
 CREATE TABLE IF NOT EXISTS user_settings (
@@ -352,7 +361,105 @@ DROP TRIGGER IF EXISTS update_user_templates_updated_at ON user_templates;
 CREATE TRIGGER update_user_templates_updated_at BEFORE UPDATE ON user_templates
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
-\echo '✅ 触发器创建完成'
+-- API 使用次数管理函数
+-- 1. 设置初始 API 限制的触发器函数
+CREATE OR REPLACE FUNCTION set_initial_api_limits()
+RETURNS TRIGGER AS $$
+BEGIN
+    -- 如果是快捷登录用户（用户名以 guest_ 开头）
+    IF NEW.username LIKE 'guest_%' THEN
+        NEW.account_type := 'quick_login';
+        NEW.max_api_usage := 50;
+    ELSE
+        NEW.account_type := 'registered';
+        NEW.max_api_usage := 100;
+    END IF;
+    
+    NEW.api_usage_count := 0;
+    
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+DROP TRIGGER IF EXISTS trg_set_initial_api_limits ON users;
+CREATE TRIGGER trg_set_initial_api_limits
+    BEFORE INSERT ON users
+    FOR EACH ROW
+    EXECUTE FUNCTION set_initial_api_limits();
+
+-- 2. 检查并扣减 API 使用次数的函数
+CREATE OR REPLACE FUNCTION check_and_increment_api_usage(
+    p_user_id UUID,
+    OUT success BOOLEAN,
+    OUT remaining INTEGER,
+    OUT message TEXT
+) AS $$
+DECLARE
+    v_current_usage INTEGER;
+    v_max_usage INTEGER;
+BEGIN
+    -- 获取当前使用次数和限制
+    SELECT api_usage_count, max_api_usage 
+    INTO v_current_usage, v_max_usage
+    FROM users 
+    WHERE id = p_user_id;
+    
+    -- 检查是否超出限制
+    IF v_current_usage >= v_max_usage THEN
+        success := FALSE;
+        remaining := 0;
+        message := '已达到 API 使用次数上限';
+        RETURN;
+    END IF;
+    
+    -- 增加使用次数
+    UPDATE users 
+    SET api_usage_count = api_usage_count + 1,
+        updated_at = CURRENT_TIMESTAMP
+    WHERE id = p_user_id;
+    
+    -- 返回结果
+    success := TRUE;
+    remaining := v_max_usage - v_current_usage - 1;
+    message := '使用次数已扣减';
+END;
+$$ LANGUAGE plpgsql;
+
+-- 3. 获取用户 API 使用情况的函数
+CREATE OR REPLACE FUNCTION get_user_api_usage(p_user_id UUID)
+RETURNS TABLE(
+    current_usage INTEGER,
+    max_usage INTEGER,
+    remaining INTEGER,
+    account_type VARCHAR(20)
+) AS $$
+BEGIN
+    RETURN QUERY
+    SELECT 
+        u.api_usage_count,
+        u.max_api_usage,
+        u.max_api_usage - u.api_usage_count as remaining,
+        u.account_type
+    FROM users u
+    WHERE u.id = p_user_id;
+END;
+$$ LANGUAGE plpgsql;
+
+-- 4. 重置用户 API 使用次数的函数（管理员功能）
+CREATE OR REPLACE FUNCTION reset_user_api_usage(p_user_id UUID)
+RETURNS BOOLEAN AS $$
+BEGIN
+    UPDATE users 
+    SET api_usage_count = 0,
+        usage_reset_at = CURRENT_TIMESTAMP,
+        updated_at = CURRENT_TIMESTAMP
+    WHERE id = p_user_id;
+    
+    RETURN FOUND;
+END;
+$$ LANGUAGE plpgsql;
+
+\echo '✅ 触发器和API管理函数创建完成'
 
 -- ============================================
 -- Step 4: 创建视图

@@ -12,6 +12,7 @@ import { itemApi, auth, templateApi } from '@/db/api';
 import { useAuth } from '@/db/apiAdapter';
 import { QueryResultPanel } from '@/components/query/QueryResultPanel';
 import { TemplateInputModal } from './TemplateInputModal';
+import { checkApiUsageBeforeAction } from '@/services/apiUsageService';
 import {
   Command,
   CommandEmpty,
@@ -753,6 +754,15 @@ export default function QuickInput({
         }
       } else {
         // 其他类型：使用 AI 处理（如果用户指定了类型，优先使用用户指定的类型）
+        
+        // 检查 API 使用次数
+        const usageCheck = await checkApiUsageBeforeAction('卡片记录创建');
+        if (!usageCheck.canProceed) {
+          toast.error(usageCheck.message || 'API 使用次数已达上限');
+          onProcessingError?.(processingId);
+          return null;
+        }
+        
         const textToProcess = userSpecifiedType ? contentWithoutPrefix : inputText;
         const aiResult = await processTextWithAI(textToProcess);
 

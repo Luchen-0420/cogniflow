@@ -1,5 +1,40 @@
 # CogniFlow 更新日志
 
+## [Unreleased] - 2025-11-06
+
+### ✨ 新功能
+
+#### API 使用次数限制
+- **新增**: 基于用户类型的 API 使用次数限制功能
+- **注册用户**: 100 次 AI 功能调用额度（包括卡片记录和智能报告）
+- **快捷登录用户**: 50 次 AI 功能调用额度
+- **自动识别**: 根据用户名自动识别用户类型（`guest_` 开头为快捷登录）
+- **智能扣减**: 仅在使用 AI 功能时扣减次数
+- **用户提示**: 登录/注册页面显示次数说明，使用时显示剩余次数
+- **管理功能**: 提供管理员重置用户使用次数的接口
+- **影响文件**:
+  - `database/migrations/008_api_usage_limits.sql` - 数据库迁移
+  - `database/deploy.sql` - 更新一键部署脚本
+  - `database/run-migrations.sh` - 迁移执行脚本
+  - `server/routes/users.ts` - API 使用次数管理接口
+  - `src/services/apiUsageService.ts` - 前端服务层
+  - `src/components/items/QuickInput.tsx` - 卡片记录次数检查
+  - `src/components/report/ReportView.tsx` - 报告生成次数检查
+  - `src/components/auth/*.tsx` - UI 提示更新
+  - `docs/features/API_USAGE_LIMITS.md` - 完整功能文档
+
+**技术亮点**：
+1. ✅ **数据库层面**: 使用触发器自动设置初始限制
+2. ✅ **后端层面**: RESTful API 设计，权限控制
+3. ✅ **前端层面**: 服务层封装，环境检测
+4. ✅ **部署层面**: 向后兼容，提供多种部署方式
+
+**用户体验**：
+- 登录/注册时清晰了解可用次数
+- 使用时智能检查，避免超限
+- 次数不足时友好提示
+- 仅 PostgreSQL 模式生效，本地模式不受限制
+
 ## [Unreleased] - 2025-11-05
 
 ### 🐛 Bug 修复

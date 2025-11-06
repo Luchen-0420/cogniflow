@@ -200,9 +200,14 @@ export function LocalLoginPanel({
                 {loading ? '创建中...' : '快速体验（自动创建账号）'}
               </Button>
               
-              <p className="text-xs text-center text-muted-foreground mt-2">
-                快速体验将自动创建一个临时账号，请保存好账号信息
-              </p>
+              <div className="space-y-1">
+                <p className="text-xs text-center text-muted-foreground">
+                  快速体验将自动创建一个临时账号，请保存好账号信息
+                </p>
+                <p className="text-[10px] text-center text-muted-foreground/70">
+                  * 注册用户可使用 100 次 AI 功能，快捷登录用户可使用 50 次
+                </p>
+              </div>
             </form>
           </TabsContent>
 

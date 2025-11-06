@@ -22,6 +22,13 @@ CREATE TABLE IF NOT EXISTS users (
     role VARCHAR(20) NOT NULL DEFAULT 'user' CHECK (role IN ('user', 'admin')),
     avatar_url TEXT,
     status VARCHAR(20) DEFAULT 'active' CHECK (status IN ('active', 'inactive', 'suspended')),
+    
+    -- API 使用次数限制字段 (v1.1.0)
+    account_type VARCHAR(20) DEFAULT 'registered' CHECK (account_type IN ('registered', 'quick_login')),
+    api_usage_count INTEGER DEFAULT 0,
+    max_api_usage INTEGER DEFAULT 100,
+    usage_reset_at TIMESTAMP WITH TIME ZONE,
+    
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     last_login_at TIMESTAMP WITH TIME ZONE
@@ -33,6 +40,8 @@ CREATE INDEX idx_users_email ON users(email);
 CREATE INDEX idx_users_phone ON users(phone);
 CREATE INDEX idx_users_status ON users(status);
 CREATE INDEX idx_users_created_at ON users(created_at);
+CREATE INDEX idx_users_account_type ON users(account_type);
+CREATE INDEX idx_users_api_usage ON users(api_usage_count, max_api_usage);
 
 -- ============================================
 -- 2. 用户配置表 (user_settings)
@@ -324,6 +333,117 @@ SELECT
 FROM users u
 LEFT JOIN items i ON u.id = i.user_id
 GROUP BY u.id, u.username, u.email, u.role, u.status, u.created_at, u.last_login_at;
+
+-- ============================================
+-- API 使用限制相关函数和触发器 (v1.1.0)
+-- ============================================
+
+-- 1. 自动设置初始 API 使用限制的触发器函数
+CREATE OR REPLACE FUNCTION set_initial_api_limits()
+RETURNS TRIGGER AS $$
+BEGIN
+    -- 如果是快捷登录用户（用户名以 guest_ 开头）
+    IF NEW.username LIKE 'guest_%' THEN
+        NEW.account_type := 'quick_login';
+        NEW.max_api_usage := 50;
+    ELSE
+        NEW.account_type := 'registered';
+        NEW.max_api_usage := 100;
+    END IF;
+    
+    NEW.api_usage_count := 0;
+    
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+DROP TRIGGER IF EXISTS trg_set_initial_api_limits ON users;
+CREATE TRIGGER trg_set_initial_api_limits
+    BEFORE INSERT ON users
+    FOR EACH ROW
+    EXECUTE FUNCTION set_initial_api_limits();
+
+-- 2. 检查并扣减 API 使用次数的函数
+CREATE OR REPLACE FUNCTION check_and_increment_api_usage(p_user_id UUID)
+RETURNS TABLE(
+    success BOOLEAN,
+    current_count INTEGER,
+    max_count INTEGER,
+    message TEXT
+) AS $$
+DECLARE
+    v_current_count INTEGER;
+    v_max_count INTEGER;
+BEGIN
+    -- 获取当前使用次数和最大次数
+    SELECT api_usage_count, max_api_usage 
+    INTO v_current_count, v_max_count
+    FROM users 
+    WHERE id = p_user_id;
+    
+    -- 检查是否超过限制
+    IF v_current_count >= v_max_count THEN
+        RETURN QUERY SELECT 
+            false,
+            v_current_count,
+            v_max_count,
+            '已达到 API 使用次数上限'::TEXT;
+        RETURN;
+    END IF;
+    
+    -- 扣减次数
+    UPDATE users 
+    SET api_usage_count = api_usage_count + 1,
+        updated_at = CURRENT_TIMESTAMP
+    WHERE id = p_user_id;
+    
+    RETURN QUERY SELECT 
+        true,
+        v_current_count + 1,
+        v_max_count,
+        '使用次数已扣减'::TEXT;
+END;
+$$ LANGUAGE plpgsql;
+
+-- 3. 获取用户 API 使用情况的函数
+CREATE OR REPLACE FUNCTION get_user_api_usage(p_user_id UUID)
+RETURNS TABLE(
+    user_id UUID,
+    username VARCHAR(50),
+    account_type VARCHAR(20),
+    current_usage INTEGER,
+    max_usage INTEGER,
+    remaining INTEGER,
+    usage_reset_at TIMESTAMP WITH TIME ZONE
+) AS $$
+BEGIN
+    RETURN QUERY
+    SELECT 
+        u.id,
+        u.username,
+        u.account_type,
+        u.api_usage_count,
+        u.max_api_usage,
+        u.max_api_usage - u.api_usage_count as remaining,
+        u.usage_reset_at
+    FROM users u
+    WHERE u.id = p_user_id;
+END;
+$$ LANGUAGE plpgsql;
+
+-- 4. 重置用户 API 使用次数的函数（管理员功能）
+CREATE OR REPLACE FUNCTION reset_user_api_usage(p_user_id UUID)
+RETURNS BOOLEAN AS $$
+BEGIN
+    UPDATE users 
+    SET api_usage_count = 0,
+        usage_reset_at = CURRENT_TIMESTAMP,
+        updated_at = CURRENT_TIMESTAMP
+    WHERE id = p_user_id;
+    
+    RETURN FOUND;
+END;
+$$ LANGUAGE plpgsql;
 
 -- ============================================
 -- 完成信息
