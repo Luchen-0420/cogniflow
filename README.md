@@ -1,156 +1,433 @@
-# CogniFlow - 智能信息管理工具
+# CogniFlow - AI 驱动的智能信息管理工具
 
-> 你只管记录，我负责管理 - AI 驱动的智能信息管理工具  
-> 让 AI 帮你整理碎片化信息
+<div align="center">
+
+**让 AI 成为你的信息管家**
+
+你只管记录，AI负责整理、分类、提醒
 
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![Docker](https://img.shields.io/badge/docker-ready-brightgreen.svg)](docker-compose.yml)
 [![PostgreSQL](https://img.shields.io/badge/database-PostgreSQL-blue.svg)](database/)
-[![Deploy](https://img.shields.io/badge/deploy-one--click-success.svg)](#-一键部署)
+
+[快速开始](#-快速开始) · [功能特性](#-核心功能) · [产品展示](#-产品展示) · [文档](#-文档中心)
+
+</div>
 
 ---
 
-## 📖 简介
+## 🎬 产品预览
 
-CogniFlow 是一款由 AI 驱动的智能信息管理工具，帮助您轻松管理日常工作和生活中的碎片化信息。
-
-**核心理念**：
-- 你只管记录，我负责管理
-- 让 AI 帮你整理碎片化信息，自动识别和分类任务、日程、笔记等内容
+<div align="center">
+  <table>
+    <tr>
+      <td width="50%">
+        <img src="./imgs/main.png" alt="主界面" />
+        <p align="center"><b>智能卡片管理</b></p>
+      </td>
+      <td width="50%">
+        <img src="./imgs/broad.png" alt="看板视图" />
+        <p align="center"><b>多维度看板</b></p>
+      </td>
+    </tr>
+    <tr>
+      <td width="50%">
+        <img src="./imgs/cal.png" alt="日历视图" />
+        <p align="center"><b>日历与冲突检测</b></p>
+      </td>
+      <td width="50%">
+        <img src="./imgs/report.png" alt="统计报告" />
+        <p align="center"><b>智能统计分析</b></p>
+      </td>
+    </tr>
+  </table>
+  
+  <p><i>👆 点击查看<a href="#-产品展示">完整产品展示</a>了解更多界面细节</i></p>
+</div>
 
 ---
 
-## 🚀 一键部署
+## 📑 目录
 
-**30秒完成部署！** 支持 Docker 容器化部署，自动创建数据库和所有表。
+- [💡 产品愿景](#-产品愿景)
+- [📸 产品展示](#-产品展示)
+- [✨ 核心功能](#-核心功能)
+  - [🎴 多样化卡片类型](#-多样化卡片类型)
+  - [🗄️ 灵活的存储模式](#️-灵活的存储模式)
+  - [💰 API 成本控制](#-api-成本控制)
+  - [⚡ 快捷输入](#-快捷输入)
+  - [📊 智能报告与统计](#-智能报告与统计)
+  - [🔔 时间冲突检测](#-时间冲突检测)
+- [🚀 快速开始](#-快速开始)
+- [🎯 使用场景](#-使用场景)
+- [🗓️ 后续规划](#️-后续规划)
+- [📚 文档中心](#-文档中心)
+- [🤝 参与贡献](#-参与贡献)
+- [📄 开源协议](#-开源协议)
+- [💬 联系我们](#-联系我们)
 
-### 一键部署（推荐）
-```bash
-# 1. 克隆项目
-git clone
+---
 
-# 2. 进入项目目录
-cd cogniflow
+## 💡 产品愿景
 
-# 3. 运行一键部署脚本（会清空旧数据）
-./deploy-all.sh
+在信息爆炸的时代，我们每天面对大量碎片化信息：临时想法、待办事项、会议安排、学习笔记、重要链接...这些信息散落在不同的地方，难以管理和追踪。
 
-# 4. 启动服务
-pnpm run dev:postgres
-```
+**CogniFlow 的诞生是为了解决这个问题**：提供一个统一的入口，让你随手记录任何信息，AI 自动帮你分类、整理、提醒，让信息管理变得简单高效。
 
-**就这么简单！** 脚本会自动：
-- ✅ 清理旧容器和数据
-- ✅ 启动 PostgreSQL 容器
-- ✅ 创建 10 个数据库表
-- ✅ 插入默认管理员账号（admin/admin123）
-- ✅ 创建 3 个智能模板（日报、会议、月报）
-- ✅ 安装所有依赖
+### 核心理念
 
-访问 http://localhost:5173 开始使用！
+- 🎯 **零心智负担** - 不用思考该把信息放在哪里，直接记录即可
+- 🤖 **AI 智能处理** - 自动识别信息类型、提取关键信息、分类归档
+- 📊 **统一管理** - 一个工具管理所有碎片化信息，不再需要多个应用
+- 🚀 **快捷高效** - 像聊天一样快速输入，支持自然语言和快捷指令
 
-📚 详细说明：[快速开始指南](./docs/quickstart/QUICK_START.md) | [DEPLOYMENT_COMPLETE.md](./DEPLOYMENT_COMPLETE.md)
+---
 
-### 手动部署
-```bash
-# 1. 启动数据库
-docker-compose up -d
+## 📸 产品展示
 
-# 2. 初始化数据库
-cd database
-./deploy-database-docker.sh
+### 主界面 - 智能卡片管理
 
-# 3. 安装依赖
-pnpm install
+<div align="center">
+  <img src="./imgs/main.png" alt="CogniFlow 主界面" width="800"/>
+  <p><i>统一的信息管理界面，支持多种卡片类型和快速输入</i></p>
+</div>
 
-# 4. 启动开发服务
-pnpm run dev:postgres
-```
+**主要特性：**
+- ✨ 卡片式设计，信息一目了然
+- 🎯 快速筛选（任务/日程/笔记/资料/链接）
+- 🔍 全文搜索，快速定位
+- 📝 流式输入框，AI 自动识别和分类
+- 🏷️ 标签系统，灵活组织信息
+
+### 看板视图 - 多维度信息展示
+
+<div align="center">
+  <img src="./imgs/broad.png" alt="看板视图" width="800"/>
+  <p><i>灵活的看板视图，按状态、优先级、标签等维度组织信息</i></p>
+</div>
+
+**主要特性：**
+- 📋 看板布局（待办/进行中/已完成）
+- 🖱️ 拖拽操作，快速更新状态
+- 🎨 优先级颜色标识
+- 📊 任务统计概览
+- 🔄 实时同步更新
+
+### 日历视图 - 时间安排可视化
+
+<div align="center">
+  <img src="./imgs/cal.png" alt="日历视图" width="800"/>
+  <p><i>日历视图展示日程安排，自动检测时间冲突</i></p>
+</div>
+
+**主要特性：**
+- 📅 月/周/日多种视图切换
+- ⚠️ 时间冲突自动标红提醒
+- 🕐 时间轴清晰展示
+- 📌 一键创建日程
+- 🔔 即将到来的事项提醒
+
+### 统计报告 - 数据分析洞察
+
+<div align="center">
+  <img src="./imgs/report.png" alt="统计报告" width="800"/>
+  <p><i>智能统计和数据可视化，了解工作效率和时间分配</i></p>
+</div>
+
+**主要特性：**
+- 📈 任务完成率趋势图
+- ⏰ 时间分配分析
+- 🏷️ 标签使用热力图
+- 📊 工作效率评估
+- 💡 AI 智能建议
+
+### 个人中心 - 设置与管理
+
+<div align="center">
+  <img src="./imgs/self.png" alt="个人中心" width="800"/>
+  <p><i>个性化设置、API 配置、数据管理等功能</i></p>
+</div>
+
+**主要特性：**
+- 🤖 AI 模型配置（API Key、模型选择）
+- 💾 存储模式切换（本地/数据库）
+- 📥 数据导入导出
+- 🎨 主题切换（亮色/暗色）
+- 💰 API 使用统计和成本控制
+
+---
+
+## ✨ 核心功能
+
+### 🎴 多样化卡片类型
+
+CogniFlow 支持五种智能卡片类型，满足不同的信息管理需求：
+
+> 💡 在[主界面](#主界面---智能卡片管理)和[看板视图](#看板视图---多维度信息展示)中查看卡片的实际展示效果
+
+- **📋 任务卡片** - 待办事项管理
+  - 优先级标记（高/中/低）
+  - 状态跟踪（待办/进行中/已完成）
+  - 截止日期提醒
+  - 标签分类
+
+- **📅 日程卡片** - 时间安排管理
+  - 开始/结束时间
+  - 时间冲突自动检测
+  - 日历视图展示
+  - 提前提醒功能
+
+- **📝 笔记卡片** - 知识记录
+  - 富文本内容
+  - 标签分组
+  - 全文搜索
+  - Markdown 支持
+
+- **📚 资料卡片** - 文档资料管理
+  - 文档描述
+  - 附件支持
+  - 分类归档
+  - 快速检索
+
+- **🔗 链接卡片** - URL 智能管理
+  - 自动抓取网页标题
+  - 网站图标显示
+  - 描述摘要
+  - 一键访问
+
+### 🗄️ 灵活的存储模式
+
+根据你的使用场景，选择最适合的存储方案：
+
+#### 本地存储模式
+- ✅ 开箱即用，无需配置
+- ✅ 数据完全本地化，隐私安全
+- ✅ 离线可用
+- ✅ 适合个人使用
+- ⚠️ 数据仅存储在浏览器，不支持跨设备同步
+
+#### 多端同步存储模式（PostgreSQL）
+- ✅ 数据持久化存储
+- ✅ 多设备自动同步
+- ✅ 团队协作支持
+- ✅ 数据备份和恢复
+- ✅ 企业级数据安全
+- ✅ 支持大规模数据存储
+- 💡 适合团队使用和长期使用
+
+### 💰 API 成本控制
+
+针对 AI 功能的 API 调用，CogniFlow 提供完善的成本控制机制：
+
+- **预算设置** - 设置调用上限
+- **详细日志** - 记录每次 API 调用详情，便于成本分析
+- **【TODO】模型选择** - 支持不同价格档位的 AI 模型切换
+
+### ⚡ 快捷输入
+
+多种输入方式，让信息记录更快捷：
+
+- **自然语言输入** - 像聊天一样输入，AI 自动识别类型
+  ```
+  "明天下午3点开会" → 自动创建日程
+  "完成报告 #重要" → 自动创建任务
+  ```
+
+- **声明式前缀** - 使用前缀明确指定类型
+  ```
+  "任务: 完成项目文档"
+  "笔记: React Hooks 学习心得"
+  "@会议 周五团队例会"
+  ```
+
+- **智能模板** - 预设常用模板，一键创建
+  - 日报模板（今日完成/遇到问题/明日计划）
+  - 会议纪要（议题/讨论/行动项）
+  - 周报/月报模板
+
+### 📊 智能报告与统计
+
+数据可视化和智能分析，让你全面了解工作状态：
+
+> 📈 查看[统计报告界面](#统计报告---数据分析洞察)了解详细的数据可视化效果
+
+- **任务统计**
+  - 任务完成率趋势
+  - 优先级分布
+  - 标签分类统计
+  - 逾期任务提醒
+
+- **时间分析**
+  - 日程时间分布
+  - 工作时长统计
+  - 时间冲突检测
+
+- **效率报表**
+  - 每日/每周/每月完成情况
+  - 工作效率趋势图
+  - 生产力报告
+
+- **智能洞察**
+  - AI 分析工作模式
+  - 提供优化建议
+
+### 🔔 时间冲突检测
+
+智能检测日程冲突，避免时间安排重叠：
+
+> 📅 在[日历视图](#日历视图---时间安排可视化)中查看冲突检测的实际效果
+
+- ⚠️ 自动识别时间重叠的日程
+- 🔴 醒目的红色视觉提示
+- 💬 鼠标悬停显示冲突详情
+- 🔄 实时更新冲突状态
+- 📅 日历视图高亮显示
+
+
 
 ---
 
 ## 🚀 快速开始
 
-### 方式一：快速体验（LocalStorage 模式，默认）
-**适用场景**：简单试用，无需跨设备同步
+> 💡 **新用户建议**：先使用本地存储模式快速体验，后续可随时切换到数据库模式
+> 
+> 📸 查看[产品展示](#-产品展示)了解界面和功能
+
+### 本地存储模式（推荐新用户）
+
+最快 3 步开始使用：
 
 ```bash
-# 1. 安装依赖
-pnpm install
+# 1. 克隆项目
+git clone https://github.com/your-repo/cogniflow.git
 
-# 2. 配置 AI API（可选）
-cp .env.example .env
-# 编辑 .env 文件，填入 GLM API Key
+# 2. 安装依赖
+cd cogniflow && pnpm install
 
-# 3. 启动开发服务器
-pnpm run dev
-
-# 4. 访问应用
-open http://127.0.0.1:5173
-```
-
-### 方式二：使用 PostgreSQL 数据库（推荐用于生产）
-**适用场景**：
-- ✅ 需要跨设备同步数据
-- ✅ 多用户协作
-- ✅ 大量数据存储
-- ✅ 企业级应用
-
-**快速启动（3 步）**：
-```bash
-# 1. 启动数据库
-docker-compose up -d
-
-# 2. 启动 API 服务器（新终端）
-cd server && pnpm tsx index.ts
-
-# 3. 修改 .env 切换到 PostgreSQL 模式
-VITE_STORAGE_MODE=postgres
-VITE_API_URL=http://localhost:3001/api
-
-# 4. 启动前端
+# 3. 启动应用
 pnpm run dev
 ```
 
-**详细指南**：
-- 📚 [PostgreSQL 快速启动](./QUICKSTART_POSTGRES.md) - 5 分钟上手
-- 📖 [数据库完整指南](./docs/DATABASE_GUIDE.md) - 深入了解
-- 🔄 [数据迁移指南](./DATABASE_MIGRATION_GUIDE.md) - LocalStorage → PostgreSQL
+访问 http://localhost:5173 立即体验！
 
-### 方式三：使用 Supabase（已废弃）
+### 数据库模式（推荐团队用户）
+
+一键部署脚本，30 秒完成：
+
+```bash
+# 1. 克隆项目
+git clone https://github.com/your-repo/cogniflow.git && cd cogniflow
+
+# 2. 一键部署（包含数据库、依赖、初始数据）
+./deploy-all.sh
+
+# 3. 启动应用
+pnpm run dev:postgres
+```
+
+访问 http://localhost:5173 开始使用！
+
+**默认账号**: admin / admin123（首次登录后请修改密码）
+
+📚 **详细文档**: [快速开始指南](./docs/quickstart/QUICK_START.md) | [部署指南](./docs/deployment/DEPLOYMENT_GUIDE.md)
 
 ---
 
-## ✨ 主要特性
+## 🎯 使用场景
 
-### 🤖 AI 智能处理
-- **自动分类** - AI 自动识别并分类为任务、日程、笔记、资料、URL
-- **智能提取** - 自动提取标题、标签、时间、优先级等信息
-- **流式输入** - 像聊天一样快速记录信息
+### 个人知识管理
+- 📝 学习笔记整理
+- 💡 灵感快速捕捉
+- 🔗 资料链接收藏
+- 📖 读书笔记记录
 
-### 📊 高效管理
-- **四大视图** - 即将发生、待办清单、笔记库、链接库
-- **智能模板** - 预设日报、会议、月报等常用模板
-- **时间冲突检测** - 自动检测日程时间冲突并提醒
+### 工作任务管理
+- ✅ 待办事项跟踪
+- 📅 会议安排管理
+- 📊 项目进度追踪
+- 🎯 目标达成监控
 
-### 🔄 数据安全
-- **自动备份** - 定时自动备份数据到本地
-- **导入导出** - 支持一键导出和导入所有数据
-- **多用户支持** - 支持多用户独立数据管理
+### 团队协作
+- 👥 多人信息共享
+- 📋 任务分配协调
+- 📝 会议纪要记录
+- 🔄 工作交接文档
 
-### 📱 响应式设计
-- **移动端优化** - 完美支持手机、平板访问
-- **暗黑模式** - 支持亮色/暗色主题切换
-- **离线使用** - IndexedDB 本地存储支持
+---
 
-### 其他核心特性
-- 📅 **日历视图** - 可视化查看日程安排
-- 🏷️ **自动标签** - AI 自动提取关键词标签
-- 🔗 **链接智能处理** - 自动获取网页标题和摘要
-- 💾 **双模式存储** - 支持 LocalStorage 和 PostgreSQL
-- 🔄 **数据迁移** - 一键迁移 LocalStorage 到数据库
-- 🗄️ **PostgreSQL 数据库** - 企业级数据存储和管理（可选）
-- 🔍 **自然语言查询** - 用自然语言搜索信息
+## 🗓️ 后续规划
+
+我们正在积极开发更多功能，让 CogniFlow 成为你的全能信息助手：
+
+### 即将推出
+
+- **📆 日历应用同步**
+  - 与 Google Calendar 双向同步
+  - 支持 Outlook 日历集成
+  - 与 Apple Calendar 互通
+  - iCal 格式导入导出
+
+- **📧 邮件应用集成**
+  - 邮件内容自动转换为任务/笔记
+  - 重要邮件智能提醒
+  - 邮件中的日程自动添加到日历
+  - 快捷邮件发送功能
+
+- **🔔 通知提醒系统**
+  - 桌面推送通知
+  - 邮件提醒
+  - 微信/钉钉提醒（webhook）
+  - 自定义提醒规则
+  - 智能提醒时间建议
+
+- **📱 移动应用**
+  - iOS 原生应用
+  - Android 原生应用
+  - PWA 离线支持
+  - 移动端优化体验
+
+### 长期愿景
+
+- **🌐 更多集成**
+  - Notion、飞书、企业微信等工具集成
+  - GitHub Issues 同步
+  - Jira 任务导入
+  - Trello 看板集成
+
+- **🤖 AI 能力升级**
+  - 智能推荐相关内容
+  - 自动生成总结报告
+  - 语音转文字输入
+  - 图像识别和OCR
+
+- **👥 协作功能增强**
+  - 实时协作编辑
+  - 评论和讨论
+  - 任务委派和跟进
+  - 团队看板视图
+
+---
+
+## 🛠️ 技术栈
+
+**前端**: React 18 · TypeScript · Tailwind CSS · Vite
+
+**后端**: Node.js · Express · PostgreSQL
+
+**AI**: 智谱 GLM-4 · 流式处理
+
+**部署**: Docker · Docker Compose
+
+---
+
+## 📚 文档中心
+
+- 📖 [用户手册](./docs/user-guide/USER_MANUAL.md) - 完整功能使用指南
+- 🎯 [快速开始](./docs/quickstart/QUICK_START.md) - 3分钟上手
+- 🛠️ [开发指南](./docs/development/DEVELOPER_GUIDE.md) - 开发者文档
+- 🚀 [部署指南](./docs/deployment/DEPLOYMENT_GUIDE.md) - 生产环境部署
+- 🔧 [配置说明](./docs/configuration/ENVIRONMENT.md) - 环境变量配置
+- 📝 [更新日志](./docs/CHANGELOG.md) - 版本历史
 
 ---
 
@@ -311,29 +588,6 @@ CogniFlow 现在支持 PostgreSQL 数据库，提供更强大的数据管理能�
 
 ---
 
-## 🏗️ 技术栈
-
-### 前端
-- **React 18** - UI 框架
-- **TypeScript** - 类型安全
-- **Tailwind CSS** - 样式框架
-- **Vite** - 构建工具
-- **IndexedDB** - 本地存储
-- **React Router** - 路由管理
-- **React Hooks** - 状态管理
-
-### 后端
-- **Node.js** - 运行时
-- **Express** - Web 框架
-- **PostgreSQL** - 数据库
-- **Docker** - 容器化
-
-### AI 服务
-- **智谱 GLM-4** - AI 模型
-- **流式处理** - 实时响应
-
----
-
 ## 📁 项目结构
 
 ```
@@ -388,85 +642,61 @@ cogniflow/
 
 ---
 
-## 🔐 默认账号
 
-部署后自动创建管理员账号：
-- **用户名**: admin
-- **密码**: admin123
+## 🤝 参与贡献
 
-⚠️ **重要**：首次登录后请立即修改密码！
+我们欢迎任何形式的贡献！
 
-### 测试账号
-- 管理员: `admin` / `admin123`
-- 测试用户: `testuser1` / `password123`
+- 🐛 [提交 Bug](https://github.com/your-repo/cogniflow/issues)
+- 💡 [功能建议](https://github.com/your-repo/cogniflow/issues)
+- 📖 [改进文档](./docs/)
+- 💻 [提交代码](https://github.com/your-repo/cogniflow/pulls)
 
----
-
-## 📋 最新更新
-
-### v1.6.0 (2025-11-02)
-- ⚠️ **新增时间冲突检测功能**
-  - 自动检测日程事项之间的时间重叠
-  - 醒目的红色视觉标识（边框、背景、标签）
-  - 鼠标悬停显示详细冲突说明
-  - 实时更新冲突状态（创建、编辑、删除、归档）
-- 数据库查询性能优化
-- 完整的测试用例和文档
-
-### v1.5.0 (2025-01-29)
-- 🎉 新增数据自动备份功能
-- 💾 定期自动备份到本地
-- 🔄 支持手动备份和恢复
-- 📥 支持导出/导入备份文件
-- ⚙️ 完整的备份管理界面
-
-### v1.4.0
-- ✅ 完全移除第三方依赖，使用本地存储
-- ✅ 迁移到智谱 AI (GLM) API
-- ✅ 优化 UI/UX，提高信息密度
-- ✅ 实现卡片悬浮操作按钮
-- ✅ 优化 URL 卡片布局
+**贡献流程**:
+1. Fork 本仓库
+2. 创建特性分支 `git checkout -b feature/amazing-feature`
+3. 提交更改 `git commit -m 'Add amazing feature'`
+4. 推送分支 `git push origin feature/amazing-feature`
+5. 提交 Pull Request
 
 ---
 
-## 📝 更新日志
+## 📄 开源协议
 
-查看 [CHANGELOG.md](./docs/CHANGELOG.md) 了解版本更新信息。
+本项目采用 [MIT License](LICENSE) 开源协议
 
----
+这意味着你可以自由地：
+- ✅ 商业使用
+- ✅ 修改源码
+- ✅ 分发
+- ✅ 私人使用
 
-## 🤝 贡献指南
-
-欢迎贡献代码！请查看 [开发指南](./docs/development/DEVELOPER_GUIDE.md)
-
-1. Fork 项目
-2. 创建特性分支 (`git checkout -b feature/AmazingFeature`)
-3. 提交更改 (`git commit -m 'Add some AmazingFeature'`)
-4. 推送到分支 (`git push origin feature/AmazingFeature`)
-5. 开启 Pull Request
-
-欢迎提交 Issue 和 Pull Request！
+唯一的要求是保留版权声明和许可声明。
 
 ---
 
-## 📄 许可证
+## 💬 联系我们
 
-本项目采用 MIT 许可证 - 查看 [LICENSE](LICENSE) 文件了解详情
+我们很乐意听取你的反馈和建议！
+
+- 📧 **邮箱**: support@cogniflow.app
+- 🐛 **问题反馈**: [GitHub Issues](https://github.com/your-repo/cogniflow/issues)
+- 💬 **功能建议**: [GitHub Discussions](https://github.com/your-repo/cogniflow/discussions)
+- 📖 **文档**: [在线文档](./docs/)
+- 🌟 **给我们 Star**: 如果这个项目对你有帮助，请在 [GitHub](https://github.com/your-repo/cogniflow) 上给我们一个 ⭐
 
 ---
 
 ## 🙏 致谢
 
-- [React](https://reactjs.org/)
-- [Tailwind CSS](https://tailwindcss.com/)
-- [智谱 AI](https://open.bigmodel.cn/)
-- [PostgreSQL](https://www.postgresql.org/)
+感谢以下开源项目和服务：
 
----
+- [React](https://reactjs.org/) - 强大的 UI 框架
+- [Tailwind CSS](https://tailwindcss.com/) - 优雅的样式解决方案
+- [智谱 AI](https://open.bigmodel.cn/) - 卓越的 AI 能力
+- [PostgreSQL](https://www.postgresql.org/) - 可靠的数据库
+- [Vite](https://vitejs.dev/) - 极速的构建工具
 
-## 📞 联系方式
-
-- 问题反馈：[GitHub Issues](https://github.com/your-repo/cogniflow/issues)
-- 文档：[docs](./docs/)
+以及所有为这个项目贡献代码、文档、建议的开发者们 ❤️
 
 ---
