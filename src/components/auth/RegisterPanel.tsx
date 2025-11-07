@@ -360,7 +360,7 @@ export function RegisterPanel({
               {loading ? '注册中...' : '注册'}
             </Button>
             <p className="text-[10px] text-center text-muted-foreground/70">
-              * 注册用户可使用 100 次 AI 功能（包括卡片记录和智能报告）
+              * 注册用户可使用 40 次 AI 功能（包括卡片记录和智能报告）
             </p>
           </div>
 

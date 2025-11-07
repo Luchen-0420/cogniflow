@@ -43,10 +43,10 @@ BEGIN
     -- 如果是快捷登录用户（用户名以 guest_ 开头）
     IF NEW.username LIKE 'guest_%' THEN
         NEW.account_type := 'quick_login';
-        NEW.max_api_usage := 50;
+        NEW.max_api_usage := 10;
     ELSE
         NEW.account_type := 'registered';
-        NEW.max_api_usage := 100;
+        NEW.max_api_usage := 40;
     END IF;
     
     NEW.api_usage_count := 0;

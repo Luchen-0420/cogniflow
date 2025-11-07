@@ -18,7 +18,7 @@ CREATE INDEX IF NOT EXISTS idx_users_personal_api_key ON users(personal_api_key)
 \echo '✅ 索引创建完成'
 
 -- 3. 更新触发器：设置默认账户类型的 max_api_usage
--- 注册用户：100次，快速登录用户：50次
+-- 注册用户：40次，快速登录用户：10次
 CREATE OR REPLACE FUNCTION set_user_defaults()
 RETURNS TRIGGER AS $$
 BEGIN
@@ -30,11 +30,11 @@ BEGIN
     -- 根据账户类型设置 max_api_usage
     IF NEW.max_api_usage IS NULL THEN
         IF NEW.account_type = 'registered' THEN
-            NEW.max_api_usage := 100;
+            NEW.max_api_usage := 40;
         ELSIF NEW.account_type = 'quick_login' THEN
-            NEW.max_api_usage := 50;
+            NEW.max_api_usage := 10;
         ELSE
-            NEW.max_api_usage := 100;
+            NEW.max_api_usage := 40;
         END IF;
     END IF;
     
@@ -167,5 +167,5 @@ COMMENT ON COLUMN users.personal_api_key IS '用户个人的智谱 API Key，配
 \echo '新增功能：'
 \echo '1. 用户可以配置自己的智谱 API Key'
 \echo '2. 配置个人 API Key 后不受使用次数限制'
-\echo '3. 注册用户默认 100 次，快速登录用户 50 次'
+\echo '3. 注册用户默认 40 次，快速登录用户 10 次'
 \echo '=========================================='

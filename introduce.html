@@ -1,0 +1,659 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CogniFlow 产品介绍：AI 驱动的智能信息管理工具</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            'sans': ['Georgia', 'serif'],
+            'display': ['Playfair Display', 'serif'],
+          },
+          colors: {
+            'warm-gray': '#8B8680',
+            'deep-blue': '#1E3A8A',
+            'accent-gold': '#D4AF37',
+            'soft-beige': '#F5F3F0',
+          }
+        }
+      }
+    }
+  </script>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&amp;family=Inter:wght@300;400;500;600&amp;display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
+  <script src="https://cdn.jsdelivr.net/npm/three@0.158.0/build/three.min.js"></script>
+  <script src="https://unpkg.com/vanta@0.5.24/dist/vanta.net.min.js"></script>
+  <style>
+    body {
+      font-family: 'Georgia', serif;
+      line-height: 1.7;
+      color: #374151;
+      overflow-x: hidden;
+    }
+
+    .hero-title {
+      font-family: 'Playfair Display', serif;
+      font-style: italic;
+      font-weight: 400;
+    }
+
+    .section-title {
+      font-family: 'Playfair Display', serif;
+      font-weight: 700;
+      color: #1E3A8A;
+    }
+
+    .toc-link {
+      transition: all 0.3s ease;
+    }
+
+    .toc-link:hover {
+      color: #D4AF37;
+      transform: translateX(4px);
+    }
+
+    .chart-container {
+      position: relative;
+      height: 400px;
+      margin: 2rem 0;
+    }
+
+    .citation {
+      color: #D4AF37;
+      text-decoration: none;
+      font-weight: 500;
+      cursor: pointer;
+    }
+
+    .citation:hover {
+      text-decoration: underline;
+    }
+
+    .hero-overlay {
+      background: linear-gradient(135deg, rgba(30, 58, 138, 0.8) 0%, rgba(139, 134, 128, 0.6) 100%);
+    }
+
+    #vanta-bg {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 0;
+    }
+
+    .bento-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 2rem;
+      align-items: center;
+    }
+
+    @media (max-width: 768px) {
+      .bento-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+
+<body class="bg-soft-beige">
+  <!-- 固定的目录导航 -->
+  <!-- 移动端目录切换按钮 -->
+  <!-- 主要内容 -->
+  <main>
+    <!-- 英雄区域 -->
+    <section class="relative min-h-screen flex items-center justify-center overflow-hidden">
+      <div id="vanta-bg"></div>
+      <div class="hero-overlay absolute inset-0 z-10"></div>
+
+      <div class="relative z-20 max-w-7xl mx-auto px-4 sm:px-6 md:px-8 py-16">
+        <div class="bento-grid">
+          <!-- 左侧：标题与副标题 -->
+          <div class="space-y-8">
+            <div class="space-y-4">
+              <h1 class="hero-title text-4xl sm:text-5xl lg:text-6xl text-white leading-tight">
+                CogniFlow
+                <br />
+                <span class="text-accent-gold">产品介绍</span>
+              </h1>
+              <p class="text-lg sm:text-xl text-gray-200 font-light leading-relaxed">
+                AI 驱动的智能信息管理工具：零心智负担的信息管家
+              </p>
+            </div>
+
+            <!-- 新增：官网和开源链接按钮 -->
+            <div class="flex flex-wrap gap-4">
+              <a href="https://ci.ai-knowledgepoints.cn/" target="_blank" rel="noopener noreferrer" class="inline-block bg-accent-gold text-white font-semibold px-6 py-3 rounded-lg shadow-lg transform transition-transform hover:scale-105">
+                <i class="fas fa-rocket mr-2"></i> 官网体验
+              </a>
+              <a href="https://github.com/alg-bug-engineer/cogniflow" target="_blank" rel="noopener noreferrer" class="inline-block bg-white/20 backdrop-blur-sm text-white font-semibold px-6 py-3 rounded-lg shadow-lg transform transition-transform hover:scale-105">
+                <i class="fab fa-github mr-2"></i> 开源仓库
+              </a>
+            </div>
+
+            <div class="flex flex-wrap gap-3 sm:gap-4 text-sm text-gray-300">
+              <span class="flex items-center gap-2">
+                <i class="fas fa-microchip text-accent-gold"></i>
+                AI 智能处理
+              </span>
+              <span class="flex items-center gap-2">
+                <i class="fas fa-book text-accent-gold"></i>
+                知识管理
+              </span>
+              <span class="flex items-center gap-2">
+                <i class="fas fa-tasks text-accent-gold"></i>
+                任务管理
+              </span>
+            </div>
+          </div>
+
+          <!-- 右侧：核心数据洞察 -->
+          <div class="bg-white/10 backdrop-blur-sm rounded-2xl p-8 border border-white/20">
+            <h3 class="text-xl font-semibold text-white mb-6">核心数据洞察</h3>
+            <div class="grid grid-cols-2 gap-6 text-center">
+              <div class="space-y-2">
+                <div class="text-2xl sm:text-3xl font-bold text-accent-gold">5种</div>
+                <div class="text-sm text-gray-300">核心卡片类型</div>
+              </div>
+              <div class="space-y-2">
+                <div class="text-2xl sm:text-3xl font-bold text-accent-gold">2种</div>
+                <div class="text-sm text-gray-300">灵活存储模式</div>
+              </div>
+              <div class="space-y-2">
+                <div class="text-2xl sm:text-3xl font-bold text-accent-gold">AI驱动</div>
+                <div class="text-sm text-gray-300">智谱 GLM-4</div>
+              </div>
+              <div class="space-y-2">
+                <div class="text-2xl sm:text-3xl font-bold text-accent-gold">10+</div>
+                <div class="text-sm text-gray-300">核心数据表 (PG)</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 产品简介 -->
+    <section id="executive-summary" class="py-20 bg-white">
+      <div class="max-w-6xl mx-auto px-4 sm:px-6 md:px-8">
+        <h2 class="section-title text-4xl mb-12">产品简介</h2>
+
+        <!-- 布局调整：从 3 列改为 2 列 -->
+        <div class="grid lg:grid-cols-2 gap-12">
+          <!-- 左侧文本 -->
+          <div class="space-y-8">
+            <div class="prose prose-lg max-w-none">
+              <p class="text-xl text-warm-gray leading-relaxed mb-6">
+                CogniFlow 是一款完全开源的 AI 驱动智能信息管理工具，旨在解决现代工作流中的信息碎片化问题。它通过提供一个统一的记录入口和强大的 AI 智能处理能力（基于智谱 GLM-4），实现了“零心智负担”的记录体验。
+                <br />
+                <strong class="text-deep-blue">官网链接：</strong> <a href="https://ci.ai-knowledgepoints.cn/" target="_blank" rel="noopener noreferrer" class="citation !text-deep-blue">https://ci.ai-knowledgepoints.cn/</a>
+                <br />
+                <strong class="text-deep-blue">项目地址：</strong> <a href="https://github.com/alg-bug-engineer/cogniflow" target="_blank" rel="noopener noreferrer" class="citation !text-deep-blue">https://github.com/alg-bug-engineer/cogniflow</a>
+              </p>
+
+              <p class="mb-6">
+                <strong>核心竞争力</strong>在于其巧妙地将 AI 快捷输入（自然语言识别与声明式前缀）、多样化信息管理（任务、日程、笔记等五种卡片）以及 灵活的部署架构（个人本地存储与团队 PostgreSQL 数据库）相结合。
+              </p>
+
+              <p>
+                该项目不仅为个人用户提供了高效的知识和任务管理方案，也通过 Docker Compose 和 PostgreSQL 支持，为团队和企业提供了可私有化部署、支持多端同步的协作平台。
+              </p>
+            </div>
+          </div>
+
+          <!-- 右侧卡片 -->
+          <div class="space-y-6">
+            <div class="bg-soft-beige p-6 rounded-xl">
+              <h4 class="font-semibold text-deep-blue mb-3">核心特性</h4>
+              <ul class="space-y-2 text-sm text-warm-gray">
+                <li class="flex items-start gap-2">
+                  <i class="fas fa-check-circle text-accent-gold mt-1"></i>
+                  AI 快捷输入是实现“零心智负担”的核心亮点
+                </li>
+                <li class="flex items-start gap-2">
+                  <i class="fas fa-check-circle text-accent-gold mt-1"></i>
+                  功能覆盖信息记录、整理、追踪、分析的全周期
+                </li>
+                <li class="flex items-start gap-2">
+                  <i class="fas fa-check-circle text-accent-gold mt-1"></i>
+                  灵活的存储模式兼顾个人隐私与团队协作需求
+                </li>
+                <li class="flex items-start gap-2">
+                  <i class="fas fa-check-circle text-accent-gold mt-1"></i>
+                  MIT 协议与 Docker 部署使其具备高商用价值
+                </li>
+              </ul>
+            </div>
+
+            <div class="bg-gradient-to-br from-deep-blue to-warm-gray p-6 rounded-xl text-white">
+              <h4 class="font-semibold mb-3">产品亮点</h4>
+              <ul class="space-y-2 text-sm">
+                <li class="flex items-start gap-2">
+                  <i class="fas fa-star text-accent-gold mt-1"></i>
+                  AI 驱动的自然语言输入
+                </li>
+                <li class="flex items-start gap-2">
+                  <i class="fas fa-star text-accent-gold mt-1"></i>
+                  五合一卡片（任务、日程、笔记等）统一管理
+                </li>
+                <li class="flex items-start gap-2">
+                  <i class="fas fa-star text-accent-gold mt-1"></i>
+                  支持本地或数据库（团队同步）部署
+                </li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 核心功能深度分析 -->
+    <section id="features-analysis" class="py-20 bg-white">
+      <div class="max-w-6xl mx-auto px-4 sm:px-6 md:px-8">
+        <h2 class="section-title text-4xl mb-12">核心功能深度分析</h2>
+
+        <!-- 功能：AI 快捷输入 -->
+        <div id="feature-ai-input" class="mb-16">
+          <div class="bg-gradient-to-r from-deep-blue to-warm-gray p-8 rounded-2xl text-white mb-8">
+            <h3 class="section-title text-3xl text-white mb-4">AI 驱动的快捷输入</h3>
+            <p class="text-xl font-light">实现“零心智负担”的核心引擎</p>
+          </div>
+
+          <div class="grid lg:grid-cols-3 gap-8">
+            <!-- Row 1 -->
+            <div class="lg:col-span-2 bg-soft-beige p-6 rounded-xl h-full">
+              <h4 class="font-semibold text-deep-blue mb-4 flex items-center gap-2">
+                <i class="fas fa-crown text-accent-gold"></i>
+                功能设计
+              </h4>
+              <p class="mb-4">
+                CogniFlow 的核心亮点在于其AI 驱动的快捷输入机制。它允许用户像聊天一样输入信息，AI 自动识别意图并创建相应卡片，彻底消除了传统工具中“先思考分类，再填写表单”的繁琐流程<a href="#ref-1" class="citation">[1]</a>。
+              </p>
+              <div class="bg-white p-4 rounded-lg">
+                <p class="text-sm text-warm-gray">
+                  <strong>示例:</strong> "明天下午3点开会" → 自动创建为日程。
+                </p>
+                <p class="text-sm text-warm-gray">
+                  <strong>示例:</strong> "完成报告 #重要" → 自动创建为任务。
+                </p>
+              </div>
+            </div>
+            <img src="https://raw.githubusercontent.com/alg-bug-engineer/cogniflow/main/imgs/main.png" alt="快捷输入界面" class="w-full rounded-xl shadow-lg h-full object-cover" />
+
+            <!-- Row 2 -->
+            <div class="lg:col-span-2 bg-soft-beige p-6 rounded-xl h-full">
+              <h4 class="font-semibold text-deep-blue mb-4 flex items-center gap-2">
+                <i class="fas fa-cog text-accent-gold"></i>
+                技术优势
+              </h4>
+              <p class="mb-4">
+                结合 AI 智能与用户控制，提供了多种输入方式：
+              </p>
+              <ul class="space-y-2 text-sm text-warm-gray list-disc list-inside">
+                <li><strong>自然语言输入:</strong> 基于智谱 GLM-4 的意图识别。</li>
+                <li><strong>声明式前缀:</strong> 用户可通过 `任务:`、`笔记:`、`@会议` 等前缀明确指定类型，AI 辅助提取关键信息。</li>
+                <li><strong>智能模板:</strong> 输入“日报”、“会议”等触发词，快速调用预设模板。</li>
+              </ul>
+            </div>
+            <div class="bg-gradient-to-br from-accent-gold to-yellow-600 p-6 rounded-xl text-white h-full">
+              <h4 class="font-semibold mb-3">AI 核心</h4>
+              <ul class="space-y-2 text-sm">
+                <li>• AI 模型: 智谱 GLM-4</li>
+                <li>• 处理方式: 流式处理</li>
+                <li>• 配置: .env 文件配置 API Key</li>
+                <li>• 成本控制: 内置预算设置与日志</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+
+        <!-- 功能：多样化信息管理 -->
+        <div id="feature-management" class="mb-16">
+          <div class="bg-gradient-to-r from-warm-gray to-deep-blue p-8 rounded-2xl text-white mb-8">
+            <h3 class="section-title text-3xl text-white mb-4">多样化信息管理</h3>
+            <p class="text-xl font-light">统一管理所有碎片化信息</p>
+          </div>
+
+          <div class="grid lg:grid-cols-3 gap-8">
+            <!-- Row 1 -->
+            <img src="https://raw.githubusercontent.com/alg-bug-engineer/cogniflow/main/imgs/broad.png" alt="看板视图" class="w-full rounded-xl shadow-lg h-full object-cover" />
+            <div class="lg:col-span-2 bg-soft-beige p-6 rounded-xl h-full">
+              <h4 class="font-semibold text-deep-blue mb-4 flex items-center gap-2">
+                <i class="fas fa-trophy text-accent-gold"></i>
+                核心卡片系统
+              </h4>
+              <p class="mb-4">
+                CogniFlow 预设了五种智能卡片类型，覆盖了个人和团队信息管理的主要场景：
+              </p>
+              <ul class="space-y-1 text-sm text-warm-gray list-disc list-inside">
+                <li><strong>📋 任务卡片:</strong> 优先级、状态、截止日期</li>
+                <li><strong>📅 日程卡片:</strong> 开始/结束时间、冲突检测</li>
+                <li><strong>📝 笔记卡片:</strong> 富文本、Markdown 支持</li>
+                <li><strong>📚 资料卡片:</strong> 附件支持、分类归档</li>
+                <li><strong>🔗 链接卡片:</strong> 自动抓取标题和图标</li>
+              </ul>
+            </div>
+
+            <!-- Row 2 -->
+            <div class="bg-soft-beige p-6 rounded-xl h-full">
+              <h4 class="font-semibold text-deep-blue mb-4">多维看板</h4>
+              <div class="text-center">
+                <div class="text-4xl font-bold text-accent-gold mb-2">3+</div>
+                <p class="text-sm text-warm-gray">
+                  支持按状态（待办/进行中/已完成）、优先级、标签等多维度组织信息<a href="#ref-1" class="citation">[1]</a>
+                </p>
+              </div>
+            </div>
+            <div class="lg:col-span-2 bg-soft-beige p-6 rounded-xl h-full">
+              <h4 class="font-semibold text-deep-blue mb-4 flex items-center gap-2">
+                <i class="fas fa-calendar-alt text-accent-gold"></i>
+                可视化视图
+              </h4>
+              <p class="mb-4">
+                提供多种视图以适应不同场景：
+              </p>
+              <div class="bg-white p-4 rounded-lg space-y-2">
+                <p class="text-sm text-warm-gray">
+                  <strong>看板视图:</strong> 用于任务流转和项目管理，支持拖拽操作。
+                </p>
+                <p class="text-sm text-warm-gray">
+                  <strong>日历视图:</strong> 用于时间安排可视化，内置时间冲突自动检测功能<a href="#ref-1" class="citation">[1]</a>。
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 功能：灵活的存储架构 -->
+        <div id="feature-storage" class="mb-16">
+          <div class="bg-gradient-to-r from-deep-blue to-accent-gold p-8 rounded-2xl text-white mb-8">
+            <h3 class="section-title text-3xl text-white mb-4">灵活的存储架构</h3>
+            <p class="text-xl font-light">兼顾个人隐私与团队协作</p>
+          </div>
+
+          <div class="grid lg:grid-cols-2 gap-8">
+            <!-- Row 1 -->
+            <div class="bg-soft-beige p-6 rounded-xl h-full">
+              <h4 class="font-semibold text-deep-blue mb-4">模式一：本地存储 (个人)</h4>
+              <p class="mb-4">
+                默认模式，数据存储在浏览器（IndexedDB或LocalStorage），实现完全的数据本地化和隐私安全。
+              </p>
+              <ul class="space-y-2 text-sm text-warm-gray">
+                <li><i class="fas fa-check text-green-500 mr-2"></i>开箱即用，无需配置</li>
+                <li><i class="fas fa-check text-green-500 mr-2"></i>离线可用，隐私安全</li>
+                <li><i class="fas fa-times text-red-500 mr-2"></i>不支持多设备同步</li>
+              </ul>
+            </div>
+            <img src="https://raw.githubusercontent.com/alg-bug-engineer/cogniflow/main/imgs/self.png" alt="个人中心设置" class="w-full rounded-xl shadow-lg h-full object-cover" />
+
+            <!-- Row 2 -->
+            <div class="bg-soft-beige p-6 rounded-xl h-full">
+              <h4 class="font-semibold text-deep-blue mb-4">模式二：数据库 (团队/多端)</h4>
+              <p class="mb-4">
+                通过连接 PostgreSQL 数据库，实现数据持久化存储、多设备自动同步和团队协作<a href="#ref-1" class="citation">[1]</a>。
+              </p>
+              <ul class="space-y-2 text-sm text-warm-gray">
+                <li><i class="fas fa-check text-green-500 mr-2"></i>数据持久化，多端同步</li>
+                <li><i class="fas fa-check text-green-500 mr-2"></i>支持团队协作与数据备份</li>
+                <li><i class="fas fa-check text-green-500 mr-2"></i>支持 Docker 一键部署</li>
+              </ul>
+            </div>
+            <div class="bg-gradient-to-br from-warm-gray to-deep-blue p-6 rounded-xl text-white h-full">
+              <h4 class="font-semibold mb-4">部署与技术栈</h4>
+              <p class="mb-4 text-sm">
+                项目提供 `docker-compose.yml` 及一键部署脚本 (`./deploy-all.sh`)，快速启动后端服务、PostgreSQL 数据库和 pgAdmin 管理界面。
+              </p>
+              <div class="bg-white/20 p-3 rounded-lg">
+                <p class="text-xs">
+                  数据库: PostgreSQL (10+ 核心表)
+                </p>
+                <p class="text-xs">
+                  后端: Node.js + Express
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 功能：智能洞察与报告 -->
+        <div id="feature-report" class="mb-16">
+          <div class="bg-gradient-to-r from-accent-gold to-deep-blue p-8 rounded-2xl text-white mb-8">
+            <h3 class="section-title text-3xl text-white mb-4">智能洞察与报告</h3>
+            <p class="text-xl font-light">从信息记录到数据洞察</p>
+          </div>
+
+          <div class="grid lg:grid-cols-3 gap-8">
+            <!-- Row 1 -->
+            <div class="lg:col-span-2 bg-soft-beige p-6 rounded-xl h-full">
+              <h4 class="font-semibold text-deep-blue mb-4 flex items-center gap-2">
+                <i class="fas fa-rocket text-accent-gold"></i>
+                数据可视化
+              </h4>
+              <p class="mb-4">
+                CogniFlow 不止于记录，更提供了智能报告与统计功能，帮助用户分析工作状态和时间分配<a href="#ref-1" class="citation">[1]</a>。
+              </p>
+              <div class="bg-white p-4 rounded-lg">
+                <ul class="space-y-2 text-sm text-warm-gray list-disc list-inside">
+                  <li><strong>任务统计:</strong> 任务完成率趋势、优先级分布。</li>
+                  <li><strong>时间分析:</strong> 日程时间分布、工作时长统计。</li>
+                  <li><strong>效率报表:</strong> 标签使用热力图、工作效率评估。</li>
+                </ul>
+              </div>
+            </div>
+            <img src="https://raw.githubusercontent.com/alg-bug-engineer/cogniflow/main/imgs/report.png" alt="统计报告" class="w-full rounded-xl shadow-lg h-full object-cover" />
+
+            <!-- Row 2 -->
+            <div class="lg:col-span-2 bg-soft-beige p-6 rounded-xl h-full">
+              <h4 class="font-semibold text-deep-blue mb-4 flex items-center gap-2">
+                <i class="fas fa-lightbulb text-accent-gold"></i>
+                智能洞察 (规划中)
+              </h4>
+              <p class="text-sm text-warm-gray">
+                后续规划中，AI 将分析用户的工作模式并提供优化建议，实现从数据到智能决策的闭环。
+              </p>
+            </div>
+            <div class="bg-gradient-to-br from-deep-blue to-accent-gold p-6 rounded-xl text-white text-center h-full">
+              <h4 class="font-semibold mb-4">效率闭环</h4>
+              <div class="space-y-3">
+                <div>
+                  <div class="text-3xl font-bold">100%</div>
+                  <div class="text-sm">信息覆盖</div>
+                </div>
+                <div>
+                  <div class="text-3xl font-bold">AI</div>
+                  <div class="text-sm">分析建议</div>
+                </div>
+              </div>
+              <p class="text-xs mt-4 text-blue-200">
+                实现记录-整理-分析-洞察
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 技术架构 -->
+    <section id="tech-stack" class="py-20 bg-soft-beige">
+      <div class="max-w-6xl mx-auto px-4 sm:px-6 md:px-8">
+        <h2 class="section-title text-4xl mb-12">技术架构</h2>
+
+        <div class="grid lg:grid-cols-3 gap-8 mb-12">
+          <div class="bg-white p-8 rounded-2xl shadow-lg">
+            <div class="w-16 h-16 bg-gradient-to-br from-accent-gold to-yellow-600 rounded-2xl flex items-center justify-center mb-6">
+              <i class="fas fa-layer-group text-white text-2xl"></i>
+            </div>
+            <h3 class="section-title text-2xl mb-4">全栈技术选型</h3>
+            <p class="text-warm-gray mb-6">
+              采用现代化的前后端分离架构，技术栈清晰，易于维护和二次开发<a href="#ref-1" class="citation">[1]</a>。
+            </p>
+            <div class="space-y-3">
+              <div class="flex justify-between items-center">
+                <span class="text-sm">前端</span>
+                <span class="font-bold text-accent-gold">React 18 + TS + Vite</span>
+              </div>
+              <div class="flex justify-between items-center">
+                <span class="text-sm">后端</span>
+                <span class="font-bold text-accent-gold">Node.js + Express</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="bg-white p-8 rounded-2xl shadow-lg">
+            <div class="w-16 h-16 bg-gradient-to-br from-deep-blue to-blue-800 rounded-2xl flex items-center justify-center mb-6">
+              <i class="fab fa-docker text-white text-2xl"></i>
+            </div>
+            <h3 class="section-title text-2xl mb-4">部署友好 (DevOps)</h3>
+            <p class="text-warm-gray mb-6">
+              项目高度重视部署体验，提供一键部署脚本和 Docker Compose 配置，极大降低私有化部署门槛。
+            </p>
+            <div class="space-y-3">
+              <div class="flex justify-between items-center">
+                <span class="text-sm">部署方式</span>
+                <span class="font-bold text-deep-blue">Docker Compose</span>
+              </div>
+              <div class="flex justify-between items-center">
+                <span class="text-sm">一键脚本</span>
+                <span class="font-bold text-deep-blue">./deploy-all.sh</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="bg-white p-8 rounded-2xl shadow-lg">
+            <div class="w-16 h-16 bg-gradient-to-br from-warm-gray to-gray-600 rounded-2xl flex items-center justify-center mb-6">
+              <i class="fas fa-microchip text-white text-2xl"></i>
+            </div>
+            <h3 class="section-title text-2xl mb-4">开放的 AI 集成</h3>
+            <p class="text-warm-gray mb-6">
+              AI 能力通过 API (智谱 GLM-4) 集成，配置灵活。内置成本控制模块，显示其对商用落地的考量。
+            </p>
+            <div class="space-y-3">
+              <div class="flex justify-between items-center">
+                <span class="text-sm">AI 模型</span>
+                <span class="font-bold text-warm-gray">智谱 GLM-4</span>
+              </div>
+              <div class="flex justify-between items-center">
+                <span class="text-sm">成本控制</span>
+                <span class="font-bold text-warm-gray">预算设置 + 日志</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 应用场景与未来规划 -->
+    <section id="use-cases-roadmap" class="py-20 bg-white">
+      <div class="max-w-6xl mx-auto px-4 sm:px-6 md:px-8">
+        <h2 class="section-title text-4xl mb-12">应用场景与未来规划</h2>
+
+        <div class="grid lg:grid-cols-2 gap-12 items-stretch">
+          <div class="space-y-8 flex flex-col">
+            <div class="bg-soft-beige p-8 rounded-2xl h-full">
+              <h3 class="section-title text-2xl mb-6">典型应用场景</h3>
+              <div class="space-y-4">
+                <div class="flex items-start gap-4">
+                  <div class="w-8 h-8 bg-accent-gold rounded-full flex items-center justify-center text-white font-bold text-sm mt-1">1</div>
+                  <div>
+                    <h4 class="font-semibold text-deep-blue mb-2">个人知识管理</h4>
+                    <p class="text-sm text-warm-gray">面向需要快速捕捉灵感、整理笔记、管理资料和链接的个人用户。</p>
+                  </div>
+                </div>
+                <div class="flex items-start gap-4">
+                  <div class="w-8 h-8 bg-accent-gold rounded-full flex items-center justify-center text-white font-bold text-sm mt-1">2</div>
+                  <div>
+                    <h4 class="font-semibold text-deep-blue mb-2">工作任务管理</h4>
+                    <p class="text-sm text-warm-gray">面向需要跟踪待办事项、安排会议、监控项目进度的专业人士。</p>
+                  </div>
+                </div>
+                <div class="flex items-start gap-4">
+                  <div class="w-8 h-8 bg-accent-gold rounded-full flex items-center justify-center text-white font-bold text-sm mt-1">3</div>
+                  <div>
+                    <h4 class="font-semibold text-deep-blue mb-2">团队协作平台</h4>
+                    <p class="text-sm text-warm-gray">面向需要信息共享、任务分配和进度协调的小型团队（特别是需要私有化部署的团队）。</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="space-y-8 flex flex-col">
+            <img src="https://raw.githubusercontent.com/alg-bug-engineer/cogniflow/main/imgs/cal.png" alt="日历视图" class="w-full rounded-xl shadow-lg" />
+            <div class="bg-gradient-to-br from-deep-blue to-warm-gray p-8 rounded-2xl text-white">
+              <h3 class="text-xl font-semibold mb-6">后续规划 (Roadmap)</h3>
+              <p class="text-sm mb-4">项目规划清晰，显示出向全平台、高集成度智能助手发展的雄心<a href="#ref-1" class="citation">[1]</a>。</p>
+              <h4 class="font-semibold mb-2 text-accent-gold">即将推出:</h4>
+              <ul class="space-y-2 text-sm list-disc list-inside">
+                <li>日历应用同步 (Google, Outlook)</li>
+                <li>邮件应用集成 (邮件转任务/笔记)</li>
+                <li>通知提醒系统 (桌面, 微信)</li>
+                <li>移动应用 (iOS, Android)</li>
+              </ul>
+              <h4 class="font-semibold mb-2 mt-4 text-accent-gold">长期愿景:</h4>
+              <ul class="space-y-2 text-sm list-disc list-inside">
+                <li>更多集成 (Notion, 飞书, GitHub)</li>
+                <li>AI 能力升级 (智能推荐, 语音转文字, OCR)</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 参考文献 -->
+    <section id="references" class="py-12 bg-white border-t">
+      <div class="max-w-6xl mx-auto px-4 sm:px-6 md:px-8">
+        <h3 class="section-title text-2xl mb-8">参考文献</h3>
+        <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-4 text-xs text-warm-gray">
+          <div id="ref-1">[1] <a href="https://github.com/alg-bug-engineer/cogniflow/blob/main/README.md" class="citation">CogniFlow GitHub 仓库 README.md</a>
+          </div>
+          <div id="ref-2">[2] <a href="https://github.com/alg-bug-engineer/cogniflow/tree/main/docs" class="citation">CogniFlow 官方文档中心</a>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    // 初始化 Vanta.js 动态背景
+    if (typeof VANTA !== 'undefined') {
+      VANTA.NET({
+        el: "#vanta-bg",
+        mouseControls: true,
+        touchControls: true,
+        gyroControls: false,
+        minHeight: 200.00,
+        minWidth: 200.00,
+        scale: 1.00,
+        scaleMobile: 1.00,
+        color: 0x1e3a8a,
+        backgroundColor: 0x0f172a,
+        points: 8.00,
+        maxDistance: 25.00,
+        spacing: 20.00
+      });
+    }
+
+    // 锚点链接平滑滚动
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+      anchor.addEventListener('click', function(e) {
+        e.preventDefault();
+        const target = document.querySelector(this.getAttribute('href'));
+        if (target) {
+          target.scrollIntoView({
+            behavior: 'smooth',
+            block: 'start'
+          });
+        }
+      });
+    });
+  </script>
+
+</body>
+
+</html>

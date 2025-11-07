@@ -205,7 +205,7 @@ export function LocalLoginPanel({
                   快速体验将自动创建一个临时账号，请保存好账号信息
                 </p>
                 <p className="text-[10px] text-center text-muted-foreground/70">
-                  * 注册用户可使用 100 次 AI 功能，快捷登录用户可使用 50 次
+                  * 注册用户可使用 40 次 AI 功能，快捷登录用户可使用 10 次
                 </p>
               </div>
             </form>

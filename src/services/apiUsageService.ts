@@ -5,7 +5,7 @@
 
 import { postgresAuth } from '@/db/postgresAuth';
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000';
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
 
 export interface ApiUsageInfo {
   currentUsage: number;
@@ -25,7 +25,7 @@ export async function getApiUsage(): Promise<ApiUsageInfo | null> {
       return null;
     }
 
-    const response = await fetch(`${API_BASE_URL}/api/users/api-usage`, {
+    const response = await fetch(`${API_BASE_URL}/users/api-usage`, {
       method: 'GET',
       headers: {
         'Authorization': `Bearer ${token}`,
@@ -64,7 +64,7 @@ export async function checkAndDecrementApiUsage(): Promise<{
       };
     }
 
-    const response = await fetch(`${API_BASE_URL}/api/users/check-api-usage`, {
+    const response = await fetch(`${API_BASE_URL}/users/check-api-usage`, {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${token}`,
@@ -101,8 +101,8 @@ export async function checkAndDecrementApiUsage(): Promise<{
  * 检查是否需要使用 API（是否使用 PostgreSQL 模式）
  */
 export function needsApiUsageCheck(): boolean {
-  const usePostgres = import.meta.env.VITE_USE_POSTGRES === 'true';
-  return usePostgres;
+  const storageMode = import.meta.env.VITE_STORAGE_MODE;
+  return storageMode === 'postgres';
 }
 
 /**

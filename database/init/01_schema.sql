@@ -50,7 +50,7 @@ CREATE INDEX idx_users_personal_api_key ON users(personal_api_key) WHERE persona
 -- 用户表字段注释
 COMMENT ON COLUMN users.personal_api_key IS '用户个人的智谱 API Key，配置后将优先使用，不受次数限制';
 COMMENT ON COLUMN users.api_usage_count IS 'API 使用次数计数器';
-COMMENT ON COLUMN users.max_api_usage IS 'API 最大使用次数限制（注册用户100次，快速登录50次）';
+COMMENT ON COLUMN users.max_api_usage IS 'API 最大使用次数限制（注册用户40次，快速登录10次）';
 COMMENT ON COLUMN users.account_type IS '账户类型：registered（注册用户）、quick_login（快速登录）';
 
 -- ============================================
@@ -355,10 +355,10 @@ BEGIN
     -- 如果是快捷登录用户（用户名以 guest_ 开头）
     IF NEW.username LIKE 'guest_%' THEN
         NEW.account_type := 'quick_login';
-        NEW.max_api_usage := 50;
+        NEW.max_api_usage := 10;
     ELSE
         NEW.account_type := 'registered';
-        NEW.max_api_usage := 100;
+        NEW.max_api_usage := 40;
     END IF;
     
     NEW.api_usage_count := 0;
