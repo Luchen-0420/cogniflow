@@ -12,7 +12,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { useAuth, userProfileApi, userSettingsApi } from '@/db/api';
+import { useAuth, profileApi, userSettingsApi } from '@/db/api';
 import { LocalStorageManager } from '@/services/localStorageManager';
 import { toast } from 'sonner';
 import { ArrowLeft, Save, Download, Upload, Trash2, RefreshCw, Eye, EyeOff, Key } from 'lucide-react';
@@ -38,6 +38,17 @@ export default function ProfilePage() {
   const [loading, setLoading] = useState(false);
   const [statsData, setStatsData] = useState<any>(null);
 
+  // 当 user 对象变化时，更新 profileData
+  useEffect(() => {
+    if (user) {
+      setProfileData({
+        username: user.username || '',
+        email: user.email || '',
+        phone: user.phone || ''
+      });
+    }
+  }, [user]);
+
   // 加载用户数据和设置
   useEffect(() => {
     loadUserData();
@@ -48,17 +59,50 @@ export default function ProfilePage() {
       const userSettings = await userSettingsApi.getSettings();
       setSettings(userSettings);
       
+      // 获取完整的用户信息（包括手机号和API Key状态）
+      try {
+        const token = localStorage.getItem('cogniflow_auth_token');
+        if (token) {
+          // 从服务器获取用户信息
+          const meResponse = await fetch('/api/users/me', {
+            headers: {
+              'Authorization': `Bearer ${token}`
+            }
+          });
+          
+          if (meResponse.ok) {
+            const userData = await meResponse.json();
+            // 更新 profileData 以显示已保存的信息
+            setProfileData({
+              username: userData.username || '',
+              email: userData.email || '',
+              phone: userData.phone || ''
+            });
+            
+            // 如果用户有个人 API Key，显示掩码
+            if (userData.has_personal_key) {
+              setPersonalApiKey('••••••••••••••••••••••••••••••••');
+            }
+          }
+        }
+      } catch (error) {
+        console.error('获取用户信息失败:', error);
+      }
+      
       // 获取 API 使用情况（从服务器或本地）
       try {
         const response = await fetch('/api/users/api-usage', {
           headers: {
-            'Authorization': `Bearer ${localStorage.getItem('token')}`
+            'Authorization': `Bearer ${localStorage.getItem('cogniflow_auth_token')}`
           }
         });
         if (response.ok) {
           const usage = await response.json();
           setApiUsage(usage);
-          setPersonalApiKey(usage.hasPersonalKey ? '••••••••••••••••' : '');
+          // 如果之前没有设置过 API Key 显示，这里再设置一次
+          if (usage.hasPersonalKey && !personalApiKey) {
+            setPersonalApiKey('••••••••••••••••••••••••••••••••');
+          }
         }
       } catch (error) {
         console.error('获取API使用情况失败:', error);
@@ -94,7 +138,7 @@ export default function ProfilePage() {
     setLoading(true);
     
     try {
-      const success = await userProfileApi.updateProfile(profileData);
+      const success = await profileApi.updateProfile(profileData);
       if (success) {
         toast.success('个人信息更新成功');
       } else {
@@ -376,33 +420,55 @@ export default function ProfilePage() {
                     </Button>
                   </div>
                   <p className="text-xs text-muted-foreground">
-                    配置个人 API Key 后将不受调用次数限制。
-                    <a 
-                      href="https://open.bigmodel.cn/" 
-                      target="_blank" 
-                      rel="noopener noreferrer"
-                      className="text-primary hover:underline ml-1"
-                    >
-                      获取 API Key
-                    </a>
+                    {apiUsage?.hasPersonalKey ? (
+                      <>
+                        当前已配置 API Key。如需修改，请先删除现有密钥，然后输入新密钥。
+                      </>
+                    ) : (
+                      <>
+                        配置个人 API Key 后将不受调用次数限制。
+                        <a 
+                          href="https://open.bigmodel.cn/" 
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                          className="text-primary hover:underline ml-1"
+                        >
+                          获取 API Key
+                        </a>
+                      </>
+                    )}
                   </p>
                 </div>
 
                 <Button 
                   onClick={async () => {
+                    // 如果输入的是掩码，不发送请求
+                    if (personalApiKey.startsWith('••••')) {
+                      toast.info('API Key 未修改');
+                      return;
+                    }
+                    
+                    // 如果输入为空，提示用户
+                    if (!personalApiKey.trim()) {
+                      toast.error('请输入有效的 API Key');
+                      return;
+                    }
+                    
                     setLoading(true);
                     try {
                       const response = await fetch('/api/users/api-key', {
                         method: 'PUT',
                         headers: {
                           'Content-Type': 'application/json',
-                          'Authorization': `Bearer ${localStorage.getItem('token')}`
+                          'Authorization': `Bearer ${localStorage.getItem('cogniflow_auth_token')}`
                         },
                         body: JSON.stringify({ personalApiKey })
                       });
 
                       if (response.ok) {
                         toast.success('API Key 更新成功');
+                        // 更新为掩码显示
+                        setPersonalApiKey('••••••••••••••••••••••••••••••••');
                         await loadUserData();
                       } else {
                         const error = await response.json();
@@ -434,7 +500,7 @@ export default function ProfilePage() {
                         const response = await fetch('/api/users/api-key', {
                           method: 'DELETE',
                           headers: {
-                            'Authorization': `Bearer ${localStorage.getItem('token')}`
+                            'Authorization': `Bearer ${localStorage.getItem('cogniflow_auth_token')}`
                           }
                         });
 

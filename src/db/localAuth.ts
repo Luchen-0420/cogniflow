@@ -22,6 +22,7 @@ export interface LocalUser {
   email: string | null;
   role: UserRole;
   created_at: string;
+  has_personal_key?: boolean;
 }
 
 /**

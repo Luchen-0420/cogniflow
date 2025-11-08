@@ -260,7 +260,9 @@ router.get('/me', async (req: AuthRequest, res: Response, next: NextFunction) =>
     }
 
     const result = await query(
-      'SELECT id, username, email, role, created_at, last_login_at FROM users WHERE id = $1',
+      `SELECT id, username, email, phone, role, created_at, last_login_at,
+              (personal_api_key IS NOT NULL AND personal_api_key != '') as has_personal_key
+       FROM users WHERE id = $1`,
       [userId]
     );
 
@@ -282,17 +284,56 @@ router.get('/me', async (req: AuthRequest, res: Response, next: NextFunction) =>
 router.put('/me', async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
     const userId = req.user?.id;
-    const { email } = req.body;
+    const { username, email, phone } = req.body;
 
     if (!userId) {
       return res.status(401).json({ error: '未授权' });
     }
 
+    // 构建动态更新语句
+    const updates: string[] = [];
+    const values: any[] = [];
+    let paramCount = 1;
+
+    if (username !== undefined) {
+      // 检查用户名是否已被其他用户使用
+      const existingUser = await query(
+        'SELECT id FROM users WHERE username = $1 AND id != $2',
+        [username, userId]
+      );
+      if (existingUser.rows.length > 0) {
+        return res.status(409).json({ error: '用户名已被使用' });
+      }
+      updates.push(`username = $${paramCount++}`);
+      values.push(username);
+    }
+
+    if (email !== undefined) {
+      updates.push(`email = $${paramCount++}`);
+      values.push(email);
+    }
+
+    if (phone !== undefined) {
+      updates.push(`phone = $${paramCount++}`);
+      values.push(phone);
+    }
+
+    // 如果没有要更新的字段
+    if (updates.length === 0) {
+      return res.status(400).json({ error: '没有要更新的字段' });
+    }
+
+    // 添加 updated_at
+    updates.push(`updated_at = CURRENT_TIMESTAMP`);
+    
+    // 添加 userId 作为最后一个参数
+    values.push(userId);
+
     const result = await query(
-      `UPDATE users SET email = $1, updated_at = CURRENT_TIMESTAMP
-       WHERE id = $2
-       RETURNING id, username, email, role`,
-      [email, userId]
+      `UPDATE users SET ${updates.join(', ')}
+       WHERE id = $${paramCount}
+       RETURNING id, username, email, phone, role`,
+      values
     );
 
     if (result.rows.length === 0) {
@@ -429,11 +470,19 @@ router.get('/api-usage', async (req: AuthRequest, res: Response, next: NextFunct
     }
 
     const usage = result.rows[0];
+    
+    // 检查用户是否有个人 API Key
+    const userResult = await query(
+      'SELECT (personal_api_key IS NOT NULL AND personal_api_key != \'\') as has_key FROM users WHERE id = $1',
+      [userId]
+    );
+    
     res.json({
-      currentUsage: usage.current_usage,
-      maxUsage: usage.max_usage,
+      current: usage.current_usage,
+      max: usage.max_usage,
       remaining: usage.remaining,
-      accountType: usage.account_type
+      accountType: usage.account_type,
+      hasPersonalKey: userResult.rows[0]?.has_key || false
     });
   } catch (error) {
     next(error);
