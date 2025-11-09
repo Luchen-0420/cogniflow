@@ -5,6 +5,7 @@ import { localAuth } from '@/db/localAuth';
 import { initDB } from '@/db/indexeddb';
 import { autoBackupService } from '@/services/autoBackup';
 import Header from '@/components/common/Header';
+import ContactButton from '@/components/common/ContactButton';
 import routes from './routes';
 
 export default function App() {
@@ -85,6 +86,7 @@ export default function App() {
           />
         ))}
       </Routes>
+      <ContactButton />
     </Router>
   );
 }

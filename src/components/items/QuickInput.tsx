@@ -12,6 +12,7 @@ import { itemApi, auth, templateApi } from '@/db/api';
 import { useAuth } from '@/db/apiAdapter';
 import { QueryResultPanel } from '@/components/query/QueryResultPanel';
 import { TemplateInputModal } from './TemplateInputModal';
+import { HelpDialog } from '@/components/help/HelpDialog';
 import { checkApiUsageBeforeAction } from '@/services/apiUsageService';
 import {
   Command,
@@ -51,6 +52,9 @@ export default function QuickInput({
   const [templates, setTemplates] = useState<UserTemplate[]>([]);
   const [selectedTemplate, setSelectedTemplate] = useState<UserTemplate | null>(null);
   const [showTemplateModal, setShowTemplateModal] = useState(false);
+  
+  // 帮助对话框状态
+  const [showHelpDialog, setShowHelpDialog] = useState(false);
   
   // 附件相关状态
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
@@ -298,6 +302,13 @@ export default function QuickInput({
     }
 
     const inputText = text.trim();
+    
+    // 检测是否为帮助指令
+    if (inputText.toLowerCase() === '@help') {
+      setShowHelpDialog(true);
+      setText('');
+      return;
+    }
     
     // 如果有附件，先上传附件
     if (selectedFiles.length > 0) {
@@ -880,6 +891,12 @@ export default function QuickInput({
         />
       )}
 
+      {/* 帮助对话框 */}
+      <HelpDialog
+        open={showHelpDialog}
+        onOpenChange={setShowHelpDialog}
+      />
+
       {/* 输入框 */}
       <div className="fixed bottom-0 left-0 right-0 bg-background border-t border-border p-4 shadow-lg z-50">
         <div className="max-w-4xl mx-auto">
@@ -976,7 +993,7 @@ export default function QuickInput({
                 placeholder={
                   isQueryMode 
                     ? "🔍 查询模式: 输入查询内容 (如: 今天有什么事? 查询本周的会议)" 
-                    : "输入任何想法、任务、日程或URL链接... (输入 / 使用智能模板, ? 或 /q 开启查询模式, Enter发送)"
+                    : "输入任何想法、任务、日程或URL链接... (输入 / 使用智能模板, ? 或 /q 开启查询模式, @help 查看帮助, Enter发送)"
                 }
                 className={`min-h-[60px] max-h-[120px] resize-none ${
                   isQueryMode ? 'border-primary' : ''
@@ -1001,9 +1018,15 @@ export default function QuickInput({
           </div>
           
           {/* 提示文本 */}
-          {isQueryMode && (
+          {isQueryMode ? (
             <div className="mt-2 text-xs text-muted-foreground">
               💡 提示: 可以查询"今天的任务"、"本周的会议"、"标签:工作"等
+            </div>
+          ) : (
+            <div className="mt-2 text-xs text-muted-foreground text-center">
+              💡 快捷提示: 输入 <code className="px-1 py-0.5 bg-muted rounded">@help</code> 查看完整使用帮助 | 
+              输入 <code className="px-1 py-0.5 bg-muted rounded">/</code> 使用模板 | 
+              输入 <code className="px-1 py-0.5 bg-muted rounded">?</code> 开启搜索
             </div>
           )}
         </div>
