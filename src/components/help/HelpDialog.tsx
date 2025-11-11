@@ -102,6 +102,16 @@ export const HelpDialog = ({ open, onOpenChange }: HelpDialogProps) => {
               />
 
               <ShortcutCard
+                icon={<FileText className="w-5 h-5 text-purple-500" />}
+                title="写作指令"
+                shortcuts={[
+                  { key: "/blog", desc: "打开博客编辑器，支持 Markdown" },
+                  { key: "实时保存", desc: "编辑器自动保存草稿" },
+                  { key: "AI 提取", desc: "自动提取标题和标签" },
+                ]}
+              />
+
+              <ShortcutCard
                 icon={<Search className="w-5 h-5 text-blue-500" />}
                 title="查询指令"
                 shortcuts={[

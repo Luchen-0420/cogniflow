@@ -1,0 +1,198 @@
+/* 博客编辑器自定义样式 */
+
+/* Dialog 内容区域强制宽度 - 覆盖默认的 sm:max-w-lg */
+.blog-editor-container {
+  width: 95vw !important;
+  max-width: 1400px !important;
+  height: 85vh !important;
+}
+
+@media (min-width: 640px) {
+  .blog-editor-container {
+    max-width: 1400px !important;
+    height: 90vh !important;
+  }
+}
+
+/* 编辑器容器优化 */
+.blog-editor-wrapper {
+  width: 100%;
+  height: 100%;
+}
+
+/* MD Editor 响应式优化 */
+.w-md-editor {
+  box-shadow: none !important;
+  width: 100% !important;
+}
+
+.blog-editor-container .w-md-editor {
+  min-width: 100% !important;
+}
+
+/* 移动端优化 */
+@media (max-width: 640px) {
+  /* 隐藏编辑器工具栏中不常用的按钮 */
+  .w-md-editor-toolbar {
+    flex-wrap: wrap;
+    padding: 8px 4px !important;
+  }
+
+  .w-md-editor-toolbar-child {
+    gap: 2px !important;
+  }
+
+  /* 调整编辑器和预览区域 */
+  .w-md-editor-content {
+    font-size: 14px;
+  }
+
+  /* 预览区域字体 */
+  .wmde-markdown {
+    font-size: 14px;
+    padding: 12px !important;
+  }
+
+  /* 移动端预览模式切换 */
+  .w-md-editor-show-preview .w-md-editor-input {
+    display: none;
+  }
+
+  .w-md-editor-show-edit .w-md-editor-preview {
+    display: none;
+  }
+}
+
+/* PC 端优化 */
+@media (min-width: 641px) {
+  /* 16:9 比例优化 */
+  .w-md-editor {
+    aspect-ratio: auto;
+  }
+
+  /* 编辑区和预览区平分 */
+  .w-md-editor-content {
+    display: flex;
+  }
+
+  .w-md-editor-input,
+  .w-md-editor-preview {
+    flex: 1;
+    min-width: 0;
+  }
+
+  /* 预览区样式优化 */
+  .wmde-markdown {
+    padding: 20px !important;
+    font-size: 16px;
+    line-height: 1.8;
+  }
+
+  .wmde-markdown h1 {
+    font-size: 2em;
+    margin-top: 0.5em;
+    margin-bottom: 0.5em;
+  }
+
+  .wmde-markdown h2 {
+    font-size: 1.5em;
+    margin-top: 0.5em;
+    margin-bottom: 0.5em;
+  }
+
+  .wmde-markdown h3 {
+    font-size: 1.25em;
+    margin-top: 0.5em;
+    margin-bottom: 0.5em;
+  }
+
+  .wmde-markdown p {
+    margin-top: 0.5em;
+    margin-bottom: 0.5em;
+  }
+
+  .wmde-markdown pre {
+    margin: 1em 0;
+    padding: 1em;
+    border-radius: 6px;
+  }
+
+  .wmde-markdown code {
+    padding: 0.2em 0.4em;
+    border-radius: 3px;
+  }
+
+  .wmde-markdown blockquote {
+    margin: 1em 0;
+    padding-left: 1em;
+    border-left: 4px solid #ddd;
+  }
+
+  .wmde-markdown ul,
+  .wmde-markdown ol {
+    margin: 0.5em 0;
+    padding-left: 2em;
+  }
+
+  .wmde-markdown li {
+    margin: 0.25em 0;
+  }
+}
+
+/* 深色模式优化 */
+[data-color-mode="dark"] .w-md-editor {
+  background-color: hsl(var(--background));
+  color: hsl(var(--foreground));
+}
+
+[data-color-mode="dark"] .w-md-editor-toolbar {
+  background-color: hsl(var(--muted));
+  border-bottom-color: hsl(var(--border));
+}
+
+[data-color-mode="dark"] .wmde-markdown {
+  background-color: hsl(var(--background));
+  color: hsl(var(--foreground));
+}
+
+[data-color-mode="dark"] .wmde-markdown blockquote {
+  border-left-color: hsl(var(--border));
+  color: hsl(var(--muted-foreground));
+}
+
+/* 滚动条优化 */
+.w-md-editor-text,
+.wmde-markdown-var {
+  scrollbar-width: thin;
+  scrollbar-color: hsl(var(--muted-foreground)) transparent;
+}
+
+.w-md-editor-text::-webkit-scrollbar,
+.wmde-markdown-var::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.w-md-editor-text::-webkit-scrollbar-track,
+.wmde-markdown-var::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.w-md-editor-text::-webkit-scrollbar-thumb,
+.wmde-markdown-var::-webkit-scrollbar-thumb {
+  background-color: hsl(var(--muted-foreground));
+  border-radius: 4px;
+}
+
+.w-md-editor-text::-webkit-scrollbar-thumb:hover,
+.wmde-markdown-var::-webkit-scrollbar-thumb:hover {
+  background-color: hsl(var(--foreground));
+}
+
+/* 加载状态 */
+.w-md-editor-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 200px;
+}

@@ -4,7 +4,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Send, Search, Paperclip, X, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { VoiceInputButton } from '@/components/voice/VoiceInputButton';
-import { processTextWithAI, generateNoteTitle } from '@/utils/ai';
+import { processTextWithAI, generateNoteTitle, extractBlogMetadata } from '@/utils/ai';
 import { detectURL, isMainlyURL, fetchURLContent, generateURLSummary } from '@/utils/urlProcessor';
 import { detectQueryIntent, removeQueryPrefix, parseQueryIntent, generateQuerySummary } from '@/utils/queryProcessor';
 import { uploadAttachment, updateAttachmentItemId } from '@/utils/attachmentUtils';
@@ -14,6 +14,7 @@ import { useAuth } from '@/db/apiAdapter';
 import { QueryResultPanel } from '@/components/query/QueryResultPanel';
 import { TemplateInputModal } from './TemplateInputModal';
 import { HelpDialog } from '@/components/help/HelpDialog';
+import { BlogEditorDialog } from '@/components/blog/BlogEditorDialog';
 import { checkApiUsageBeforeAction } from '@/services/apiUsageService';
 import {
   Command,
@@ -56,6 +57,9 @@ export default function QuickInput({
   
   // 帮助对话框状态
   const [showHelpDialog, setShowHelpDialog] = useState(false);
+  
+  // 博客编辑器状态
+  const [showBlogEditor, setShowBlogEditor] = useState(false);
   
   // 附件相关状态
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
@@ -165,13 +169,22 @@ export default function QuickInput({
     
     setText(value);
     
+    // 检测 /blog 指令
+    if (value.trim().toLowerCase() === '/blog') {
+      setShowBlogEditor(true);
+      setText(''); // 清空输入框
+      setShowTemplateMenu(false); // 关闭模板菜单
+      return;
+    }
+    
     // 检测是否输入了 /
     if (value === '/') {
       setShowTemplateMenu(true);
-    } else if (value.startsWith('/')) {
-      // 继续显示菜单，用于过滤
+    } else if (value.startsWith('/') && value.length > 1) {
+      // 继续显示菜单，用于过滤（只有在 / 后面有内容时）
       setShowTemplateMenu(true);
     } else {
+      // 如果不是以 / 开头，或者输入框为空，关闭菜单
       setShowTemplateMenu(false);
     }
   };
@@ -223,6 +236,75 @@ export default function QuickInput({
 
   const handleRemoveFile = (index: number) => {
     setSelectedFiles(prev => prev.filter((_, i) => i !== index));
+  };
+
+  // 处理博客保存
+  const handleBlogSave = async (content: string) => {
+    const processingId = `processing-${Date.now()}`;
+    
+    try {
+      const user = auth.getCurrentUser();
+      if (!user) {
+        toast.error('用户未初始化');
+        return;
+      }
+
+      // 检查 API 用量
+      const canProceed = await checkApiUsageBeforeAction(user.id);
+      if (!canProceed) {
+        return;
+      }
+
+      toast.info('正在分析文章内容...');
+      onProcessingStart?.('博客文章', processingId);
+
+      // 使用 AI 提取标题和标签
+      const metadata = await extractBlogMetadata(content);
+      
+      console.log('📝 提取的博客元数据:', metadata);
+
+      // 创建笔记类型的条目
+      const newItem = await itemApi.createItem({
+        raw_text: content,
+        type: 'note',
+        title: metadata.title,
+        description: metadata.description,
+        due_date: null,
+        priority: 'medium',
+        status: 'pending',
+        tags: [...metadata.tags, '博客'],
+        entities: {},
+        archived_at: null,
+        url: null,
+        url_title: null,
+        url_summary: null,
+        url_thumbnail: null,
+        url_fetched_at: null,
+        has_conflict: false,
+        start_time: null,
+        end_time: null,
+        recurrence_rule: null,
+        recurrence_end_date: null,
+        master_item_id: null,
+        is_master: false,
+      });
+
+      if (newItem) {
+        console.log('✅ 博客文章创建成功:', newItem);
+        toast.success(`博客文章《${metadata.title}》已保存到笔记卡片`);
+        onProcessingComplete?.(processingId);
+        onItemCreated?.();
+      } else {
+        console.error('❌ 创建博客条目返回 null');
+        toast.error('创建失败，请重试');
+        onProcessingError?.(processingId);
+      }
+    } catch (error) {
+      console.error('保存博客失败:', error);
+      toast.error('保存失败，请重试');
+      onProcessingError?.(processingId);
+      throw error;
+    }
   };
 
   const handleTemplateSave = async (data: {
@@ -898,6 +980,13 @@ export default function QuickInput({
         onOpenChange={setShowHelpDialog}
       />
 
+      {/* 博客编辑器 */}
+      <BlogEditorDialog
+        open={showBlogEditor}
+        onOpenChange={setShowBlogEditor}
+        onSave={handleBlogSave}
+      />
+
       {/* 输入框 */}
       <div className="fixed bottom-0 left-0 right-0 bg-background border-t border-border p-4 shadow-lg z-50">
         <div className="max-w-4xl mx-auto">
@@ -1008,7 +1097,7 @@ export default function QuickInput({
                 placeholder={
                   isQueryMode 
                     ? "🔍 查询模式: 输入查询内容 (如: 今天有什么事? 查询本周的会议)" 
-                    : "输入任何想法、任务、日程或URL链接... (输入 / 使用智能模板, ? 或 /q 开启查询模式, @help 查看帮助, Enter发送)"
+                    : "输入任何想法、任务、日程或URL链接... (输入 /blog 写博客, / 使用智能模板, ? 或 /q 开启查询模式, @help 查看帮助, Enter发送)"
                 }
                 className={`min-h-[60px] max-h-[120px] resize-none ${
                   isQueryMode ? 'border-primary' : ''
@@ -1039,9 +1128,10 @@ export default function QuickInput({
             </div>
           ) : (
             <div className="mt-2 text-xs text-muted-foreground text-center">
-              💡 快捷提示: 输入 <code className="px-1 py-0.5 bg-muted rounded">@help</code> 查看完整使用帮助 | 
-              输入 <code className="px-1 py-0.5 bg-muted rounded">/</code> 使用模板 | 
-              输入 <code className="px-1 py-0.5 bg-muted rounded">?</code> 开启搜索 | 
+              💡 快捷提示: 输入 <code className="px-1 py-0.5 bg-muted rounded">/blog</code> 写博客 | 
+              <code className="px-1 py-0.5 bg-muted rounded">@help</code> 查看帮助 | 
+              <code className="px-1 py-0.5 bg-muted rounded">/</code> 使用模板 | 
+              <code className="px-1 py-0.5 bg-muted rounded">?</code> 开启搜索 | 
               🎤 点击麦克风使用语音输入
             </div>
           )}

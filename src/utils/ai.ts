@@ -549,7 +549,7 @@ export async function processTextWithAI(text: string): Promise<AIProcessResult> 
  * @returns 生成的标题（10-20个字）
  */
 export async function generateNoteTitle(noteContent: string): Promise<string> {
-  return new Promise((resolve, reject) => {
+  return new Promise((resolve) => {
     let fullResponse = '';
 
     const systemPrompt = `你是一个专业的标题生成助手。用户会提供笔记内容，你需要为这段内容生成一个简洁、准确的标题。
@@ -605,4 +605,146 @@ ${noteContent}
       temperature: 0.7 // 使用较低的温度以获得更稳定的输出
     });
   });
+}
+
+/**
+ * 从博客/文章内容中提取标题和标签
+ * @param content Markdown 格式的博客内容
+ * @returns 包含标题、描述和标签的对象
+ */
+export interface BlogExtractResult {
+  title: string;
+  description: string;
+  tags: string[];
+}
+
+export async function extractBlogMetadata(content: string): Promise<BlogExtractResult> {
+  return new Promise((resolve) => {
+    let fullResponse = '';
+
+    const systemPrompt = `你是一个专业的博客内容分析助手。用户会提供 Markdown 格式的博客文章，你需要提取以下信息：
+
+1. **标题**：如果内容中有 Markdown 一级标题（# 标题），直接使用；否则根据内容生成一个简洁准确的标题（10-30个字）
+2. **描述**：提取文章的核心观点或前几句话作为描述（不超过100字）
+3. **标签**：根据文章内容生成3-5个相关标签，标签应该准确反映文章的主题和关键词
+
+返回格式必须是有效的 JSON：
+{
+  "title": "文章标题",
+  "description": "文章描述或摘要",
+  "tags": ["标签1", "标签2", "标签3"]
+}
+
+要求：
+- 标题简洁准确，能够概括文章主题
+- 描述提炼文章核心内容，不要过长
+- 标签要有代表性，可以包括技术栈、领域、主题等
+- 只返回 JSON 格式，不要添加任何其他文字说明`;
+
+    const userContent = `请分析以下博客文章，提取标题、描述和标签：
+
+${content}
+
+只返回 JSON 格式的结果，不要包含任何其他内容。`;
+
+    sendChatStream({
+      messages: [
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: userContent }
+      ],
+      onUpdate: (content: string) => {
+        fullResponse = content;
+      },
+      onComplete: () => {
+        try {
+          console.log('🤖 AI 返回的原始响应:', fullResponse);
+          
+          // 清理响应中的代码块标记
+          let cleanedResponse = fullResponse.trim();
+          cleanedResponse = cleanedResponse.replace(/```json\n?/g, '');
+          cleanedResponse = cleanedResponse.replace(/```\n?/g, '');
+          cleanedResponse = cleanedResponse.trim();
+          
+          const result = JSON.parse(cleanedResponse);
+          
+          // 验证结果
+          if (!result.title || !result.description || !Array.isArray(result.tags)) {
+            throw new Error('AI 返回的数据格式不正确');
+          }
+          
+          resolve({
+            title: result.title,
+            description: result.description,
+            tags: result.tags
+          });
+        } catch (error) {
+          console.error('❌ 解析博客元数据失败:', error);
+          console.error('📄 原始响应:', fullResponse);
+          
+          // 如果解析失败，提供后备方案
+          const fallbackTitle = extractMarkdownTitle(content) || '博客文章';
+          const fallbackDescription = extractFirstParagraph(content);
+          const fallbackTags = ['博客', '文章'];
+          
+          resolve({
+            title: fallbackTitle,
+            description: fallbackDescription,
+            tags: fallbackTags
+          });
+        }
+      },
+      onError: (error: Error) => {
+        console.error('❌ 提取博客元数据失败:', error);
+        
+        // AI 调用失败，使用本地提取
+        const fallbackTitle = extractMarkdownTitle(content) || '博客文章';
+        const fallbackDescription = extractFirstParagraph(content);
+        const fallbackTags = ['博客', '文章'];
+        
+        resolve({
+          title: fallbackTitle,
+          description: fallbackDescription,
+          tags: fallbackTags
+        });
+      },
+      temperature: 0.7
+    });
+  });
+}
+
+/**
+ * 从 Markdown 内容中提取一级标题
+ */
+function extractMarkdownTitle(content: string): string | null {
+  const lines = content.split('\n');
+  for (const line of lines) {
+    const trimmed = line.trim();
+    if (trimmed.startsWith('# ') && !trimmed.startsWith('## ')) {
+      return trimmed.substring(2).trim();
+    }
+  }
+  return null;
+}
+
+/**
+ * 提取第一段文字作为描述
+ */
+function extractFirstParagraph(content: string): string {
+  // 移除标题行
+  const lines = content.split('\n').filter(line => {
+    const trimmed = line.trim();
+    return trimmed && !trimmed.startsWith('#');
+  });
+  
+  // 获取前几行非空内容
+  const firstLines = lines.slice(0, 3).join(' ');
+  
+  // 移除 Markdown 语法
+  const cleaned = firstLines
+    .replace(/[*_~`]/g, '')
+    .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
+    .trim();
+  
+  // 限制长度
+  return cleaned.length > 100 ? cleaned.substring(0, 100) + '...' : cleaned;
 }
