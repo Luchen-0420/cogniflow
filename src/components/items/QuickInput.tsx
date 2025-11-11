@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Send, Search, Paperclip, X, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
+import { VoiceInputButton } from '@/components/voice/VoiceInputButton';
 import { processTextWithAI, generateNoteTitle } from '@/utils/ai';
 import { detectURL, isMainlyURL, fetchURLContent, generateURLSummary } from '@/utils/urlProcessor';
 import { detectQueryIntent, removeQueryPrefix, parseQueryIntent, generateQuerySummary } from '@/utils/queryProcessor';
@@ -939,7 +940,7 @@ export default function QuickInput({
           
           <div className="flex gap-2">
             {/* 附件上传按钮 */}
-            <div className="flex items-start">
+            <div className="flex items-start gap-2">
               <Button
                 type="button"
                 variant="outline"
@@ -950,6 +951,20 @@ export default function QuickInput({
               >
                 <Paperclip className="h-5 w-5" />
               </Button>
+              
+              {/* 语音输入按钮 */}
+              <VoiceInputButton
+                onTranscript={(voiceText) => {
+                  // 将语音识别的文本追加到现有文本后面
+                  setText((prev) => {
+                    const newText = prev ? `${prev} ${voiceText}` : voiceText;
+                    return newText;
+                  });
+                }}
+                disabled={isQuerying || isUploading}
+                size="lg"
+                className="h-[60px] px-3"
+              />
               
               {/* 隐藏的文件输入 */}
               <input
@@ -1026,7 +1041,8 @@ export default function QuickInput({
             <div className="mt-2 text-xs text-muted-foreground text-center">
               💡 快捷提示: 输入 <code className="px-1 py-0.5 bg-muted rounded">@help</code> 查看完整使用帮助 | 
               输入 <code className="px-1 py-0.5 bg-muted rounded">/</code> 使用模板 | 
-              输入 <code className="px-1 py-0.5 bg-muted rounded">?</code> 开启搜索
+              输入 <code className="px-1 py-0.5 bg-muted rounded">?</code> 开启搜索 | 
+              🎤 点击麦克风使用语音输入
             </div>
           )}
         </div>

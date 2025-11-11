@@ -1,5 +1,55 @@
 # CogniFlow 更新日志
 
+## [Unreleased] - 2025-11-11
+
+### ✨ 新功能
+
+#### 🎤 语音输入功能
+- **新增**: 完整的语音输入功能，支持通过麦克风将语音转换为文字
+- **Web Speech API**: 使用浏览器原生 API，无需后端支持
+- **中文支持**: 默认支持中文语音识别，识别准确率高
+- **实时预览**: 录音时实时显示识别的临时文本
+- **视觉反馈**: 
+  - 麦克风按钮在录音时变为红色并带有脉冲动画
+  - 显示实时识别文本的浮窗预览
+  - Toast 提示操作状态和错误信息
+- **智能追加**: 识别结果自动追加到输入框，支持与手动输入混合使用
+- **错误处理**: 完善的权限管理和错误提示机制
+- **浏览器兼容**: 
+  - ✅ Chrome/Edge (完全支持，推荐)
+  - ✅ Safari (支持)
+  - ❌ Firefox (不支持)
+- **隐私保护**: 所有语音处理在本地完成，不上传音频数据
+
+**核心组件**:
+- `src/hooks/useSpeechRecognition.ts` - 语音识别 Hook
+- `src/components/voice/VoiceInputButton.tsx` - 语音输入按钮组件
+
+**集成位置**:
+- `src/components/items/QuickInput.tsx` - 在主输入框左侧添加语音输入按钮
+
+**文档**:
+- `docs/features/VOICE_INPUT.md` - 完整功能文档
+- `docs/features/VOICE_INPUT_IMPLEMENTATION.md` - 实现总结
+- `docs/quickstart/VOICE_INPUT_QUICKSTART.md` - 快速开始指南
+
+**测试**:
+- `test-voice-input.html` - 独立测试页面
+
+**技术亮点**：
+1. ✅ **封装完善**: 自定义 Hook 封装 Web Speech API
+2. ✅ **TypeScript 支持**: 完整的类型定义
+3. ✅ **用户体验优秀**: 直观的交互和及时的反馈
+4. ✅ **错误处理完善**: 各种边界情况的友好提示
+5. ✅ **资源管理**: 组件卸载时自动清理，防止内存泄漏
+
+**使用场景**：
+- 快速记录灵感和想法
+- 长篇文字输入
+- 移动端操作
+- 会议记录
+- 解放双手的场景
+
 ## [Unreleased] - 2025-11-06
 
 ### ✨ 新功能
