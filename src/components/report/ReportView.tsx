@@ -132,13 +132,23 @@ export default function ReportView() {
         month: '本月'
       }[reportPeriod];
 
-      const summary = await generateSmartSummary(reportData.items, periodName);
+      const summary = await generateSmartSummary(reportData.items, periodName, {
+        onProgress: (message, type) => {
+          if (type === 'error') {
+            toast.error(message);
+          } else if (type === 'success') {
+            // 成功时，显示剩余次数提示
+            if (usageCheck.remaining !== undefined) {
+              toast.success(`${message} ${usageCheck.message}`);
+            } else {
+              toast.success(message);
+            }
+          } else {
+            toast.info(message);
+          }
+        }
+      });
       setSmartSummary({ content: summary, isGenerating: false });
-      
-      // 显示剩余次数提示
-      if (usageCheck.remaining !== undefined) {
-        toast.success(`报告生成成功！${usageCheck.message}`);
-      }
     } catch (error) {
       console.error('生成智能报告失败:', error);
       setSmartSummary({ 

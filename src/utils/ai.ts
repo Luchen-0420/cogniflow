@@ -76,6 +76,10 @@ export const createSSEHook = (options: SSEOptions): AfterResponseHook => {
   return hook;
 };
 
+export interface AIProcessOptions {
+  onProgress?: (message: string, type?: 'info' | 'success' | 'error') => void;
+}
+
 export interface ChatMessage {
   role: 'user' | 'assistant' | 'system';
   content: string;
@@ -159,9 +163,12 @@ export const sendChatStream = async (options: ChatStreamOptions): Promise<void> 
 /**
  * 生成智能汇总报告
  */
-export async function generateSmartSummary(items: any[], periodName: string): Promise<string> {
+export async function generateSmartSummary(items: any[], periodName: string, options?: AIProcessOptions): Promise<string> {
   return new Promise((resolve, reject) => {
     let fullResponse = '';
+
+    // 通知开始处理
+    options?.onProgress?.('📊 正在生成智能汇总...', 'info');
 
     // 统计数据
     const stats = {
@@ -266,18 +273,23 @@ export async function generateSmartSummary(items: any[], periodName: string): Pr
         fullResponse = content;
       },
       onComplete: () => {
+        options?.onProgress?.('✅ 汇总生成完成', 'success');
         resolve(fullResponse.trim());
       },
       onError: (error: Error) => {
+        options?.onProgress?.('❌ 生成汇总失败', 'error');
         reject(error);
       }
     });
   });
 };
 
-export async function processTextWithAI(text: string): Promise<AIProcessResult> {
+export async function processTextWithAI(text: string, options?: AIProcessOptions): Promise<AIProcessResult> {
   return new Promise((resolve, reject) => {
     let fullResponse = '';
+
+    // 通知开始处理
+    options?.onProgress?.('🤖 AI 正在分析内容...', 'info');
 
     // 获取当前日期时间信息（使用本地时间，不使用 UTC）
     const now = new Date();
@@ -517,10 +529,12 @@ export async function processTextWithAI(text: string): Promise<AIProcessResult> 
             end_time: processedResult.end_time
           });
 
+          options?.onProgress?.('✅ 处理完成', 'success');
           resolve(processedResult);
         } catch (error) {
           console.error('❌ [AI处理] 解析AI响应失败:', error);
           console.error('📄 [AI处理] 原始响应:', fullResponse);
+          options?.onProgress?.('⚠️ 解析失败，使用默认配置', 'error');
           // 解析失败时，默认使用 'task' 类型
           resolve({
             type: 'task',
@@ -537,6 +551,7 @@ export async function processTextWithAI(text: string): Promise<AIProcessResult> 
       },
       onError: (error: Error) => {
         console.error('❌ [AI处理] AI处理失败:', error);
+        options?.onProgress?.('❌ AI 处理失败', 'error');
         reject(error);
       }
     });
@@ -548,9 +563,12 @@ export async function processTextWithAI(text: string): Promise<AIProcessResult> 
  * @param noteContent 笔记的完整内容
  * @returns 生成的标题（10-20个字）
  */
-export async function generateNoteTitle(noteContent: string): Promise<string> {
+export async function generateNoteTitle(noteContent: string, options?: AIProcessOptions): Promise<string> {
   return new Promise((resolve) => {
     let fullResponse = '';
+
+    // 通知开始处理
+    options?.onProgress?.('✍️ 正在生成标题...', 'info');
 
     const systemPrompt = `你是一个专业的标题生成助手。用户会提供笔记内容，你需要为这段内容生成一个简洁、准确的标题。
 
@@ -592,10 +610,12 @@ ${noteContent}
         const title = fullResponse.trim().replace(/^["']|["']$/g, '');
         // 如果标题过长，截取前20个字
         const finalTitle = title.length > 20 ? title.substring(0, 20) : title;
+        options?.onProgress?.('✅ 标题生成完成', 'success');
         resolve(finalTitle);
       },
       onError: (error: Error) => {
         console.error('生成笔记标题失败:', error);
+        options?.onProgress?.('⚠️ 使用备用标题', 'error');
         // 如果 AI 失败，使用简单的截取作为后备方案
         const fallbackTitle = noteContent.length > 15 
           ? noteContent.substring(0, 15) + '...' 
@@ -618,9 +638,12 @@ export interface BlogExtractResult {
   tags: string[];
 }
 
-export async function extractBlogMetadata(content: string): Promise<BlogExtractResult> {
+export async function extractBlogMetadata(content: string, options?: AIProcessOptions): Promise<BlogExtractResult> {
   return new Promise((resolve) => {
     let fullResponse = '';
+
+    // 通知开始处理
+    options?.onProgress?.('📝 正在分析博客内容...', 'info');
 
     const systemPrompt = `你是一个专业的博客内容分析助手。用户会提供 Markdown 格式的博客文章，你需要提取以下信息：
 
@@ -672,6 +695,7 @@ ${content}
             throw new Error('AI 返回的数据格式不正确');
           }
           
+          options?.onProgress?.('✅ 内容分析完成', 'success');
           resolve({
             title: result.title,
             description: result.description,
@@ -681,6 +705,7 @@ ${content}
           console.error('❌ 解析博客元数据失败:', error);
           console.error('📄 原始响应:', fullResponse);
           
+          options?.onProgress?.('⚠️ 使用备用方案', 'error');
           // 如果解析失败，提供后备方案
           const fallbackTitle = extractMarkdownTitle(content) || '博客文章';
           const fallbackDescription = extractFirstParagraph(content);
@@ -696,6 +721,7 @@ ${content}
       onError: (error: Error) => {
         console.error('❌ 提取博客元数据失败:', error);
         
+        options?.onProgress?.('❌ AI 处理失败，使用本地提取', 'error');
         // AI 调用失败，使用本地提取
         const fallbackTitle = extractMarkdownTitle(content) || '博客文章';
         const fallbackDescription = extractFirstParagraph(content);

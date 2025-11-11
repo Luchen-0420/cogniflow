@@ -255,11 +255,20 @@ export default function QuickInput({
         return;
       }
 
-      toast.info('正在分析文章内容...');
       onProcessingStart?.('博客文章', processingId);
 
       // 使用 AI 提取标题和标签
-      const metadata = await extractBlogMetadata(content);
+      const metadata = await extractBlogMetadata(content, {
+        onProgress: (message, type) => {
+          if (type === 'error') {
+            toast.error(message);
+          } else if (type === 'success') {
+            toast.success(message);
+          } else {
+            toast.info(message);
+          }
+        }
+      });
       
       console.log('📝 提取的博客元数据:', metadata);
 
@@ -492,11 +501,20 @@ export default function QuickInput({
           if (hasExtractedText) {
             // 有文档内容：创建资料类型，不经过 AI
             console.log('📚 有文档内容，创建资料类型条目（不经过AI）');
-            toast.info('正在生成标题...');
             
             try {
               // 使用 AI 仅生成标题
-              const generatedTitle = await generateNoteTitle(combinedText);
+              const generatedTitle = await generateNoteTitle(combinedText, {
+                onProgress: (message, type) => {
+                  if (type === 'error') {
+                    toast.error(message);
+                  } else if (type === 'success') {
+                    toast.success(message);
+                  } else {
+                    toast.info(message);
+                  }
+                }
+              });
               
               newItem = await itemApi.createItem({
                 raw_text: combinedText, // 保存原始文本（用户输入 + 文档内容）
@@ -747,11 +765,20 @@ export default function QuickInput({
       } else if (isNote) {
         // 笔记类型：使用 AI 生成标题，但内容保持原文
         console.log('📝 检测到笔记，生成标题...');
-        toast.info('正在生成标题...');
         
         try {
           // 使用 AI 生成简洁的标题
-          const generatedTitle = await generateNoteTitle(noteContent);
+          const generatedTitle = await generateNoteTitle(noteContent, {
+            onProgress: (message, type) => {
+              if (type === 'error') {
+                toast.error(message);
+              } else if (type === 'success') {
+                toast.success(message);
+              } else {
+                toast.info(message);
+              }
+            }
+          });
           
           // 创建笔记类型的条目
           const newItem = await itemApi.createItem({
@@ -798,11 +825,20 @@ export default function QuickInput({
       } else if (isData) {
         // 资料类型：使用 AI 生成标题，但内容保持原文
         console.log('📚 检测到资料，生成标题...');
-        toast.info('正在生成标题...');
         
         try {
           // 使用 AI 生成简洁的标题
-          const generatedTitle = await generateNoteTitle(contentWithoutPrefix);
+          const generatedTitle = await generateNoteTitle(contentWithoutPrefix, {
+            onProgress: (message, type) => {
+              if (type === 'error') {
+                toast.error(message);
+              } else if (type === 'success') {
+                toast.success(message);
+              } else {
+                toast.info(message);
+              }
+            }
+          });
           
           // 创建资料类型的条目
           const newItem = await itemApi.createItem({
@@ -858,7 +894,17 @@ export default function QuickInput({
         }
         
         const textToProcess = userSpecifiedType ? contentWithoutPrefix : inputText;
-        const aiResult = await processTextWithAI(textToProcess);
+        const aiResult = await processTextWithAI(textToProcess, {
+          onProgress: (message, type) => {
+            if (type === 'error') {
+              toast.error(message);
+            } else if (type === 'success') {
+              toast.success(message);
+            } else {
+              toast.info(message);
+            }
+          }
+        });
 
         // 如果用户指定了类型，使用用户指定的类型；否则使用 AI 识别的类型
         const itemType = userSpecifiedType || aiResult.type || 'task';
