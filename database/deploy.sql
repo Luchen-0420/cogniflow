@@ -256,7 +256,27 @@ CREATE INDEX IF NOT EXISTS idx_activity_logs_action ON activity_logs(action);
 CREATE INDEX IF NOT EXISTS idx_activity_logs_entity_type ON activity_logs(entity_type);
 CREATE INDEX IF NOT EXISTS idx_activity_logs_created_at ON activity_logs(created_at DESC);
 
--- 7. 用户统计表 (user_statistics)
+-- 7. 提醒日志表 (reminder_logs)
+CREATE TABLE IF NOT EXISTS reminder_logs (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    item_id UUID NOT NULL REFERENCES items(id) ON DELETE CASCADE,
+    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    reminder_time TIMESTAMP WITH TIME ZONE NOT NULL,
+    sent_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    email_to VARCHAR(255) NOT NULL,
+    status VARCHAR(20) DEFAULT 'sent' CHECK (status IN ('sent', 'failed', 'pending')),
+    error_message TEXT,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(item_id, reminder_time)
+);
+
+CREATE INDEX IF NOT EXISTS idx_reminder_logs_item_id ON reminder_logs(item_id);
+CREATE INDEX IF NOT EXISTS idx_reminder_logs_user_id ON reminder_logs(user_id);
+CREATE INDEX IF NOT EXISTS idx_reminder_logs_reminder_time ON reminder_logs(reminder_time);
+CREATE INDEX IF NOT EXISTS idx_reminder_logs_sent_at ON reminder_logs(sent_at);
+CREATE INDEX IF NOT EXISTS idx_reminder_logs_status ON reminder_logs(status);
+
+-- 8. 用户统计表 (user_statistics)
 CREATE TABLE IF NOT EXISTS user_statistics (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
@@ -282,7 +302,7 @@ CREATE TABLE IF NOT EXISTS user_statistics (
 CREATE INDEX IF NOT EXISTS idx_user_statistics_user_id ON user_statistics(user_id);
 CREATE INDEX IF NOT EXISTS idx_user_statistics_date ON user_statistics(date DESC);
 
--- 8. 系统日志表 (system_logs)
+-- 9. 系统日志表 (system_logs)
 CREATE TABLE IF NOT EXISTS system_logs (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     level VARCHAR(20) NOT NULL CHECK (level IN ('debug', 'info', 'warn', 'error', 'fatal')),
@@ -295,7 +315,7 @@ CREATE TABLE IF NOT EXISTS system_logs (
 CREATE INDEX IF NOT EXISTS idx_system_logs_level ON system_logs(level);
 CREATE INDEX IF NOT EXISTS idx_system_logs_created_at ON system_logs(created_at DESC);
 
--- 9. 会话表 (sessions)
+-- 10. 会话表 (sessions)
 CREATE TABLE IF NOT EXISTS sessions (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
@@ -312,7 +332,7 @@ CREATE INDEX IF NOT EXISTS idx_sessions_user_id ON sessions(user_id);
 CREATE INDEX IF NOT EXISTS idx_sessions_token ON sessions(token);
 CREATE INDEX IF NOT EXISTS idx_sessions_expires_at ON sessions(expires_at);
 
--- 10. 备份记录表 (backups)
+-- 11. 备份记录表 (backups)
 CREATE TABLE IF NOT EXISTS backups (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     user_id UUID REFERENCES users(id) ON DELETE SET NULL,
@@ -554,13 +574,36 @@ VALUES (
 ) ON CONFLICT (username) DO NOTHING;
 
 -- 为管理员用户创建默认设置
-INSERT INTO user_settings (user_id, theme, language, notifications_enabled)
-SELECT id, 'system', 'zh-CN', true
+INSERT INTO user_settings (user_id, theme, language, notifications_enabled, email_notifications)
+SELECT id, 'system', 'zh-CN', true, true
 FROM users
 WHERE username = 'admin'
 ON CONFLICT (user_id) DO NOTHING;
 
-\echo '✅ 默认管理员账号创建完成'
+-- 确保所有用户都有 user_settings（包括通过触发器未创建的）
+DO $$
+DECLARE
+    settings_created INTEGER := 0;
+BEGIN
+    INSERT INTO user_settings (user_id, theme, language, notifications_enabled, email_notifications)
+    SELECT 
+        u.id,
+        'system',
+        'zh-CN',
+        true,
+        true
+    FROM users u
+    LEFT JOIN user_settings us ON u.id = us.user_id
+    WHERE us.id IS NULL;
+    
+    GET DIAGNOSTICS settings_created = ROW_COUNT;
+    
+    IF settings_created > 0 THEN
+        RAISE NOTICE '✅ 为 % 个用户补充了 user_settings', settings_created;
+    END IF;
+END $$;
+
+\echo '✅ 默认管理员账号和用户设置创建完成'
 
 -- ============================================
 -- Step 6: 为所有用户创建默认模板

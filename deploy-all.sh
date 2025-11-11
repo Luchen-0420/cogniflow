@@ -249,8 +249,13 @@ NODE_ENV=development
 
 # JWT 密钥
 JWT_SECRET=cogniflow-secret-key-$(openssl rand -hex 16)
+
+# 邮件提醒配置（需要手动配置 QQ 邮箱授权码）
+EMAIL_USER=646184101@qq.com
+EMAIL_PASSWORD=
 EOF
 log_success "后端环境变量配置完成"
+log_warning "请手动配置 server/.env 中的 EMAIL_PASSWORD（QQ邮箱授权码）以启用邮件提醒功能"
 
 # 配置前端环境变量（如果需要）
 if [ ! -f "$SCRIPT_DIR/.env" ]; then
@@ -276,8 +281,11 @@ cd "$SCRIPT_DIR/server"
 pnpm install --silent
 log_success "后端依赖安装完成"
 
-
-pnpm add -D tsx
+log_step "安装邮件提醒依赖..."
+pnpm add nodemailer --silent
+pnpm add -D @types/nodemailer --silent
+pnpm add -D tsx --silent
+log_success "邮件提醒依赖安装完成"
 # ============================================
 # Step 7: 显示部署信息
 # ============================================
@@ -313,7 +321,16 @@ echo -e "  • 配置入口: 个人资料页面 → API 配置"
 echo -e "  • 获取 API Key: ${BLUE}https://open.bigmodel.cn/${NC}"
 echo ""
 echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
-echo -e "${YELLOW}📋 数据库统计${NC}"
+echo -e "${YELLOW}� 邮件提醒配置 (v1.3.0)${NC}"
+echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+echo -e "  • 功能: 日程开始前 ${GREEN}5 分钟${NC} 自动邮件提醒"
+echo -e "  • 发件邮箱: ${GREEN}646184101@qq.com${NC}"
+echo -e "  • ${YELLOW}需要配置:${NC} 编辑 ${BLUE}server/.env${NC} 添加 ${GREEN}EMAIL_PASSWORD${NC}"
+echo -e "  • 获取授权码: QQ邮箱 → 设置 → 账户 → 生成授权码"
+echo -e "  • 配置文档: ${BLUE}docs/quickstart/REMINDER_QUICKSTART.md${NC}"
+echo ""
+echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+echo -e "${YELLOW}�📋 数据库统计${NC}"
 echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
 docker exec "$CONTAINER_NAME" psql -U "$DB_USER" -d "$DB_NAME" << 'EOF'
 SELECT 

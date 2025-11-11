@@ -16,6 +16,10 @@
   "author": "",
   "license": "MIT",
   "devDependencies": {
+    "@types/nodemailer": "^7.0.3",
     "tsx": "^4.20.6"
+  },
+  "dependencies": {
+    "nodemailer": "^7.0.10"
   }
 }
