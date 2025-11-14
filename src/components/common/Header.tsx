@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { Shield, Download, Upload, User, LogOut, BookOpen, FileText, Github, ExternalLink, Menu } from "lucide-react";
+import { Shield, Download, Upload, User, LogOut, BookOpen, FileText, Github, ExternalLink, Menu, MessageSquare } from "lucide-react";
 import { useAuth, exportData, importData } from "@/db/api";
 import { toast } from "sonner";
 
@@ -107,8 +107,17 @@ export default function Header() {
               <span>博客</span>
             </div>
           </Link>
+          <Link
+            to="/messages"
+            className="px-3 py-1.5 text-sm font-medium text-foreground/70 hover:text-foreground transition-colors rounded-md hover:bg-accent/50"
+          >
+            <div className="flex items-center gap-1.5">
+              <MessageSquare className="h-3.5 w-3.5" />
+              <span>留言板</span>
+            </div>
+          </Link>
           <a
-            href="https://github.com/your-repo/cogniflow"
+            href="https://github.com/alg-bug-engineer/cogniflow"
             target="_blank"
             rel="noopener noreferrer"
             className="px-3 py-1.5 text-sm font-medium text-foreground/70 hover:text-foreground transition-colors rounded-md hover:bg-accent/50"
@@ -144,8 +153,14 @@ export default function Header() {
               </Link>
             </DropdownMenuItem>
             <DropdownMenuItem asChild>
+              <Link to="/messages" className="flex items-center gap-2 w-full">
+                <MessageSquare className="h-4 w-4" />
+                <span>留言板</span>
+              </Link>
+            </DropdownMenuItem>
+            <DropdownMenuItem asChild>
               <a
-                href="https://github.com/your-repo/cogniflow"
+                href="https://github.com/alg-bug-engineer/cogniflow"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex items-center gap-2 w-full"

@@ -301,7 +301,7 @@ docs/
 
 ## 📞 获取帮助
 
-- **GitHub Issues**: [提交问题](https://github.com/your-repo/cogniflow/issues)
+- **GitHub Issues**: [提交问题](https://github.com/alg-bug-engineer/cogniflow/issues)
 - **文档问题**: 如果文档有错误或不清楚，请提交 Issue
 - **功能建议**: 欢迎在 Issues 中提出新功能建议
 

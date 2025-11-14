@@ -98,7 +98,7 @@ CogniFlow 是一款为“信息爆炸时代”打造的智能工作台，支持�
 ### 方式一：本地极速体验（IndexedDB）
 
 ```bash
-git clone https://github.com/your-repo/cogniflow.git
+git clone https://github.com/alg-bug-engineer/cogniflow.git
 cd cogniflow
 pnpm install
 cp .env.example .env              # 保持 VITE_STORAGE_MODE=local

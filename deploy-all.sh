@@ -211,7 +211,7 @@ log_success "数据库表和数据初始化完成"
 # 验证表是否创建成功
 log_step "验证数据库表..."
 TABLE_COUNT=$(docker exec "$CONTAINER_NAME" psql -U "$DB_USER" -d "$DB_NAME" -t -c "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = 'public';" | tr -d ' ')
-if [ "$TABLE_COUNT" -ge 10 ]; then
+if [ "$TABLE_COUNT" -ge 12 ]; then
     log_success "数据库表验证通过 ($TABLE_COUNT 个表)"
 else
     log_error "数据库表验证失败，仅找到 $TABLE_COUNT 个表"
@@ -225,6 +225,14 @@ if [ "$PERSONAL_API_KEY_COLUMN" == "personal_api_key" ]; then
     log_success "个人 API Key 功能已部署"
 else
     log_warning "个人 API Key 字段未找到，可能需要手动迁移"
+fi
+
+log_step "验证留言板功能..."
+MESSAGES_TABLE=$(docker exec "$CONTAINER_NAME" psql -U "$DB_USER" -d "$DB_NAME" -t -c "SELECT table_name FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'messages';" | tr -d ' ')
+if [ "$MESSAGES_TABLE" == "messages" ]; then
+    log_success "留言板功能已部署"
+else
+    log_warning "留言板表未找到，可能需要手动迁移"
 fi
 
 # ============================================

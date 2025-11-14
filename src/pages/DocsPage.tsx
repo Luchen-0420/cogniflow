@@ -104,7 +104,7 @@ export default function DocsPage() {
                     {category.links.map((link) => (
                       <a
                         key={link.name}
-                        href={`https://github.com/your-repo/cogniflow/blob/main${link.path}`}
+                        href={`https://github.com/alg-bug-engineer/cogniflow/blob/main${link.path}`}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="block text-sm text-primary hover:text-primary/80 hover:underline transition-colors"
@@ -129,7 +129,7 @@ export default function DocsPage() {
               <div className="flex flex-wrap justify-center gap-3">
                 <Button variant="outline" asChild>
                   <a
-                    href="https://github.com/your-repo/cogniflow"
+                    href="https://github.com/alg-bug-engineer/cogniflow"
                     target="_blank"
                     rel="noopener noreferrer"
                   >

@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 import { SmartInputAssistant, RelatedItem, GapAnalysis, ExternalRecommendation } from '@/components/smart-assist/SmartInputAssistant';
 import { shouldTriggerSmartAssist, getRelatedItems, analyzeKnowledgeGap, getExternalRecommendations } from '@/features/smart-assist';
 import { toast } from 'sonner';
@@ -37,6 +38,7 @@ interface ProcessingItem {
 }
 
 export default function Dashboard() {
+  const location = useLocation();
   // 智能输入助手相关状态
   const [showSmartAssist, setShowSmartAssist] = useState(false);
   const [smartAssistTopic, setSmartAssistTopic] = useState('');
@@ -1098,14 +1100,16 @@ export default function Dashboard() {
         onSuccess={loadData}
       />
 
-      {/* 浮动操作菜单 */}
-      <FloatingActionMenu
-        onDailyReport={handleDailyReportClick}
-        onWeeklyReport={() => setShowWeeklyReport(true)}
-        onBlog={() => setShowBlogEditor(true)}
-        onResearch={handleResearchClick}
-        onHelp={() => setShowHelpDialog(true)}
-      />
+      {/* 浮动操作菜单 - 只在 Dashboard 主界面显示 */}
+      {location.pathname === '/' && (
+        <FloatingActionMenu
+          onDailyReport={handleDailyReportClick}
+          onWeeklyReport={() => setShowWeeklyReport(true)}
+          onBlog={() => setShowBlogEditor(true)}
+          onResearch={handleResearchClick}
+          onHelp={() => setShowHelpDialog(true)}
+        />
+      )}
 
       {/* 周报对话框 */}
       <WeeklyReportDialog

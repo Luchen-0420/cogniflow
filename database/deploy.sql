@@ -773,6 +773,80 @@ GROUP BY user_id;
 \echo '✅ 附件支持创建完成'
 
 -- ============================================
+-- Step 8: 创建留言板功能
+-- ============================================
+\echo ''
+\echo '💬 Step 8/8: 创建留言板功能...'
+
+-- 留言表 (messages)
+CREATE TABLE IF NOT EXISTS messages (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    username VARCHAR(50) NOT NULL,
+    content TEXT NOT NULL,
+    parent_id UUID REFERENCES messages(id) ON DELETE CASCADE,
+    like_count INTEGER DEFAULT 0,
+    dislike_count INTEGER DEFAULT 0,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 留言表索引
+CREATE INDEX IF NOT EXISTS idx_messages_user_id ON messages(user_id);
+CREATE INDEX IF NOT EXISTS idx_messages_parent_id ON messages(parent_id);
+CREATE INDEX IF NOT EXISTS idx_messages_created_at ON messages(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_messages_username ON messages(username);
+
+-- 留言反应表 (message_reactions) - 记录用户的点赞/点踩
+CREATE TABLE IF NOT EXISTS message_reactions (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    message_id UUID NOT NULL REFERENCES messages(id) ON DELETE CASCADE,
+    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    reaction_type VARCHAR(10) NOT NULL CHECK (reaction_type IN ('like', 'dislike')),
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(message_id, user_id, reaction_type)
+);
+
+-- 留言反应表索引
+CREATE INDEX IF NOT EXISTS idx_message_reactions_message_id ON message_reactions(message_id);
+CREATE INDEX IF NOT EXISTS idx_message_reactions_user_id ON message_reactions(user_id);
+CREATE INDEX IF NOT EXISTS idx_message_reactions_type ON message_reactions(reaction_type);
+
+-- 留言表更新时间触发器
+DROP TRIGGER IF EXISTS update_messages_updated_at ON messages;
+CREATE TRIGGER update_messages_updated_at BEFORE UPDATE ON messages
+    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+-- 留言反应触发器：自动更新留言的点赞/点踩数量
+CREATE OR REPLACE FUNCTION update_message_reaction_count()
+RETURNS TRIGGER AS $$
+BEGIN
+    IF TG_OP = 'INSERT' THEN
+        IF NEW.reaction_type = 'like' THEN
+            UPDATE messages SET like_count = like_count + 1 WHERE id = NEW.message_id;
+        ELSIF NEW.reaction_type = 'dislike' THEN
+            UPDATE messages SET dislike_count = dislike_count + 1 WHERE id = NEW.message_id;
+        END IF;
+    ELSIF TG_OP = 'DELETE' THEN
+        IF OLD.reaction_type = 'like' THEN
+            UPDATE messages SET like_count = GREATEST(like_count - 1, 0) WHERE id = OLD.message_id;
+        ELSIF OLD.reaction_type = 'dislike' THEN
+            UPDATE messages SET dislike_count = GREATEST(dislike_count - 1, 0) WHERE id = OLD.message_id;
+        END IF;
+    END IF;
+    RETURN COALESCE(NEW, OLD);
+END;
+$$ LANGUAGE plpgsql;
+
+DROP TRIGGER IF EXISTS trigger_update_message_reaction_count ON message_reactions;
+CREATE TRIGGER trigger_update_message_reaction_count
+    AFTER INSERT OR DELETE ON message_reactions
+    FOR EACH ROW
+    EXECUTE FUNCTION update_message_reaction_count();
+
+\echo '✅ 留言板功能创建完成'
+
+-- ============================================
 -- 完成部署
 -- ============================================
 \echo ''
@@ -797,7 +871,11 @@ SELECT 'tags', COUNT(*) FROM tags
 UNION ALL
 SELECT 'attachments', COUNT(*) FROM attachments
 UNION ALL
-SELECT 'attachment_configs', COUNT(*) FROM attachment_configs;
+SELECT 'attachment_configs', COUNT(*) FROM attachment_configs
+UNION ALL
+SELECT 'messages', COUNT(*) FROM messages
+UNION ALL
+SELECT 'message_reactions', COUNT(*) FROM message_reactions;
 
 \echo ''
 \echo '👤 默认管理员账号:'

@@ -170,7 +170,7 @@ export function FloatingActionMenu({
   return (
     <div
       ref={containerRef}
-      className="fixed bottom-8 left-4 z-50 relative"
+      className="fixed bottom-8 left-4 z-[9999]"
       style={{
         width: isExpanded || isHovering ? size : buttonSizeCollapsed,
         height: isExpanded || isHovering ? size : buttonSizeCollapsed,

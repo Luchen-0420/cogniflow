@@ -7,6 +7,7 @@ import Admin from './pages/Admin';
 import NotFound from './pages/NotFound';
 import DocsPage from './pages/DocsPage';
 import BlogPage from './pages/BlogPage';
+import MessageBoardPage from './pages/MessageBoardPage';
 import { ProtectedRoute, PublicRoute } from './components/auth/ProtectedRoute';
 import type { ReactNode } from 'react';
 
@@ -85,6 +86,12 @@ const routes: RouteConfig[] = [
     name: '博客',
     path: '/blog',
     element: <BlogPage />,
+    visible: true
+  },
+  {
+    name: '留言板',
+    path: '/messages',
+    element: <MessageBoardPage />,
     visible: true
   },
   {

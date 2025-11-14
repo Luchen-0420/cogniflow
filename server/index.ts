@@ -11,6 +11,7 @@ import itemsRouter from './routes/items.js';
 import usersRouter from './routes/users.js';
 import templatesRouter from './routes/templates.js';
 import attachmentsRouter from './routes/attachments.js';
+import messagesRouter from './routes/messages.js';
 import { authMiddleware } from './middleware/auth.js';
 import { startReminderScheduler, stopReminderScheduler, triggerReminderCheck } from './services/reminderService.js';
 import { verifyEmailConfig, sendTestEmail } from './services/emailService.js';
@@ -57,13 +58,15 @@ app.get('/api', (req, res) => {
       attachments: '/api/attachments/*',
       templates: '/api/templates/*',
       tags: '/api/tags/*',
-      statistics: '/api/statistics/*'
+      statistics: '/api/statistics/*',
+      messages: '/api/messages/*'
     }
   });
 });
 
 // 公开路由（不需要认证）
 app.use('/api/auth', usersRouter); // 注册和登录
+app.use('/api/messages', messagesRouter); // 留言板（部分公开，部分需要认证）
 
 // 需要认证的路由
 app.use('/api/items', authMiddleware, itemsRouter);
