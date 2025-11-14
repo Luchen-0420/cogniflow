@@ -89,11 +89,10 @@ export function LocalLoginPanel({
       const username = `guest_${timestamp}_${randomStr}`;
       const password = `${randomStr}${timestamp}`;
       
-      // 注册临时账号
+      // 注册临时账号（游客账号不需要邮箱）
       await register({
         username,
-        password,
-        email: ''
+        password
       });
       
       toast.success('体验账号创建成功！', {

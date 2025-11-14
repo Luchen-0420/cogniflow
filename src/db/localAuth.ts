@@ -30,7 +30,7 @@ export interface LocalUser {
  */
 export interface RegisterUserData {
   username: string;
-  email: string;
+  email?: string;
   phone?: string;
   password: string;
   personalApiKey?: string;
@@ -151,16 +151,16 @@ class LocalAuth {
         throw new Error('密码至少需要6个字符');
       }
 
-      // 检查邮箱格式
+      // 检查邮箱格式（如果提供了邮箱）
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      if (!emailRegex.test(userData.email)) {
+      if (userData.email && !emailRegex.test(userData.email)) {
         throw new Error('请输入有效的邮箱地址');
       }
 
       // 创建用户记录
       const userRecord = await LocalStorageManager.createUser({
         username: userData.username,
-        email: userData.email,
+        email: userData.email || null,
         phone: userData.phone || null,
         passwordHash: LocalStorageManager.hashPassword(userData.password),
         role: 'user'
