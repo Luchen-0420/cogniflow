@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { 
@@ -12,7 +13,9 @@ import {
   CheckSquare,
   Layers,
   Smartphone,
-  Monitor
+  Monitor,
+  BookOpen,
+  Sparkles
 } from 'lucide-react';
 
 interface HelpDialogProps {
@@ -21,6 +24,17 @@ interface HelpDialogProps {
 }
 
 export const HelpDialog = ({ open, onOpenChange }: HelpDialogProps) => {
+  // ESC 关闭支持
+  useEffect(() => {
+    const handleEsc = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && open) {
+        onOpenChange(false);
+      }
+    };
+    document.addEventListener('keydown', handleEsc);
+    return () => document.removeEventListener('keydown', handleEsc);
+  }, [open, onOpenChange]);
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-3xl max-h-[90vh] overflow-y-auto">
@@ -31,12 +45,115 @@ export const HelpDialog = ({ open, onOpenChange }: HelpDialogProps) => {
           </DialogTitle>
         </DialogHeader>
 
-        <Tabs defaultValue="cards" className="w-full mt-4">
-          <TabsList className="grid w-full grid-cols-3">
+        <Tabs defaultValue="quickstart" className="w-full mt-4">
+          <TabsList className="grid w-full grid-cols-4">
+            <TabsTrigger value="quickstart">快速开始</TabsTrigger>
             <TabsTrigger value="cards">卡片类型</TabsTrigger>
             <TabsTrigger value="shortcuts">快捷输入</TabsTrigger>
             <TabsTrigger value="tips">使用技巧</TabsTrigger>
           </TabsList>
+
+          {/* 快速开始 */}
+          <TabsContent value="quickstart" className="space-y-4 mt-4">
+            <div className="bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-950/20 dark:to-purple-950/20 p-6 rounded-lg border border-blue-200 dark:border-blue-800">
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4 flex items-center gap-2">
+                <Sparkles className="w-5 h-5 text-blue-500" />
+                欢迎使用 CogniFlow
+              </h3>
+              <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+                CogniFlow 是一款智能信息管理工具，帮助您高效管理任务、笔记、日程和知识。
+              </p>
+              <div className="space-y-3">
+                <div className="flex items-start gap-3">
+                  <div className="w-6 h-6 rounded-full bg-blue-500 text-white flex items-center justify-center text-xs font-bold flex-shrink-0 mt-0.5">
+                    1
+                  </div>
+                  <div>
+                    <h4 className="font-semibold text-gray-900 dark:text-gray-100 mb-1">左下角快捷菜单</h4>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">
+                      点击左下角按钮展开快捷菜单，包含日报、周报、博客、调研等功能。鼠标悬停自动展开，点击中心按钮查看帮助。
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3">
+                  <div className="w-6 h-6 rounded-full bg-blue-500 text-white flex items-center justify-center text-xs font-bold flex-shrink-0 mt-0.5">
+                    2
+                  </div>
+                  <div>
+                    <h4 className="font-semibold text-gray-900 dark:text-gray-100 mb-1">快速输入</h4>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">
+                      在底部输入框直接输入内容，AI 会自动识别类型（任务、日程、笔记等）。支持自然语言，如"明天下午3点开会"。
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3">
+                  <div className="w-6 h-6 rounded-full bg-blue-500 text-white flex items-center justify-center text-xs font-bold flex-shrink-0 mt-0.5">
+                    3
+                  </div>
+                  <div>
+                    <h4 className="font-semibold text-gray-900 dark:text-gray-100 mb-1">模板功能</h4>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">
+                      输入 <code className="px-1.5 py-0.5 bg-white dark:bg-gray-800 rounded text-xs">/</code> 触发模板菜单，快速创建日报、会议纪要等结构化内容。
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3">
+                  <div className="w-6 h-6 rounded-full bg-blue-500 text-white flex items-center justify-center text-xs font-bold flex-shrink-0 mt-0.5">
+                    4
+                  </div>
+                  <div>
+                    <h4 className="font-semibold text-gray-900 dark:text-gray-100 mb-1">周报功能</h4>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">
+                      点击周报按钮，自动汇总本周所有日报，AI 生成总结，支持编辑后保存为周报卡片。
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <HelpCard
+                icon={<FileText className="w-5 h-5 text-blue-500" />}
+                title="日报功能"
+                description='点击左下角菜单的"日报"按钮，快速创建每日工作日志'
+                examples={[
+                  "自动生成日期标题",
+                  "预设工作记录模板",
+                  "支持子任务和备注"
+                ]}
+              />
+              <HelpCard
+                icon={<Calendar className="w-5 h-5 text-green-500" />}
+                title="周报功能"
+                description="汇总本周所有日报，AI 生成总结"
+                examples={[
+                  "自动检索本周日报",
+                  "横版展示每日记录",
+                  "可编辑 AI 总结"
+                ]}
+              />
+              <HelpCard
+                icon={<BookOpen className="w-5 h-5 text-purple-500" />}
+                title="博客功能"
+                description="Markdown 编辑器，支持实时预览"
+                examples={[
+                  '点击"博客"按钮打开',
+                  "自动保存草稿",
+                  "AI 提取标题和标签"
+                ]}
+              />
+              <HelpCard
+                icon={<Search className="w-5 h-5 text-orange-500" />}
+                title="调研功能"
+                description="智能助手帮助您进行知识调研"
+                examples={[
+                  "关联历史相关内容",
+                  "分析知识缺口",
+                  "推荐外部资源"
+                ]}
+              />
+            </div>
+          </TabsContent>
 
           {/* 卡片类型 */}
           <TabsContent value="cards" className="space-y-4 mt-4">

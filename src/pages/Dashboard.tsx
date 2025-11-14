@@ -19,10 +19,17 @@ import CalendarView from '@/components/calendar/CalendarView';
 import ReportView from '@/components/report/ReportView';
 import { LoginDialog } from '@/components/auth/LoginDialog';
 import { useAuth } from '@/db/apiAdapter';
-import { itemApi } from '@/db/api';
-import type { Item, TagStats } from '@/types/types';
+import { itemApi, templateApi, auth } from '@/db/api';
+import type { Item, TagStats, UserTemplate } from '@/types/types';
 import { format } from 'date-fns';
 import { zhCN } from 'date-fns/locale';
+import { FloatingActionMenu } from '@/components/common/FloatingActionMenu';
+import { WeeklyReportDialog } from '@/components/report/WeeklyReportDialog';
+import { TemplateInputModal } from '@/components/items/TemplateInputModal';
+import { BlogEditorDialog } from '@/components/blog/BlogEditorDialog';
+import { HelpDialog } from '@/components/help/HelpDialog';
+import { extractBlogMetadata } from '@/utils/ai';
+import { checkApiUsageBeforeAction } from '@/services/apiUsageService';
 
 interface ProcessingItem {
   id: string;
@@ -59,6 +66,13 @@ export default function Dashboard() {
   const [searchResults, setSearchResults] = useState<Item[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const [processingItems, setProcessingItems] = useState<ProcessingItem[]>([]);
+  
+  // 浮动按钮相关状态
+  const [showWeeklyReport, setShowWeeklyReport] = useState(false);
+  const [showDailyReport, setShowDailyReport] = useState(false);
+  const [showBlogEditor, setShowBlogEditor] = useState(false);
+  const [showHelpDialog, setShowHelpDialog] = useState(false);
+  const [dailyReportTemplate, setDailyReportTemplate] = useState<UserTemplate | null>(null);
 
   const loadData = async () => {
     console.log('🔄 开始加载数据...');
@@ -366,6 +380,202 @@ export default function Dashboard() {
       console.error('添加推荐链接失败:', error);
       toast.error('添加失败，请重试');
     }
+  };
+
+  // 加载日报模板
+  const loadDailyReportTemplate = async () => {
+    try {
+      const templates = await templateApi.getAll();
+      const dailyTemplate = templates.find(
+        (t) => t.collection_type === '日报' && t.is_active
+      );
+      
+      if (dailyTemplate) {
+        setDailyReportTemplate(dailyTemplate);
+      } else {
+        // 使用默认模板
+        setDailyReportTemplate({
+          id: 'default-daily',
+          user_id: '',
+          trigger_word: '日报',
+          template_name: '每日工作日志',
+          icon: '📰',
+          collection_type: '日报',
+          default_tags: ['工作', '日报'],
+          default_sub_items: [
+            { id: '1', text: '总结今日完成的工作', status: 'pending' },
+            { id: '2', text: '记录遇到的问题', status: 'pending' },
+            { id: '3', text: '规划明日工作计划', status: 'pending' },
+          ],
+          is_active: true,
+          sort_order: 0,
+          usage_count: 0,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        });
+      }
+    } catch (error) {
+      console.error('加载日报模板失败:', error);
+      // 使用默认模板
+      setDailyReportTemplate({
+        id: 'default-daily',
+        user_id: '',
+        trigger_word: '日报',
+        template_name: '每日工作日志',
+        icon: '📰',
+        collection_type: '日报',
+        default_tags: ['工作', '日报'],
+        default_sub_items: [
+          { id: '1', text: '总结今日完成的工作', status: 'pending' },
+          { id: '2', text: '记录遇到的问题', status: 'pending' },
+          { id: '3', text: '规划明日工作计划', status: 'pending' },
+        ],
+        is_active: true,
+        sort_order: 0,
+        usage_count: 0,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      });
+    }
+  };
+
+  // 处理日报按钮点击
+  const handleDailyReportClick = async () => {
+    await loadDailyReportTemplate();
+    setShowDailyReport(true);
+  };
+
+  // 处理日报保存
+  const handleDailyReportSave = async (data: {
+    title: string;
+    description: string;
+    sub_items: any[];
+    tags: string[];
+  }) => {
+    if (!dailyReportTemplate) return;
+
+    try {
+      const user = auth.getCurrentUser();
+      if (!user) {
+        toast.error('用户未登录');
+        return;
+      }
+
+      const newItem = await itemApi.createItem({
+        raw_text: data.title,
+        type: 'collection',
+        title: data.title,
+        description: data.description,
+        due_date: null,
+        priority: 'medium',
+        status: 'pending',
+        tags: data.tags,
+        entities: {},
+        archived_at: null,
+        url: null,
+        url_title: null,
+        url_summary: null,
+        url_thumbnail: null,
+        url_fetched_at: null,
+        has_conflict: false,
+        start_time: null,
+        end_time: null,
+        recurrence_rule: null,
+        recurrence_end_date: null,
+        master_item_id: null,
+        is_master: false,
+        collection_type: dailyReportTemplate.collection_type,
+        sub_items: data.sub_items,
+      });
+
+      if (newItem) {
+        toast.success('日报已保存');
+        loadData();
+        
+        // 更新模板使用次数
+        try {
+          await templateApi.incrementUsage(dailyReportTemplate.id);
+        } catch (err) {
+          console.warn('更新模板使用次数失败:', err);
+        }
+      } else {
+        toast.error('保存失败');
+      }
+    } catch (error) {
+      console.error('保存日报失败:', error);
+      toast.error('保存失败，请重试');
+    }
+  };
+
+  // 处理博客保存
+  const handleBlogSave = async (content: string) => {
+    try {
+      const user = auth.getCurrentUser();
+      if (!user) {
+        toast.error('用户未登录');
+        return;
+      }
+
+      // 检查 API 使用次数
+      const usageCheck = await checkApiUsageBeforeAction('博客文章创建');
+      if (!usageCheck.canProceed) {
+        toast.error(usageCheck.message || 'API 使用次数已达上限');
+        return;
+      }
+
+      // 使用 AI 提取标题和标签
+      const metadata = await extractBlogMetadata(content, {
+        onProgress: (message, type) => {
+          if (type === 'error') {
+            toast.error(message);
+          } else if (type === 'success') {
+            toast.success(message);
+          } else {
+            toast.info(message);
+          }
+        }
+      });
+
+      const newItem = await itemApi.createItem({
+        raw_text: content,
+        type: 'note',
+        title: metadata.title,
+        description: metadata.description,
+        due_date: null,
+        priority: 'medium',
+        status: 'pending',
+        tags: [...metadata.tags, '博客'],
+        entities: {},
+        archived_at: null,
+        url: null,
+        url_title: null,
+        url_summary: null,
+        url_thumbnail: null,
+        url_fetched_at: null,
+        has_conflict: false,
+        start_time: null,
+        end_time: null,
+        recurrence_rule: null,
+        recurrence_end_date: null,
+        master_item_id: null,
+        is_master: false,
+      });
+
+      if (newItem) {
+        toast.success(`博客《${metadata.title}》已保存`);
+        loadData();
+      } else {
+        toast.error('保存失败');
+      }
+    } catch (error) {
+      console.error('保存博客失败:', error);
+      toast.error('保存失败，请重试');
+    }
+  };
+
+  // 处理调研按钮点击（暂时使用智能助手）
+  const handleResearchClick = () => {
+    toast.info('调研功能开发中，请使用智能助手功能');
   };
 
   return (
@@ -886,6 +1096,45 @@ export default function Dashboard() {
         open={showLoginDialog} 
         onOpenChange={setShowLoginDialog}
         onSuccess={loadData}
+      />
+
+      {/* 浮动操作菜单 */}
+      <FloatingActionMenu
+        onDailyReport={handleDailyReportClick}
+        onWeeklyReport={() => setShowWeeklyReport(true)}
+        onBlog={() => setShowBlogEditor(true)}
+        onResearch={handleResearchClick}
+        onHelp={() => setShowHelpDialog(true)}
+      />
+
+      {/* 周报对话框 */}
+      <WeeklyReportDialog
+        open={showWeeklyReport}
+        onOpenChange={setShowWeeklyReport}
+        onReportCreated={loadData}
+      />
+
+      {/* 日报模板对话框 */}
+      {dailyReportTemplate && (
+        <TemplateInputModal
+          open={showDailyReport}
+          onOpenChange={setShowDailyReport}
+          template={dailyReportTemplate}
+          onSave={handleDailyReportSave}
+        />
+      )}
+
+      {/* 博客编辑器 */}
+      <BlogEditorDialog
+        open={showBlogEditor}
+        onOpenChange={setShowBlogEditor}
+        onSave={handleBlogSave}
+      />
+
+      {/* 帮助对话框 */}
+      <HelpDialog
+        open={showHelpDialog}
+        onOpenChange={setShowHelpDialog}
       />
 
       {/* 预览/加载弹窗 */}
