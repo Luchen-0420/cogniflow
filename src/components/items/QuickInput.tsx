@@ -163,6 +163,44 @@ export default function QuickInput({
     }
   };
 
+  /**
+   * 提取以 / 或 @ 开头的标签短语
+   * 例如: "/报告 @整理 这是内容" -> { tags: ["报告", "整理"], text: "这是内容" }
+   */
+  const extractTagPhrases = (text: string): { tags: string[]; text: string } => {
+    const tags: string[] = [];
+    let cleanedText = text;
+    
+    // 匹配以 / 或 @ 开头的短语（后面跟着非空白字符，直到遇到空白字符或行尾）
+    // 支持中文、英文、数字等字符
+    const tagPattern = /([/@])([^\s/]+)/g;
+    let match;
+    const matches: Array<{ full: string; tag: string }> = [];
+    
+    // 收集所有匹配的标签
+    while ((match = tagPattern.exec(text)) !== null) {
+      const fullMatch = match[0]; // 例如: "/报告" 或 "@整理"
+      const tagName = match[2]; // 例如: "报告" 或 "整理"
+      
+      // 排除已知的类型前缀（如 @笔记、@任务等），这些是用于指定类型的，不是标签
+      const typePrefixes = ['笔记', 'note', '任务', 'task', 'todo', '待办', '日程', 'event', '活动', '会议', '资料', 'data', '文档'];
+      if (!typePrefixes.includes(tagName.toLowerCase())) {
+        matches.push({ full: fullMatch, tag: tagName });
+        tags.push(tagName);
+      }
+    }
+    
+    // 从文本中移除所有匹配的标签短语
+    if (matches.length > 0) {
+      matches.forEach(({ full }) => {
+        // 移除标签短语及其前后的空白字符
+        cleanedText = cleanedText.replace(new RegExp(`\\s*${full.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\s*`, 'g'), ' ').trim();
+      });
+    }
+    
+    return { tags, text: cleanedText };
+  };
+
   const handleTextChange = (value: string) => {
     // 如果是首次输入（从空到有内容），触发回调
     if (!text && value && onFirstInput) {
@@ -518,15 +556,18 @@ export default function QuickInput({
                 }
               });
               
+              // 从 combinedText 中提取标签
+              const { tags: fileExtractedTags, text: fileTextWithoutTags } = extractTagPhrases(combinedText);
+              
               newItem = await itemApi.createItem({
                 raw_text: combinedText, // 保存原始文本（用户输入 + 文档内容）
                 type: 'data',
                 title: generatedTitle,
-                description: combinedText, // 完整内容作为描述（保持原文）
+                description: fileTextWithoutTags, // 使用去除标签后的文本作为描述
                 due_date: null,
                 priority: 'medium',
                 status: 'pending',
-                tags: ['资料'],
+                tags: [...fileExtractedTags, '资料'],
                 entities: {},
                 archived_at: null,
                 url: null,
@@ -654,62 +695,95 @@ export default function QuickInput({
         return null;
       }
 
-      // 检测是否为URL
-      const detectedURL = detectURL(inputText);
-      const isURL = detectedURL && isMainlyURL(inputText);
+      // 提取标签短语（以 / 或 @ 开头的短语）
+      const { tags: extractedTags, text: textWithoutTags } = extractTagPhrases(inputText);
+      console.log('🏷️ 提取的标签:', extractedTags);
+      console.log('📝 去除标签后的文本:', textWithoutTags);
+
+      // 检测是否为URL（使用去除标签后的文本）
+      const detectedURL = detectURL(textWithoutTags);
+      const isURL = detectedURL && isMainlyURL(textWithoutTags);
 
       // 检测用户声明的类型（支持多种前缀）
       const typePatterns = {
         note: [
           /^笔记[：:]\s*/i,
           /^@笔记\s*/i,
+          /^\/笔记\s*/i,
           /^note[：:]\s*/i,
           /^@note\s*/i,
+          /^\/note\s*/i,
         ],
         task: [
           /^任务[：:]\s*/i,
           /^@任务\s*/i,
+          /^\/任务\s*/i,
           /^task[：:]\s*/i,
           /^@task\s*/i,
+          /^\/task\s*/i,
           /^待办[：:]\s*/i,
           /^@待办\s*/i,
+          /^\/待办\s*/i,
           /^todo[：:]\s*/i,
           /^@todo\s*/i,
+          /^\/todo\s*/i,
         ],
         event: [
           /^日程[：:]\s*/i,
           /^@日程\s*/i,
+          /^\/日程\s*/i,
           /^event[：:]\s*/i,
           /^@event\s*/i,
+          /^\/event\s*/i,
           /^活动[：:]\s*/i,
           /^@活动\s*/i,
+          /^\/活动\s*/i,
           /^会议[：:]\s*/i,
           /^@会议\s*/i,
+          /^\/会议\s*/i,
         ],
         data: [
           /^资料[：:]\s*/i,
           /^@资料\s*/i,
+          /^\/资料\s*/i,
           /^data[：:]\s*/i,
           /^@data\s*/i,
+          /^\/data\s*/i,
           /^文档[：:]\s*/i,
           /^@文档\s*/i,
+          /^\/文档\s*/i,
+        ],
+        collection: [
+          /^合集[：:]\s*/i,
+          /^@合集\s*/i,
+          /^\/合集\s*/i,
+          /^collection[：:]\s*/i,
+          /^@collection\s*/i,
+          /^\/collection\s*/i,
         ],
       };
 
-      // 检测用户指定的类型
-      let userSpecifiedType: 'note' | 'task' | 'event' | 'data' | null = null;
-      let contentWithoutPrefix = inputText;
+      // 检测用户指定的类型（使用去除标签后的文本）
+      let userSpecifiedType: 'note' | 'task' | 'event' | 'data' | 'collection' | null = null;
+      let contentWithoutPrefix = textWithoutTags;
 
       for (const [type, patterns] of Object.entries(typePatterns)) {
         for (const pattern of patterns) {
-          if (pattern.test(inputText)) {
-            userSpecifiedType = type as 'note' | 'task' | 'event' | 'data';
-            contentWithoutPrefix = inputText.replace(pattern, '').trim();
+          if (pattern.test(textWithoutTags)) {
+            userSpecifiedType = type as 'note' | 'task' | 'event' | 'data' | 'collection';
+            contentWithoutPrefix = textWithoutTags.replace(pattern, '').trim();
             console.log(`🏷️ 检测到用户指定类型: ${type}`);
             break;
           }
         }
         if (userSpecifiedType) break;
+      }
+      
+      // 如果用户指定了 collection 类型，提示使用模板功能
+      if (userSpecifiedType === 'collection') {
+        toast.info('合集类型请使用模板功能（输入 / 选择模板）');
+        // 将 collection 类型转换为普通任务处理，但去除前缀
+        userSpecifiedType = null;
       }
       
       const isNote = userSpecifiedType === 'note';
@@ -733,16 +807,18 @@ export default function QuickInput({
             inputText
           );
 
-          // 创建URL类型的条目
+          // 创建URL类型的条目（合并提取的标签）
+          // 使用去除类型前缀和标签后的内容作为 raw_text
+          const urlRawText = contentWithoutPrefix || textWithoutTags;
           const newItem = await itemApi.createItem({
-            raw_text: inputText,
+            raw_text: urlRawText, // 保存去除类型前缀和标签后的内容
             type: 'url',
             title: urlResult.title,
             description: urlResult.summary,
             due_date: null,
             priority: 'medium',
             status: 'pending',
-            tags: ['链接', '网页'],
+            tags: [...extractedTags, '链接', '网页'],
             entities: {},
             archived_at: null,
             url: urlResult.url,
@@ -804,7 +880,7 @@ export default function QuickInput({
             }
           });
           
-          // 创建笔记类型的条目
+          // 创建笔记类型的条目（合并提取的标签）
           const newItem = await itemApi.createItem({
             raw_text: noteContent, // 保存去除前缀后的原始内容
             type: 'note',
@@ -813,7 +889,7 @@ export default function QuickInput({
             due_date: null,
             priority: 'medium',
             status: 'pending',
-            tags: ['笔记'],
+            tags: [...extractedTags, '笔记'],
             entities: {},
             archived_at: null,
             url: null,
@@ -875,7 +951,7 @@ export default function QuickInput({
             }
           });
           
-          // 创建资料类型的条目
+          // 创建资料类型的条目（合并提取的标签）
           const newItem = await itemApi.createItem({
             raw_text: contentWithoutPrefix, // 保存去除前缀后的原始内容
             type: 'data',
@@ -884,7 +960,7 @@ export default function QuickInput({
             due_date: null,
             priority: 'medium',
             status: 'pending',
-            tags: ['资料'],
+            tags: [...extractedTags, '资料'],
             entities: {},
             archived_at: null,
             url: null,
@@ -939,7 +1015,8 @@ export default function QuickInput({
           return null;
         }
         
-        const textToProcess = userSpecifiedType ? contentWithoutPrefix : inputText;
+        // 使用去除标签后的文本进行AI处理
+        const textToProcess = userSpecifiedType ? contentWithoutPrefix : textWithoutTags;
         const aiResult = await processTextWithAI(textToProcess, {
           onProgress: (message, type) => {
             if (type === 'error') {
@@ -955,11 +1032,13 @@ export default function QuickInput({
         // 如果用户指定了类型，使用用户指定的类型；否则使用 AI 识别的类型
         const itemType = userSpecifiedType || aiResult.type || 'task';
         
-        console.log('🤖 AI 处理结果:', {
+            console.log('🤖 AI 处理结果:', {
           用户指定类型: userSpecifiedType,
           AI识别类型: aiResult.type,
           最终类型: itemType,
           原始文本: inputText,
+          提取的标签: extractedTags,
+          去除标签后的文本: textWithoutTags,
           处理文本: textToProcess
         });
 
@@ -981,16 +1060,18 @@ export default function QuickInput({
           标准化: { due_date: normalizedDueDate, start_time: normalizedStartTime, end_time: normalizedEndTime }
         });
 
-        // 创建条目
+        // 创建条目（合并提取的标签和AI生成的标签）
+        // 使用去除类型前缀和标签后的内容作为 raw_text
+        const finalRawText = userSpecifiedType ? contentWithoutPrefix : textWithoutTags;
         const newItem = await itemApi.createItem({
-          raw_text: inputText,
+          raw_text: finalRawText, // 保存去除类型前缀和标签后的内容
           type: itemType,
           title: aiResult.title,
           description: aiResult.description,
           due_date: normalizedDueDate,
           priority: aiResult.priority,
           status: 'pending',
-          tags: aiResult.tags,
+          tags: [...extractedTags, ...(aiResult.tags || [])], // 合并提取的标签和AI生成的标签
           entities: aiResult.entities,
           archived_at: null,
           url: null,
@@ -1200,7 +1281,7 @@ export default function QuickInput({
                 placeholder={
                   isQueryMode 
                     ? "🔍 查询模式: 输入查询内容 (如: 今天有什么事? 查询本周的会议)" 
-                    : "输入任何想法、任务、日程或URL链接... (输入 /blog 写博客, / 使用智能模板, ? 或 /q 开启查询模式, @help 查看帮助, Enter发送)"
+                    : "输入任何想法、任务、日程或URL链接... (输入 /blog 写博客, / 使用智能模板, ? 或 /q 开启查询模式, @help 查看帮助, /报告 @整理 自动添加标签, Enter发送)"
                 }
                 className={`min-h-[60px] max-h-[120px] resize-none ${
                   isQueryMode ? 'border-primary' : ''
@@ -1260,6 +1341,7 @@ export default function QuickInput({
               <code className="px-1 py-0.5 bg-muted rounded">@help</code> 查看帮助 | 
               <code className="px-1 py-0.5 bg-muted rounded">/</code> 使用模板 | 
               <code className="px-1 py-0.5 bg-muted rounded">?</code> 开启搜索 | 
+              <code className="px-1 py-0.5 bg-muted rounded">/报告</code> 或 <code className="px-1 py-0.5 bg-muted rounded">@整理</code> 自动添加标签 | 
               🎤 点击麦克风使用语音输入
             </div>
           )}

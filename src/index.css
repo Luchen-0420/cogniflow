@@ -54,6 +54,86 @@ All colors MUST be HSL.
     --sidebar-border: 220 13% 91%;
 
     --sidebar-ring: 217.2 91.2% 59.8%;
+
+    /* ==================== 类型颜色系统 ==================== */
+    /* Task (任务) - 蓝色 */
+    --type-task-bg: 210 96% 95%;
+    --type-task-text: 210 100% 25%;
+    --type-task-border: 210 100% 70%;
+
+    /* Event (日程) - 绿色 */
+    --type-event-bg: 142 76% 94%;
+    --type-event-text: 142 76% 20%;
+    --type-event-border: 142 76% 65%;
+
+    /* Note (笔记) - 黄色 */
+    --type-note-bg: 48 96% 95%;
+    --type-note-text: 48 96% 20%;
+    --type-note-border: 48 96% 70%;
+
+    /* Data (资料) - 紫色 */
+    --type-data-bg: 270 91% 95%;
+    --type-data-text: 270 91% 25%;
+    --type-data-border: 270 91% 70%;
+
+    /* URL (链接) - 青色 */
+    --type-url-bg: 188 94% 95%;
+    --type-url-text: 188 94% 25%;
+    --type-url-border: 188 94% 70%;
+
+    /* Collection (合集) - 粉色 */
+    --type-collection-bg: 330 81% 95%;
+    --type-collection-text: 330 81% 25%;
+    --type-collection-border: 330 81% 70%;
+
+    /* ==================== 状态颜色系统 ==================== */
+    /* Success (成功) */
+    --status-success-bg: 142 76% 94%;
+    --status-success-text: 142 76% 20%;
+    --status-success-border: 142 76% 65%;
+
+    /* Warning (警告) */
+    --status-warning-bg: 48 96% 95%;
+    --status-warning-text: 48 96% 20%;
+    --status-warning-border: 48 96% 70%;
+
+    /* Error (错误) */
+    --status-error-bg: 0 84% 95%;
+    --status-error-text: 0 84% 25%;
+    --status-error-border: 0 84% 70%;
+
+    /* Info (信息) */
+    --status-info-bg: 210 96% 95%;
+    --status-info-text: 210 100% 25%;
+    --status-info-border: 210 100% 70%;
+
+    /* ==================== 优先级颜色系统 ==================== */
+    /* High (高优先级) - 红色 */
+    --priority-high-border: 0 84% 60%;
+    --priority-high-bg: 0 84% 98%;
+
+    /* Medium (中优先级) - 黄色 */
+    --priority-medium-border: 48 96% 60%;
+    --priority-medium-bg: 48 96% 98%;
+
+    /* Low (低优先级) - 绿色 */
+    --priority-low-border: 142 76% 60%;
+    --priority-low-bg: 142 76% 98%;
+
+    /* ==================== 阴影系统 ==================== */
+    --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+    --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+    --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+    --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+    --shadow-2xl: 0 25px 50px -12px rgb(0 0 0 / 0.25);
+    --shadow-card: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+    --shadow-hover: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+
+    /* ==================== 动画系统 ==================== */
+    --transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-normal: 200ms cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-slow: 300ms cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-slower: 500ms cubic-bezier(0.4, 0, 0.2, 1);
   }
 
   .dark {
@@ -92,6 +172,80 @@ All colors MUST be HSL.
     --sidebar-accent-foreground: 240 4.8% 95.9%;
     --sidebar-border: 240 3.7% 15.9%;
     --sidebar-ring: 217.2 91.2% 59.8%;
+
+    /* ==================== 类型颜色系统 (暗色模式) ==================== */
+    /* Task (任务) - 蓝色 */
+    --type-task-bg: 210 50% 15%;
+    --type-task-text: 210 100% 75%;
+    --type-task-border: 210 50% 40%;
+
+    /* Event (日程) - 绿色 */
+    --type-event-bg: 142 50% 15%;
+    --type-event-text: 142 76% 75%;
+    --type-event-border: 142 50% 40%;
+
+    /* Note (笔记) - 黄色 */
+    --type-note-bg: 48 50% 15%;
+    --type-note-text: 48 96% 75%;
+    --type-note-border: 48 50% 40%;
+
+    /* Data (资料) - 紫色 */
+    --type-data-bg: 270 50% 15%;
+    --type-data-text: 270 91% 75%;
+    --type-data-border: 270 50% 40%;
+
+    /* URL (链接) - 青色 */
+    --type-url-bg: 188 50% 15%;
+    --type-url-text: 188 94% 75%;
+    --type-url-border: 188 50% 40%;
+
+    /* Collection (合集) - 粉色 */
+    --type-collection-bg: 330 50% 15%;
+    --type-collection-text: 330 81% 75%;
+    --type-collection-border: 330 50% 40%;
+
+    /* ==================== 状态颜色系统 (暗色模式) ==================== */
+    /* Success (成功) */
+    --status-success-bg: 142 50% 15%;
+    --status-success-text: 142 76% 75%;
+    --status-success-border: 142 50% 40%;
+
+    /* Warning (警告) */
+    --status-warning-bg: 48 50% 15%;
+    --status-warning-text: 48 96% 75%;
+    --status-warning-border: 48 50% 40%;
+
+    /* Error (错误) */
+    --status-error-bg: 0 50% 15%;
+    --status-error-text: 0 84% 75%;
+    --status-error-border: 0 50% 40%;
+
+    /* Info (信息) */
+    --status-info-bg: 210 50% 15%;
+    --status-info-text: 210 100% 75%;
+    --status-info-border: 210 50% 40%;
+
+    /* ==================== 优先级颜色系统 (暗色模式) ==================== */
+    /* High (高优先级) - 红色 */
+    --priority-high-border: 0 84% 50%;
+    --priority-high-bg: 0 50% 15%;
+
+    /* Medium (中优先级) - 黄色 */
+    --priority-medium-border: 48 96% 50%;
+    --priority-medium-bg: 48 50% 15%;
+
+    /* Low (低优先级) - 绿色 */
+    --priority-low-border: 142 76% 50%;
+    --priority-low-bg: 142 50% 15%;
+
+    /* ==================== 阴影系统 (暗色模式) ==================== */
+    --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.3);
+    --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.4), 0 2px 4px -2px rgb(0 0 0 / 0.3);
+    --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.4), 0 4px 6px -4px rgb(0 0 0 / 0.3);
+    --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.4), 0 8px 10px -6px rgb(0 0 0 / 0.3);
+    --shadow-2xl: 0 25px 50px -12px rgb(0 0 0 / 0.5);
+    --shadow-card: 0 1px 3px 0 rgb(0 0 0 / 0.3), 0 1px 2px -1px rgb(0 0 0 / 0.3);
+    --shadow-hover: 0 10px 15px -3px rgb(0 0 0 / 0.4), 0 4px 6px -4px rgb(0 0 0 / 0.3);
   }
 }
 
@@ -134,6 +288,31 @@ All colors MUST be HSL.
       display: none !important;
     }
   }
+
+  /* 统一的卡片样式 */
+  .card-base {
+    @apply bg-card border border-border rounded-lg shadow-card;
+    transition: all var(--transition-normal);
+  }
+
+  .card-hover {
+    @apply hover:shadow-hover hover:scale-[1.01];
+  }
+
+  /* 统一的按钮样式增强 */
+  .btn-ghost-hover {
+    @apply hover:bg-muted transition-colors duration-fast;
+  }
+
+  /* 统一的输入框样式 */
+  .input-base {
+    @apply bg-background border border-input rounded-md;
+    transition: all var(--transition-fast);
+  }
+
+  .input-focus {
+    @apply focus:ring-2 focus:ring-ring focus:ring-offset-2;
+  }
 }
 
 /* 智能报告 Markdown 样式增强 */
@@ -146,16 +325,12 @@ All colors MUST be HSL.
   }
 
   table thead tr {
-    background: linear-gradient(to right, #f3f4f6, #e5e7eb);
-  }
-
-  .dark table thead tr {
-    background: linear-gradient(to right, #1f2937, #374151);
+    @apply bg-muted;
   }
 
   table tbody tr:hover {
-    @apply bg-gray-50 dark:bg-gray-800/50;
-    transition: background-color 0.2s ease;
+    @apply bg-muted/50;
+    transition: background-color var(--transition-normal);
   }
 
   /* 列表项间距优化 */
@@ -165,12 +340,12 @@ All colors MUST be HSL.
 
   /* 强调文本高亮 */
   strong {
-    @apply bg-yellow-100 dark:bg-yellow-900/30 px-1 rounded;
+    @apply bg-status-warning-bg/30 text-status-warning-text px-1 rounded;
   }
 
   /* 分隔线样式 */
   hr {
-    @apply border-t-2 border-dashed border-gray-300 dark:border-gray-600 my-6;
+    @apply border-t-2 border-dashed border-border my-6;
   }
 
   /* 代码块滚动优化 */
@@ -188,27 +363,17 @@ All colors MUST be HSL.
 
 .markdown-report code::-webkit-scrollbar-track,
 .scrollbar-thin::-webkit-scrollbar-track {
-  background-color: rgb(243 244 246); /* gray-100 */
+  @apply bg-muted;
   border-radius: 0.25rem;
-}
-
-.dark .markdown-report code::-webkit-scrollbar-track,
-.dark .scrollbar-thin::-webkit-scrollbar-track {
-  background-color: rgb(31 41 55); /* gray-800 */
 }
 
 .markdown-report code::-webkit-scrollbar-thumb,
 .scrollbar-thin::-webkit-scrollbar-thumb {
-  background-color: rgb(156 163 175); /* gray-400 */
+  @apply bg-muted-foreground/30;
   border-radius: 0.25rem;
-}
-
-.dark .markdown-report code::-webkit-scrollbar-thumb,
-.dark .scrollbar-thin::-webkit-scrollbar-thumb {
-  background-color: rgb(75 85 99); /* gray-600 */
 }
 
 .markdown-report code::-webkit-scrollbar-thumb:hover,
 .scrollbar-thin::-webkit-scrollbar-thumb:hover {
-  background-color: rgb(107 114 128); /* gray-500 */
+  @apply bg-muted-foreground/50;
 }

@@ -47,10 +47,10 @@ export default function App() {
 
   if (!initialized) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
+      <div className="flex items-center justify-center min-h-screen bg-background">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900 dark:border-gray-100 mx-auto mb-4"></div>
-          <p className="text-gray-600 dark:text-gray-400">正在初始化数据库...</p>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-muted-foreground">正在初始化数据库...</p>
         </div>
       </div>
     );
@@ -58,13 +58,13 @@ export default function App() {
 
   if (error) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="text-center max-w-md p-6 bg-red-50 dark:bg-red-900/20 rounded-lg">
-          <h2 className="text-xl font-bold text-red-600 dark:text-red-400 mb-2">初始化错误</h2>
-          <p className="text-sm text-red-500 dark:text-red-300">{error}</p>
+      <div className="flex items-center justify-center min-h-screen bg-background">
+        <div className="text-center max-w-md p-6 bg-status-error-bg/30 border border-status-error-border rounded-lg">
+          <h2 className="text-xl font-bold text-status-error-text mb-2">初始化错误</h2>
+          <p className="text-sm text-status-error-text/80">{error}</p>
           <button 
             onClick={() => window.location.reload()} 
-            className="mt-4 px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
+            className="mt-4 px-4 py-2 bg-status-error-text text-status-error-bg rounded-lg hover:opacity-90 transition-opacity duration-fast"
           >
             重新加载
           </button>

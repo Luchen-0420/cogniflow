@@ -73,6 +73,77 @@ export default {
           border: 'hsl(var(--sidebar-border))',
           ring: 'hsl(var(--sidebar-ring))',
         },
+        // 类型颜色系统
+        type: {
+          task: {
+            bg: 'hsl(var(--type-task-bg))',
+            text: 'hsl(var(--type-task-text))',
+            border: 'hsl(var(--type-task-border))',
+          },
+          event: {
+            bg: 'hsl(var(--type-event-bg))',
+            text: 'hsl(var(--type-event-text))',
+            border: 'hsl(var(--type-event-border))',
+          },
+          note: {
+            bg: 'hsl(var(--type-note-bg))',
+            text: 'hsl(var(--type-note-text))',
+            border: 'hsl(var(--type-note-border))',
+          },
+          data: {
+            bg: 'hsl(var(--type-data-bg))',
+            text: 'hsl(var(--type-data-text))',
+            border: 'hsl(var(--type-data-border))',
+          },
+          url: {
+            bg: 'hsl(var(--type-url-bg))',
+            text: 'hsl(var(--type-url-text))',
+            border: 'hsl(var(--type-url-border))',
+          },
+          collection: {
+            bg: 'hsl(var(--type-collection-bg))',
+            text: 'hsl(var(--type-collection-text))',
+            border: 'hsl(var(--type-collection-border))',
+          },
+        },
+        // 状态颜色系统
+        status: {
+          success: {
+            bg: 'hsl(var(--status-success-bg))',
+            text: 'hsl(var(--status-success-text))',
+            border: 'hsl(var(--status-success-border))',
+          },
+          warning: {
+            bg: 'hsl(var(--status-warning-bg))',
+            text: 'hsl(var(--status-warning-text))',
+            border: 'hsl(var(--status-warning-border))',
+          },
+          error: {
+            bg: 'hsl(var(--status-error-bg))',
+            text: 'hsl(var(--status-error-text))',
+            border: 'hsl(var(--status-error-border))',
+          },
+          info: {
+            bg: 'hsl(var(--status-info-bg))',
+            text: 'hsl(var(--status-info-text))',
+            border: 'hsl(var(--status-info-border))',
+          },
+        },
+        // 优先级颜色系统
+        priority: {
+          high: {
+            border: 'hsl(var(--priority-high-border))',
+            bg: 'hsl(var(--priority-high-bg))',
+          },
+          medium: {
+            border: 'hsl(var(--priority-medium-border))',
+            bg: 'hsl(var(--priority-medium-bg))',
+          },
+          low: {
+            border: 'hsl(var(--priority-low-border))',
+            bg: 'hsl(var(--priority-low-bg))',
+          },
+        },
       },
       borderRadius: {
         lg: 'var(--radius)',
@@ -85,8 +156,24 @@ export default {
         'gradient-background': 'var(--gradient-background)',
       },
       boxShadow: {
+        sm: 'var(--shadow-sm)',
+        md: 'var(--shadow-md)',
+        lg: 'var(--shadow-lg)',
+        xl: 'var(--shadow-xl)',
+        '2xl': 'var(--shadow-2xl)',
         card: 'var(--shadow-card)',
         hover: 'var(--shadow-hover)',
+        inner: 'inset 0 2px 4px 0 rgb(0 0 0 / 0.05)',
+        none: 'none',
+      },
+      transitionDuration: {
+        fast: 'var(--transition-fast)',
+        normal: 'var(--transition-normal)',
+        slow: 'var(--transition-slow)',
+        slower: 'var(--transition-slower)',
+      },
+      transitionTimingFunction: {
+        'ease-in-out': 'cubic-bezier(0.4, 0, 0.2, 1)',
       },
       keyframes: {
         'accordion-down': {

@@ -13,6 +13,8 @@ import EditItemDialog from './EditItemDialog';
 import URLCard from './URLCard';
 import { AttachmentImages } from '@/components/attachments/AttachmentImages';
 import { NoteViewDialog } from './NoteViewDialog';
+import { getTypeBadgeClasses, getPriorityBorderClasses, type ItemType } from '@/styles/color-utils';
+import { cn } from '@/lib/utils';
 
 /**
  * 将不带时区的ISO时间字符串解析为本地时间
@@ -57,20 +59,8 @@ const typeLabels = {
   collection: '合集'
 };
 
-const typeColors = {
-  task: 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200',
-  event: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200',
-  note: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200',
-  data: 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200',
-  url: 'bg-cyan-100 text-cyan-800 dark:bg-cyan-900 dark:text-cyan-200',
-  collection: 'bg-pink-100 text-pink-800 dark:bg-pink-900 dark:text-pink-200'
-};
-
-const priorityColors = {
-  high: 'border-l-4 border-l-red-500',
-  medium: 'border-l-4 border-l-yellow-500',
-  low: 'border-l-4 border-l-green-500'
-};
+// 类型颜色已迁移到设计系统，使用 getTypeBadgeClasses 函数
+// 优先级颜色已迁移到设计系统，使用 getPriorityBorderClasses 函数
 
 export default function ItemCard({ item, onUpdate }: ItemCardProps) {
   const [isEditOpen, setIsEditOpen] = useState(false);
@@ -143,28 +133,30 @@ export default function ItemCard({ item, onUpdate }: ItemCardProps) {
 
   // 确定边框颜色: 冲突优先级最高，然后是过期，最后是优先级
   const borderClass = hasConflict 
-    ? 'border-l-4 border-l-red-500 bg-red-50/50 dark:bg-red-950/20' 
+    ? 'border-l-4 border-l-status-error-border bg-status-error-bg/30' 
     : isOverdue
-    ? 'border-l-4 border-l-orange-500'
-    : (priorityColors[item.priority as keyof typeof priorityColors] || '');
+    ? 'border-l-4 border-l-status-warning-border'
+    : getPriorityBorderClasses(item.priority as 'high' | 'medium' | 'low' | undefined || 'low');
 
   return (
     <>
-      <Card className={`
-        group relative
-        ${borderClass} 
-        ${isCompleted ? 'opacity-50' : ''} 
-        hover:shadow-lg hover:scale-[1.01] 
-        transition-all duration-200 ease-out
-        border border-gray-200 dark:border-gray-800
-        ${hasConflict ? 'shadow-md shadow-red-200/50 dark:shadow-red-900/30' : 'bg-white/50 dark:bg-gray-900/50 backdrop-blur-sm'}
-      `}>
+      <Card className={cn(
+        'group relative',
+        borderClass,
+        isCompleted && 'opacity-50',
+        'hover:shadow-hover hover:scale-[1.01]',
+        'transition-all duration-fast ease-in-out',
+        'border border-border',
+        hasConflict 
+          ? 'shadow-md shadow-status-error-border/20' 
+          : 'bg-card/50 backdrop-blur-sm'
+      )}>
         {/* 悬浮操作按钮 */}
         <div className="absolute top-2 right-2 sm:top-2.5 sm:right-2.5 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-all duration-200 flex gap-1 z-10">
           <Button
             variant="ghost"
             size="sm"
-            className="h-6 w-6 sm:h-7 sm:w-7 p-0 bg-white/90 dark:bg-gray-800/90 backdrop-blur hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg shadow-sm"
+            className="h-6 w-6 sm:h-7 sm:w-7 p-0 bg-card/90 backdrop-blur hover:bg-muted rounded-lg shadow-sm"
             onClick={() => setIsEditOpen(true)}
             title="编辑"
           >
@@ -173,7 +165,7 @@ export default function ItemCard({ item, onUpdate }: ItemCardProps) {
           <Button
             variant="ghost"
             size="sm"
-            className="h-6 w-6 sm:h-7 sm:w-7 p-0 bg-white/90 dark:bg-gray-800/90 backdrop-blur hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg shadow-sm"
+            className="h-6 w-6 sm:h-7 sm:w-7 p-0 bg-card/90 backdrop-blur hover:bg-muted rounded-lg shadow-sm"
             onClick={handleArchive}
             title={isArchived ? "恢复" : "归档"}
           >
@@ -186,11 +178,11 @@ export default function ItemCard({ item, onUpdate }: ItemCardProps) {
           <Button
             variant="ghost"
             size="sm"
-            className="h-6 w-6 sm:h-7 sm:w-7 p-0 bg-white/90 dark:bg-gray-800/90 backdrop-blur hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg shadow-sm"
+            className="h-6 w-6 sm:h-7 sm:w-7 p-0 bg-card/90 backdrop-blur hover:bg-status-error-bg/30 rounded-lg shadow-sm"
             onClick={handleDelete}
             title="删除"
           >
-            <Trash2 className="h-3 w-3 sm:h-3.5 sm:w-3.5 text-red-500" />
+            <Trash2 className="h-3 w-3 sm:h-3.5 sm:w-3.5 text-status-error-text" />
           </Button>
         </div>
 
@@ -204,29 +196,32 @@ export default function ItemCard({ item, onUpdate }: ItemCardProps) {
                 onClick={handleToggleComplete}
               >
                 {isCompleted ? (
-                  <CheckCircle2 className="h-5 w-5 text-green-500 hover:text-green-600 transition-colors" />
+                  <CheckCircle2 className="h-5 w-5 text-status-success-text hover:text-status-success-text/80 transition-colors" />
                 ) : (
-                  <Circle className="h-5 w-5 text-gray-300 hover:text-gray-400 transition-colors" />
+                  <Circle className="h-5 w-5 text-muted-foreground/50 hover:text-muted-foreground transition-colors" />
                 )}
               </Button>
             )}
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-1 sm:gap-2 mb-1 flex-wrap">
-                <CardTitle className={`text-sm sm:text-base font-medium break-words ${isCompleted ? 'line-through text-gray-400' : 'text-gray-900 dark:text-gray-100'}`}>
+                <CardTitle className={cn(
+                  'text-sm sm:text-base font-medium break-words',
+                  isCompleted ? 'line-through text-muted-foreground' : 'text-foreground'
+                )}>
                   {item.title || '无标题'}
                 </CardTitle>
                 {hasConflict && (
                   <TooltipProvider>
                     <Tooltip>
                       <TooltipTrigger asChild>
-                        <div className="flex items-center gap-1 px-1.5 sm:px-2 py-0.5 rounded-md bg-red-100 dark:bg-red-900/30 border border-red-300 dark:border-red-700">
-                          <AlertTriangle className="h-3 w-3 sm:h-3.5 sm:w-3.5 text-red-600 dark:text-red-400 flex-shrink-0" />
-                          <span className="text-[10px] sm:text-xs font-medium text-red-700 dark:text-red-300">时间冲突</span>
+                        <div className="flex items-center gap-1 px-1.5 sm:px-2 py-0.5 rounded-md bg-status-error-bg border border-status-error-border">
+                          <AlertTriangle className="h-3 w-3 sm:h-3.5 sm:w-3.5 text-status-error-text flex-shrink-0" />
+                          <span className="text-[10px] sm:text-xs font-medium text-status-error-text">时间冲突</span>
                         </div>
                       </TooltipTrigger>
-                      <TooltipContent className="bg-red-50 dark:bg-red-900 border-red-200 dark:border-red-700">
-                        <p className="text-red-900 dark:text-red-100 font-medium text-xs sm:text-sm">⚠️ 此日程与其他事项存在时间冲突</p>
-                        <p className="text-[10px] sm:text-xs text-red-700 dark:text-red-300 mt-1">请检查并调整时间安排</p>
+                      <TooltipContent className="bg-status-error-bg border-status-error-border">
+                        <p className="text-status-error-text font-medium text-xs sm:text-sm">⚠️ 此日程与其他事项存在时间冲突</p>
+                        <p className="text-[10px] sm:text-xs text-status-error-text/80 mt-1">请检查并调整时间安排</p>
                       </TooltipContent>
                     </Tooltip>
                   </TooltipProvider>
@@ -244,34 +239,34 @@ export default function ItemCard({ item, onUpdate }: ItemCardProps) {
                 if (!displayDate) return null;
                 
                 return (
-                  <div className="mb-1.5 sm:mb-2 p-1.5 sm:p-2 rounded-lg bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-950/30 dark:to-indigo-950/30 border border-blue-100 dark:border-blue-900/50">
+                  <div className="mb-1.5 sm:mb-2 p-1.5 sm:p-2 rounded-lg bg-type-event-bg/50 border border-type-event-border/50">
                     <div className="flex items-start sm:items-center gap-2 sm:gap-3">
-                      <Calendar className="h-4 w-4 sm:h-5 sm:w-5 text-blue-600 dark:text-blue-400 flex-shrink-0 mt-0.5 sm:mt-0" />
+                      <Calendar className="h-4 w-4 sm:h-5 sm:w-5 text-type-event-text flex-shrink-0 mt-0.5 sm:mt-0" />
                       <div className="flex-1 min-w-0">
                         {startTime && endTime ? (
                           <div className="space-y-0.5 sm:space-y-1">
-                            <div className="text-xs sm:text-sm font-semibold text-blue-900 dark:text-blue-100 break-words">
+                            <div className="text-xs sm:text-sm font-semibold text-type-event-text break-words">
                               {format(parseLocalDateTime(startTime), 'yyyy年MM月dd日 EEEE', { locale: zhCN })}
                             </div>
-                            <div className="flex flex-wrap items-center gap-1 sm:gap-2 text-xs sm:text-sm text-blue-700 dark:text-blue-300">
+                            <div className="flex flex-wrap items-center gap-1 sm:gap-2 text-xs sm:text-sm text-type-event-text/80">
                               <span className="font-medium">
                                 {format(parseLocalDateTime(startTime), 'HH:mm', { locale: zhCN })}
                               </span>
-                              <span className="text-blue-400">→</span>
+                              <span className="text-type-event-text/60">→</span>
                               <span className="font-medium">
                                 {format(parseLocalDateTime(endTime), 'HH:mm', { locale: zhCN })}
                               </span>
-                              <span className="text-[10px] sm:text-xs text-blue-600 dark:text-blue-400">
+                              <span className="text-[10px] sm:text-xs text-type-event-text/70">
                                 ({Math.round((parseLocalDateTime(endTime).getTime() - parseLocalDateTime(startTime).getTime()) / 60000)}分钟)
                               </span>
                             </div>
                           </div>
                         ) : endTime ? (
                           <div className="space-y-0.5 sm:space-y-1">
-                            <div className="text-xs sm:text-sm font-semibold text-blue-900 dark:text-blue-100 break-words">
+                            <div className="text-xs sm:text-sm font-semibold text-type-event-text break-words">
                               {format(parseLocalDateTime(endTime), 'yyyy年MM月dd日 EEEE', { locale: zhCN })}
                             </div>
-                            <div className="text-xs sm:text-sm text-blue-700 dark:text-blue-300">
+                            <div className="text-xs sm:text-sm text-type-event-text/80">
                               <span className="font-medium">
                                 {format(parseLocalDateTime(endTime), 'HH:mm', { locale: zhCN })}
                               </span>
@@ -279,10 +274,10 @@ export default function ItemCard({ item, onUpdate }: ItemCardProps) {
                           </div>
                         ) : item.due_date ? (
                           <div className="space-y-0.5 sm:space-y-1">
-                            <div className="text-xs sm:text-sm font-semibold text-blue-900 dark:text-blue-100 break-words">
+                            <div className="text-xs sm:text-sm font-semibold text-type-event-text break-words">
                               {format(parseLocalDateTime(item.due_date), 'yyyy年MM月dd日 EEEE', { locale: zhCN })}
                             </div>
-                            <div className="text-xs sm:text-sm text-blue-700 dark:text-blue-300">
+                            <div className="text-xs sm:text-sm text-type-event-text/80">
                               <span className="font-medium">
                                 {format(parseLocalDateTime(item.due_date), 'HH:mm', { locale: zhCN })}
                               </span>
@@ -298,16 +293,19 @@ export default function ItemCard({ item, onUpdate }: ItemCardProps) {
               {/* 非日程类型：保持原有的简洁显示 */}
               {item.type !== 'event' && (
                 <div className="flex items-center gap-1 sm:gap-2 flex-wrap">
-                  <Badge className={`${typeColors[item.type]} text-[10px] sm:text-xs px-1.5 sm:px-2 py-0.5 font-normal`}>
+                  <Badge className={cn(
+                    getTypeBadgeClasses(item.type as ItemType),
+                    'text-[10px] sm:text-xs px-1.5 sm:px-2 py-0.5 font-normal'
+                  )}>
                     {typeLabels[item.type]}
                   </Badge>
                   {item.due_date && (
-                    <div className={`
-                      flex items-center gap-0.5 sm:gap-1 text-[10px] sm:text-xs px-1.5 sm:px-2 py-0.5 rounded-md
-                      ${isOverdue 
-                        ? 'bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400' 
-                        : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400'}
-                    `}>
+                    <div className={cn(
+                      'flex items-center gap-0.5 sm:gap-1 text-[10px] sm:text-xs px-1.5 sm:px-2 py-0.5 rounded-md',
+                      isOverdue 
+                        ? 'bg-status-error-bg/30 text-status-error-text' 
+                        : 'bg-muted text-muted-foreground'
+                    )}>
                       {isOverdue && <AlertCircle className="h-2.5 w-2.5 sm:h-3 sm:w-3" />}
                       <Calendar className="h-2.5 w-2.5 sm:h-3 sm:w-3" />
                       <span className="font-medium">
@@ -323,7 +321,10 @@ export default function ItemCard({ item, onUpdate }: ItemCardProps) {
               {/* 日程类型也显示类型标签 */}
               {item.type === 'event' && (
                 <div className="flex items-center gap-1 sm:gap-2 flex-wrap mt-1 sm:mt-2">
-                  <Badge className={`${typeColors[item.type]} text-[10px] sm:text-xs px-1.5 sm:px-2 py-0.5 font-normal`}>
+                  <Badge className={cn(
+                    getTypeBadgeClasses(item.type as ItemType),
+                    'text-[10px] sm:text-xs px-1.5 sm:px-2 py-0.5 font-normal'
+                  )}>
                     {typeLabels[item.type]}
                   </Badge>
                 </div>
@@ -340,7 +341,7 @@ export default function ItemCard({ item, onUpdate }: ItemCardProps) {
                   {!isExpanded && item.raw_text && item.raw_text.split('\n').length > 3 ? (
                     // 折叠状态：显示前3行
                     <>
-                      <div className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed whitespace-pre-wrap line-clamp-3">
+                      <div className="text-sm text-foreground leading-relaxed whitespace-pre-wrap line-clamp-3">
                         {item.raw_text || item.description}
                       </div>
                       <Button
@@ -355,7 +356,7 @@ export default function ItemCard({ item, onUpdate }: ItemCardProps) {
                             setIsExpanded(true);
                           }
                         }}
-                        className="mt-1 h-6 px-2 text-xs text-blue-600 hover:text-blue-700 hover:bg-blue-50 dark:text-blue-400 dark:hover:text-blue-300 dark:hover:bg-blue-950/30"
+                        className="mt-1 h-6 px-2 text-xs text-primary hover:text-primary/80 hover:bg-primary/5"
                       >
                         {item.type === 'note' 
                           ? '在编辑器中查看' 
@@ -366,11 +367,7 @@ export default function ItemCard({ item, onUpdate }: ItemCardProps) {
                     // 展开状态：显示完整内容，支持滚动
                     <div className="space-y-2">
                       <div 
-                        className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed whitespace-pre-wrap max-h-[400px] overflow-y-auto pr-2"
-                        style={{
-                          scrollbarWidth: 'thin',
-                          scrollbarColor: 'rgba(156, 163, 175, 0.5) transparent'
-                        }}
+                        className="text-sm text-foreground leading-relaxed whitespace-pre-wrap max-h-[400px] overflow-y-auto pr-2 scrollbar-thin"
                       >
                         {item.raw_text || item.description}
                       </div>
@@ -379,7 +376,7 @@ export default function ItemCard({ item, onUpdate }: ItemCardProps) {
                           variant="ghost"
                           size="sm"
                           onClick={() => setIsExpanded(false)}
-                          className="h-6 px-2 text-xs text-blue-600 hover:text-blue-700 hover:bg-blue-50 dark:text-blue-400 dark:hover:text-blue-300 dark:hover:bg-blue-950/30"
+                          className="h-6 px-2 text-xs text-primary hover:text-primary/80 hover:bg-primary/5"
                         >
                           收起
                         </Button>
@@ -389,7 +386,7 @@ export default function ItemCard({ item, onUpdate }: ItemCardProps) {
                 </div>
               ) : (
                 // 其他类型：显示 AI 处理后的描述
-                <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed pl-7">
+                <p className="text-sm text-muted-foreground leading-relaxed pl-7">
                   {item.description}
                 </p>
               )}
@@ -407,7 +404,7 @@ export default function ItemCard({ item, onUpdate }: ItemCardProps) {
                 <Badge 
                   key={index} 
                   variant="outline" 
-                  className="text-xs px-2 py-0 font-normal border-gray-300 dark:border-gray-700 text-gray-600 dark:text-gray-400"
+                  className="text-xs px-2 py-0 font-normal border-border text-muted-foreground"
                 >
                   #{tag}
                 </Badge>
@@ -415,7 +412,7 @@ export default function ItemCard({ item, onUpdate }: ItemCardProps) {
             </div>
           )}
           <div className="pt-0.5 pl-7">
-            <span className="text-xs text-gray-400 dark:text-gray-600">
+            <span className="text-xs text-muted-foreground/70">
               {format(parseLocalDateTime(item.created_at), 'yyyy-MM-dd HH:mm', { locale: zhCN })}
             </span>
           </div>
