@@ -10,7 +10,7 @@ import { itemApi } from '@/db/api';
 import { toast } from 'sonner';
 import { useState, useEffect } from 'react';
 import EditItemDialog from './EditItemDialog';
-import { generateURLSummary } from '@/utils/urlProcessor';
+import { generateURLSummary, fetchURLContent } from '@/utils/urlProcessor';
 import { AttachmentImages } from '@/components/attachments/AttachmentImages';
 
 interface URLCardProps {
@@ -65,9 +65,15 @@ export default function URLCard({ item, onUpdate }: URLCardProps) {
 
     setGeneratingSummary(true);
     try {
+      // 重新抓取网页内容以确保获取最新内容
+      toast.info('正在重新抓取网页内容...');
+      const urlResult = await fetchURLContent(item.url);
+      
+      // 使用实际抓取的网页内容生成梗概
       const summary = await generateURLSummary(
         item.url,
-        item.url_title || item.title || '链接',
+        urlResult.title || item.url_title || item.title || '链接',
+        urlResult.content, // 传入实际抓取的网页内容
         item.raw_text
       );
       
@@ -75,7 +81,9 @@ export default function URLCard({ item, onUpdate }: URLCardProps) {
       
       // 更新到数据库
       const success = await itemApi.updateItem(item.id, {
-        url_summary: summary
+        url_summary: summary,
+        url_title: urlResult.title || item.url_title,
+        url_thumbnail: urlResult.thumbnail || item.url_thumbnail
       });
 
       if (success) {

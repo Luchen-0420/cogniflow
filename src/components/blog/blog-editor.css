@@ -1,14 +1,16 @@
 /* 博客编辑器自定义样式 */
 
 /* Dialog 内容区域强制宽度 - 覆盖默认的 sm:max-w-lg */
-.blog-editor-container {
+.blog-editor-container,
+.note-view-container {
   width: 95vw !important;
   max-width: 1400px !important;
   height: 85vh !important;
 }
 
 @media (min-width: 640px) {
-  .blog-editor-container {
+  .blog-editor-container,
+  .note-view-container {
     max-width: 1400px !important;
     height: 90vh !important;
   }
@@ -26,7 +28,8 @@
   width: 100% !important;
 }
 
-.blog-editor-container .w-md-editor {
+.blog-editor-container .w-md-editor,
+.note-view-container .w-md-editor {
   min-width: 100% !important;
 }
 
@@ -158,6 +161,70 @@
 [data-color-mode="dark"] .wmde-markdown blockquote {
   border-left-color: hsl(var(--border));
   color: hsl(var(--muted-foreground));
+}
+
+/* 自动换行优化 */
+/* 编辑器输入区域 - 自动换行 */
+.w-md-editor-text,
+.w-md-editor-textarea,
+.w-md-editor-input textarea {
+  word-wrap: break-word !important;
+  word-break: break-word !important;
+  white-space: pre-wrap !important;
+  overflow-wrap: break-word !important;
+  hyphens: auto !important;
+}
+
+/* 预览区域 - 自动换行 */
+.wmde-markdown,
+.wmde-markdown p,
+.wmde-markdown li,
+.wmde-markdown td,
+.wmde-markdown th {
+  word-wrap: break-word !important;
+  word-break: break-word !important;
+  overflow-wrap: break-word !important;
+  hyphens: auto !important;
+}
+
+/* 代码块保持不换行（代码块应该保持原样） */
+.wmde-markdown pre,
+.wmde-markdown code:not(pre code) {
+  word-wrap: normal !important;
+  word-break: normal !important;
+  white-space: pre !important;
+  overflow-x: auto !important;
+}
+
+/* 确保编辑器容器支持换行 */
+.w-md-editor-input {
+  overflow-x: hidden !important;
+  overflow-y: auto !important;
+}
+
+.w-md-editor-preview {
+  overflow-x: hidden !important;
+  overflow-y: auto !important;
+}
+
+/* 表格自动换行 */
+.wmde-markdown table {
+  table-layout: auto !important;
+  width: 100% !important;
+  word-wrap: break-word !important;
+}
+
+.wmde-markdown table td,
+.wmde-markdown table th {
+  word-wrap: break-word !important;
+  word-break: break-word !important;
+  max-width: 0 !important;
+}
+
+/* 链接自动换行 */
+.wmde-markdown a {
+  word-break: break-all !important;
+  overflow-wrap: break-word !important;
 }
 
 /* 滚动条优化 */

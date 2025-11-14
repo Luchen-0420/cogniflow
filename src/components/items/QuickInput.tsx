@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
-import { Send, Search, Paperclip, X, Loader2 } from 'lucide-react';
+import { Send, Search, Paperclip, X, Loader2, Sparkles } from 'lucide-react';
 import { toast } from 'sonner';
 import { VoiceInputButton } from '@/components/voice/VoiceInputButton';
 import { processTextWithAI, generateNoteTitle, extractBlogMetadata } from '@/utils/ai';
@@ -33,6 +33,7 @@ interface QuickInputProps {
   onProcessingError?: (id: string) => void;
   onDeleteURL?: (id: string) => void;
   onFirstInput?: () => void;
+  onSmartAssistTrigger?: (input: { title: string; tags: string[]; type: string; content: string }, manual?: boolean) => void;
 }
 
 export default function QuickInput({ 
@@ -41,7 +42,8 @@ export default function QuickInput({
   onProcessingComplete,
   onProcessingError,
   onDeleteURL,
-  onFirstInput
+  onFirstInput,
+  onSmartAssistTrigger
 }: QuickInputProps) {
   const { isAuthenticated } = useAuth();
   const [text, setText] = useState('');
@@ -543,6 +545,16 @@ export default function QuickInput({
               
               if (newItem) {
                 toast.success('资料已保存');
+                
+                // 触发智能输入助手（如果满足条件）
+                if (onSmartAssistTrigger) {
+                  onSmartAssistTrigger({
+                    title: newItem.title || '',
+                    tags: newItem.tags || [],
+                    type: newItem.type || '',
+                    content: newItem.raw_text || combinedText,
+                  });
+                }
               }
             } catch (error) {
               console.error('资料创建失败:', error);
@@ -712,11 +724,12 @@ export default function QuickInput({
         try {
           const urlResult = await fetchURLContent(detectedURL);
 
-          // 使用 AI 生成更智能的梗概
+          // 使用 AI 生成更智能的梗概（传入实际抓取的网页内容）
           toast.info('正在生成智能梗概...');
           const aiSummary = await generateURLSummary(
             urlResult.url,
             urlResult.title,
+            urlResult.content, // 传入实际抓取的网页内容
             inputText
           );
 
@@ -750,6 +763,17 @@ export default function QuickInput({
             toast.success('链接已保存到链接库');
             onProcessingComplete?.(processingId);
             onItemCreated?.();
+            
+            // 触发智能输入助手（如果满足条件）
+            if (onSmartAssistTrigger) {
+              onSmartAssistTrigger({
+                title: newItem.title || '',
+                tags: newItem.tags || [],
+                type: newItem.type || '',
+                content: newItem.raw_text || inputText,
+              });
+            }
+            
             return newItem;
           } else {
             toast.error('保存失败,请重试');
@@ -810,6 +834,17 @@ export default function QuickInput({
             toast.success('笔记已保存');
             onProcessingComplete?.(processingId);
             onItemCreated?.();
+            
+            // 触发智能输入助手（如果满足条件）
+            if (onSmartAssistTrigger) {
+              onSmartAssistTrigger({
+                title: newItem.title || '',
+                tags: newItem.tags || [],
+                type: newItem.type || '',
+                content: newItem.raw_text || noteContent,
+              });
+            }
+            
             return newItem;
           } else {
             toast.error('保存失败,请重试');
@@ -870,6 +905,17 @@ export default function QuickInput({
             toast.success('资料已保存');
             onProcessingComplete?.(processingId);
             onItemCreated?.();
+            
+            // 触发智能输入助手（如果满足条件）
+            if (onSmartAssistTrigger) {
+              onSmartAssistTrigger({
+                title: newItem.title || '',
+                tags: newItem.tags || [],
+                type: newItem.type || '',
+                content: newItem.raw_text || contentWithoutPrefix,
+              });
+            }
+            
             return newItem;
           } else {
             toast.error('保存失败,请重试');
@@ -967,6 +1013,17 @@ export default function QuickInput({
           onProcessingComplete?.(processingId);
           onItemCreated?.();
           console.log('🔄 已调用数据刷新回调');
+          
+          // 触发智能输入助手（如果满足条件）
+          if (onSmartAssistTrigger) {
+            onSmartAssistTrigger({
+              title: newItem.title || '',
+              tags: newItem.tags || [],
+              type: newItem.type || '',
+              content: newItem.raw_text || inputText,
+            });
+          }
+          
           return newItem;
         } else {
           console.error('❌ 创建条目返回 null');
@@ -1150,6 +1207,31 @@ export default function QuickInput({
                 }`}
               />
             </div>
+            
+            {/* 智能关联按钮 */}
+            {!isQueryMode && text.trim().length > 0 && (
+              <Button
+                type="button"
+                variant="outline"
+                size="lg"
+                onClick={() => {
+                  if (onSmartAssistTrigger) {
+                    // 手动触发，不受50字限制
+                    onSmartAssistTrigger({
+                      title: '',
+                      tags: [],
+                      type: '',
+                      content: text.trim(),
+                    }, true);
+                  }
+                }}
+                className="h-[60px] px-3"
+                disabled={isQuerying || isUploading}
+                title="查看关联内容"
+              >
+                <Sparkles className="h-5 w-5" />
+              </Button>
+            )}
             
             <Button
               onClick={handleSubmit}

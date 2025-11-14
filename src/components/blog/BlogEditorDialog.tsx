@@ -187,6 +187,13 @@ export function BlogEditorDialog({
               visibleDragbar={false}
               textareaProps={{
                 placeholder: '# 标题\n\n在这里开始写作...\n\n支持 Markdown 语法：\n- **粗体** 和 *斜体*\n- [链接](url)\n- ![图片](url)\n- 代码块\n- 列表\n- 等等...',
+                wrap: 'soft',
+                style: {
+                  wordWrap: 'break-word',
+                  wordBreak: 'break-word',
+                  whiteSpace: 'pre-wrap',
+                  overflowWrap: 'break-word',
+                },
               }}
               className="shadow-sm border rounded-lg overflow-hidden"
               style={{

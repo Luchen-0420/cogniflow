@@ -12,6 +12,7 @@ import { useState } from 'react';
 import EditItemDialog from './EditItemDialog';
 import URLCard from './URLCard';
 import { AttachmentImages } from '@/components/attachments/AttachmentImages';
+import { NoteViewDialog } from './NoteViewDialog';
 
 /**
  * 将不带时区的ISO时间字符串解析为本地时间
@@ -74,6 +75,7 @@ const priorityColors = {
 export default function ItemCard({ item, onUpdate }: ItemCardProps) {
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
+  const [isNoteViewOpen, setIsNoteViewOpen] = useState(false);
 
   // 如果是 URL 类型，使用专门的 URLCard 组件
   if (item.type === 'url') {
@@ -232,45 +234,66 @@ export default function ItemCard({ item, onUpdate }: ItemCardProps) {
               </div>
               
               {/* 日程类型：显示完整的日期时间信息 */}
-              {item.type === 'event' && (item.start_time || item.due_date) && (
-                <div className="mb-1.5 sm:mb-2 p-1.5 sm:p-2 rounded-lg bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-950/30 dark:to-indigo-950/30 border border-blue-100 dark:border-blue-900/50">
-                  <div className="flex items-start sm:items-center gap-2 sm:gap-3">
-                    <Calendar className="h-4 w-4 sm:h-5 sm:w-5 text-blue-600 dark:text-blue-400 flex-shrink-0 mt-0.5 sm:mt-0" />
-                    <div className="flex-1 min-w-0">
-                      {item.start_time && item.end_time ? (
-                        <div className="space-y-0.5 sm:space-y-1">
-                          <div className="text-xs sm:text-sm font-semibold text-blue-900 dark:text-blue-100 break-words">
-                            {format(parseLocalDateTime(item.start_time), 'yyyy年MM月dd日 EEEE', { locale: zhCN })}
+              {item.type === 'event' && (item.start_time || item.end_time || item.due_date) && (() => {
+                // 确定实际使用的开始时间和结束时间
+                const startTime = item.start_time;
+                // 优先使用 end_time，如果没有 end_time 但有 due_date 和 start_time，使用 due_date 作为结束时间
+                const endTime = item.end_time || (item.start_time && item.due_date ? item.due_date : null);
+                const displayDate = startTime ? parseLocalDateTime(startTime) : (endTime ? parseLocalDateTime(endTime) : (item.due_date ? parseLocalDateTime(item.due_date) : null));
+                
+                if (!displayDate) return null;
+                
+                return (
+                  <div className="mb-1.5 sm:mb-2 p-1.5 sm:p-2 rounded-lg bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-950/30 dark:to-indigo-950/30 border border-blue-100 dark:border-blue-900/50">
+                    <div className="flex items-start sm:items-center gap-2 sm:gap-3">
+                      <Calendar className="h-4 w-4 sm:h-5 sm:w-5 text-blue-600 dark:text-blue-400 flex-shrink-0 mt-0.5 sm:mt-0" />
+                      <div className="flex-1 min-w-0">
+                        {startTime && endTime ? (
+                          <div className="space-y-0.5 sm:space-y-1">
+                            <div className="text-xs sm:text-sm font-semibold text-blue-900 dark:text-blue-100 break-words">
+                              {format(parseLocalDateTime(startTime), 'yyyy年MM月dd日 EEEE', { locale: zhCN })}
+                            </div>
+                            <div className="flex flex-wrap items-center gap-1 sm:gap-2 text-xs sm:text-sm text-blue-700 dark:text-blue-300">
+                              <span className="font-medium">
+                                {format(parseLocalDateTime(startTime), 'HH:mm', { locale: zhCN })}
+                              </span>
+                              <span className="text-blue-400">→</span>
+                              <span className="font-medium">
+                                {format(parseLocalDateTime(endTime), 'HH:mm', { locale: zhCN })}
+                              </span>
+                              <span className="text-[10px] sm:text-xs text-blue-600 dark:text-blue-400">
+                                ({Math.round((parseLocalDateTime(endTime).getTime() - parseLocalDateTime(startTime).getTime()) / 60000)}分钟)
+                              </span>
+                            </div>
                           </div>
-                          <div className="flex flex-wrap items-center gap-1 sm:gap-2 text-xs sm:text-sm text-blue-700 dark:text-blue-300">
-                            <span className="font-medium">
-                              {format(parseLocalDateTime(item.start_time), 'HH:mm', { locale: zhCN })}
-                            </span>
-                            <span className="text-blue-400">→</span>
-                            <span className="font-medium">
-                              {format(parseLocalDateTime(item.end_time), 'HH:mm', { locale: zhCN })}
-                            </span>
-                            <span className="text-[10px] sm:text-xs text-blue-600 dark:text-blue-400">
-                              ({Math.round((parseLocalDateTime(item.end_time).getTime() - parseLocalDateTime(item.start_time).getTime()) / 60000)}分钟)
-                            </span>
+                        ) : endTime ? (
+                          <div className="space-y-0.5 sm:space-y-1">
+                            <div className="text-xs sm:text-sm font-semibold text-blue-900 dark:text-blue-100 break-words">
+                              {format(parseLocalDateTime(endTime), 'yyyy年MM月dd日 EEEE', { locale: zhCN })}
+                            </div>
+                            <div className="text-xs sm:text-sm text-blue-700 dark:text-blue-300">
+                              <span className="font-medium">
+                                {format(parseLocalDateTime(endTime), 'HH:mm', { locale: zhCN })}
+                              </span>
+                            </div>
                           </div>
-                        </div>
-                      ) : item.due_date && (
-                        <div className="space-y-0.5 sm:space-y-1">
-                          <div className="text-xs sm:text-sm font-semibold text-blue-900 dark:text-blue-100 break-words">
-                            {format(parseLocalDateTime(item.due_date), 'yyyy年MM月dd日 EEEE', { locale: zhCN })}
+                        ) : item.due_date ? (
+                          <div className="space-y-0.5 sm:space-y-1">
+                            <div className="text-xs sm:text-sm font-semibold text-blue-900 dark:text-blue-100 break-words">
+                              {format(parseLocalDateTime(item.due_date), 'yyyy年MM月dd日 EEEE', { locale: zhCN })}
+                            </div>
+                            <div className="text-xs sm:text-sm text-blue-700 dark:text-blue-300">
+                              <span className="font-medium">
+                                {format(parseLocalDateTime(item.due_date), 'HH:mm', { locale: zhCN })}
+                              </span>
+                            </div>
                           </div>
-                          <div className="text-xs sm:text-sm text-blue-700 dark:text-blue-300">
-                            <span className="font-medium">
-                              {format(parseLocalDateTime(item.due_date), 'HH:mm', { locale: zhCN })}
-                            </span>
-                          </div>
-                        </div>
-                      )}
+                        ) : null}
+                      </div>
                     </div>
                   </div>
-                </div>
-              )}
+                );
+              })()}
               
               {/* 非日程类型：保持原有的简洁显示 */}
               {item.type !== 'event' && (
@@ -314,22 +337,54 @@ export default function ItemCard({ item, onUpdate }: ItemCardProps) {
               {(item.type === 'note' || item.type === 'data') ? (
                 // 笔记和资料类型：显示原始内容，支持折叠展开
                 <div className="pl-7">
-                  <div 
-                    className={`text-sm text-gray-700 dark:text-gray-300 leading-relaxed whitespace-pre-wrap ${
-                      !isExpanded && item.raw_text && item.raw_text.split('\n').length > 3 ? 'line-clamp-3' : ''
-                    }`}
-                  >
-                    {item.raw_text || item.description}
-                  </div>
-                  {item.raw_text && item.raw_text.split('\n').length > 3 && (
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => setIsExpanded(!isExpanded)}
-                      className="mt-1 h-6 px-2 text-xs text-blue-600 hover:text-blue-700 hover:bg-blue-50 dark:text-blue-400 dark:hover:text-blue-300 dark:hover:bg-blue-950/30"
-                    >
-                      {isExpanded ? '收起' : '展开全部'}
-                    </Button>
+                  {!isExpanded && item.raw_text && item.raw_text.split('\n').length > 3 ? (
+                    // 折叠状态：显示前3行
+                    <>
+                      <div className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed whitespace-pre-wrap line-clamp-3">
+                        {item.raw_text || item.description}
+                      </div>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => {
+                          // 如果是笔记类型，打开 Markdown 编辑器
+                          if (item.type === 'note') {
+                            setIsNoteViewOpen(true);
+                          } else {
+                            // 资料类型，展开显示（支持滚动）
+                            setIsExpanded(true);
+                          }
+                        }}
+                        className="mt-1 h-6 px-2 text-xs text-blue-600 hover:text-blue-700 hover:bg-blue-50 dark:text-blue-400 dark:hover:text-blue-300 dark:hover:bg-blue-950/30"
+                      >
+                        {item.type === 'note' 
+                          ? '在编辑器中查看' 
+                          : '展开全部'}
+                      </Button>
+                    </>
+                  ) : (
+                    // 展开状态：显示完整内容，支持滚动
+                    <div className="space-y-2">
+                      <div 
+                        className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed whitespace-pre-wrap max-h-[400px] overflow-y-auto pr-2"
+                        style={{
+                          scrollbarWidth: 'thin',
+                          scrollbarColor: 'rgba(156, 163, 175, 0.5) transparent'
+                        }}
+                      >
+                        {item.raw_text || item.description}
+                      </div>
+                      {item.type === 'data' && item.raw_text && item.raw_text.split('\n').length > 3 && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => setIsExpanded(false)}
+                          className="h-6 px-2 text-xs text-blue-600 hover:text-blue-700 hover:bg-blue-50 dark:text-blue-400 dark:hover:text-blue-300 dark:hover:bg-blue-950/30"
+                        >
+                          收起
+                        </Button>
+                      )}
+                    </div>
                   )}
                 </div>
               ) : (
@@ -373,6 +428,16 @@ export default function ItemCard({ item, onUpdate }: ItemCardProps) {
         onOpenChange={setIsEditOpen}
         onUpdate={onUpdate}
       />
+
+      {/* 笔记查看/编辑对话框 */}
+      {item.type === 'note' && (
+        <NoteViewDialog
+          item={item}
+          open={isNoteViewOpen}
+          onOpenChange={setIsNoteViewOpen}
+          onUpdate={onUpdate}
+        />
+      )}
     </>
   );
 }

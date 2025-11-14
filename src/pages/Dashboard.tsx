@@ -1,4 +1,8 @@
 import { useState, useEffect } from 'react';
+import { SmartInputAssistant, RelatedItem, GapAnalysis, ExternalRecommendation } from '@/components/smart-assist/SmartInputAssistant';
+import { shouldTriggerSmartAssist, getRelatedItems, analyzeKnowledgeGap, getExternalRecommendations } from '@/features/smart-assist';
+import { toast } from 'sonner';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -26,6 +30,14 @@ interface ProcessingItem {
 }
 
 export default function Dashboard() {
+  // 智能输入助手相关状态
+  const [showSmartAssist, setShowSmartAssist] = useState(false);
+  const [smartAssistTopic, setSmartAssistTopic] = useState('');
+  const [smartAssistRelated, setSmartAssistRelated] = useState<RelatedItem[]>([]);
+  const [smartAssistGap, setSmartAssistGap] = useState<GapAnalysis | undefined>(undefined);
+  const [smartAssistRecs, setSmartAssistRecs] = useState<ExternalRecommendation[] | undefined>(undefined);
+  const [previewItem, setPreviewItem] = useState<Item | null>(null);
+  const [previewDialogOpen, setPreviewDialogOpen] = useState(false);
   const { isAuthenticated } = useAuth();
   const [showLoginDialog, setShowLoginDialog] = useState(false);
   const [hasInteracted, setHasInteracted] = useState(false);
@@ -131,6 +143,228 @@ export default function Dashboard() {
     if (!isAuthenticated && !hasInteracted) {
       setHasInteracted(true);
       setShowLoginDialog(true);
+    }
+  };
+
+  // 智能输入助手触发逻辑
+  const handleQuickInput = async (input: { title: string; tags: string[]; type: string; content: string }, manual = false) => {
+    if (shouldTriggerSmartAssist(input, manual)) {
+      const topic = input.title || input.content.slice(0, 50) || '当前输入';
+      setSmartAssistTopic(topic);
+      setShowSmartAssist(true);
+      
+      // 异步加载数据
+      try {
+        // 第一层：历史关联（快速响应）
+        const related = await getRelatedItems(topic);
+        setSmartAssistRelated(related);
+        
+        // 第二层：缺口分析（稍慢，手动触发时简化分析）
+        if (manual && input.content.length < 50) {
+          // 手动触发且内容较短时，只做简单分析
+          setSmartAssistGap({
+            completeness: {
+              score: 0,
+              gaps: [
+                { type: '信息不足', description: '输入内容较短，建议补充更多信息以获得更准确的分析', priority: 'medium' }
+              ]
+            },
+            timeliness: {
+              latestDate: '',
+              needsUpdate: false,
+              reason: '内容较短，无法进行时效性分析'
+            },
+            suggestions: [
+              { action: '补充信息', details: '建议输入更多内容以获得更准确的关联和分析' }
+            ],
+            outline: [] // 内容太短时不生成大纲
+          });
+        } else {
+          // 异步加载缺口分析（包含大纲生成）
+          analyzeKnowledgeGap(topic).then(gap => {
+            setSmartAssistGap(gap);
+          }).catch(error => {
+            console.error('缺口分析失败:', error);
+            // 失败时设置一个基础的分析结果
+            setSmartAssistGap({
+              completeness: {
+                score: 50,
+                gaps: [
+                  { type: '分析失败', description: '无法完成分析，请稍后重试', priority: 'medium' }
+                ]
+              },
+              timeliness: {
+                latestDate: '',
+                needsUpdate: false,
+                reason: '无法获取时间信息'
+              },
+              suggestions: [
+                { action: '重试', details: '请稍后重试分析功能' }
+              ],
+              outline: []
+            });
+          });
+        }
+        
+        // 第三层：外部推荐（异步加载并验证链接）
+        getExternalRecommendations(topic).then(recs => {
+          setSmartAssistRecs(recs);
+        }).catch(error => {
+          console.error('获取外部推荐失败:', error);
+          // 失败时不显示推荐，不设置状态
+        });
+      } catch (error) {
+        console.error('加载智能助手数据失败:', error);
+      }
+    }
+  };
+
+  const handleCloseSmartAssist = () => setShowSmartAssist(false);
+  
+  // 交互操作实现
+  const handleLoadItem = async (id: string) => {
+    try {
+      const item = await itemApi.getItem(id);
+      if (item) {
+        // 加载：将内容复制到输入框，方便用户编辑或引用
+        // 这里可以触发一个回调，将内容传递给输入框
+        // 暂时显示预览弹窗，并提示可以复制内容
+        setPreviewItem(item);
+        setPreviewDialogOpen(true);
+        toast.success(`已加载：${item.title}，可以在预览中复制内容到输入框`);
+      }
+    } catch (error) {
+      console.error('加载条目失败:', error);
+      toast.error('加载失败');
+    }
+  };
+  
+  const handlePreviewItem = async (id: string) => {
+    try {
+      const item = await itemApi.getItem(id);
+      if (item) {
+        // 预览：只查看内容，不进行任何操作
+        setPreviewItem(item);
+        setPreviewDialogOpen(true);
+      }
+    } catch (error) {
+      console.error('预览条目失败:', error);
+      toast.error('预览失败');
+    }
+  };
+  
+  const handleGenerateOutline = () => {
+    if (smartAssistGap?.outline) {
+      const outlineText = smartAssistGap.outline.join('\n');
+      // 可以复制到剪贴板或创建新笔记
+      navigator.clipboard.writeText(outlineText).then(() => {
+        toast.success('调研大纲已复制到剪贴板');
+      }).catch(() => {
+        toast.info('调研大纲：\n' + outlineText);
+      });
+    }
+  };
+  
+  const handleCreateSubTasks = async () => {
+    if (!smartAssistGap?.suggestions || smartAssistGap.suggestions.length === 0) {
+      toast.warning('没有可创建的子任务');
+      return;
+    }
+
+    try {
+      let successCount = 0;
+      let failCount = 0;
+
+      // 为每个建议创建子任务
+      for (const suggestion of smartAssistGap.suggestions) {
+        try {
+          const taskTitle = `${suggestion.action}：${suggestion.details}`;
+          
+          const newTask = await itemApi.createItem({
+            raw_text: taskTitle,
+            type: 'task',
+            title: taskTitle,
+            description: suggestion.details,
+            due_date: null,
+            priority: 'medium',
+            status: 'pending',
+            tags: ['调研', '子任务', ...(smartAssistTopic ? [smartAssistTopic] : [])],
+            entities: {},
+            archived_at: null,
+            url: null,
+            url_title: null,
+            url_summary: null,
+            url_thumbnail: null,
+            url_fetched_at: null,
+            has_conflict: false,
+            start_time: null,
+            end_time: null,
+            recurrence_rule: null,
+            recurrence_end_date: null,
+            master_item_id: null,
+            is_master: false
+          });
+
+          if (newTask) {
+            successCount++;
+          } else {
+            failCount++;
+          }
+        } catch (error) {
+          console.error('创建子任务失败:', error);
+          failCount++;
+        }
+      }
+
+      if (successCount > 0) {
+        toast.success(`成功创建 ${successCount} 个子任务${failCount > 0 ? `，${failCount} 个失败` : ''}`);
+        loadData(); // 刷新数据
+      } else {
+        toast.error('创建子任务失败，请重试');
+      }
+    } catch (error) {
+      console.error('创建子任务异常:', error);
+      toast.error('创建子任务失败');
+    }
+  };
+  
+  const handleAddRecommendation = async (url: string) => {
+    try {
+      // 创建链接类型的卡片
+      const newItem = await itemApi.createItem({
+        raw_text: url,
+        type: 'url',
+        title: url,
+        description: '',
+        due_date: null,
+        priority: 'medium',
+        status: 'pending',
+        tags: ['推荐资料'],
+        entities: {},
+        archived_at: null,
+        url: url,
+        url_title: null,
+        url_summary: null,
+        url_thumbnail: null,
+        url_fetched_at: null,
+        has_conflict: false,
+        start_time: null,
+        end_time: null,
+        recurrence_rule: null,
+        recurrence_end_date: null,
+        master_item_id: null,
+        is_master: false
+      });
+
+      if (newItem) {
+        toast.success('已添加到链接库');
+        loadData(); // 刷新数据
+      } else {
+        toast.error('添加失败');
+      }
+    } catch (error) {
+      console.error('添加推荐链接失败:', error);
+      toast.error('添加失败，请重试');
     }
   };
 
@@ -627,6 +861,24 @@ export default function Dashboard() {
         onProcessingError={handleProcessingError}
         onDeleteURL={handleDeleteURL}
         onFirstInput={handleFirstInput}
+        // 智能输入助手集成
+        onSmartAssistTrigger={handleQuickInput}
+      />
+
+      {/* 智能输入助手侧边栏 */}
+      <SmartInputAssistant
+        visible={showSmartAssist}
+        loading={smartAssistRelated.length === 0 && !smartAssistGap}
+        topic={smartAssistTopic}
+        relatedItems={smartAssistRelated}
+        gapAnalysis={smartAssistGap}
+        recommendations={smartAssistRecs}
+        onClose={handleCloseSmartAssist}
+        onLoadItem={handleLoadItem}
+        onPreviewItem={handlePreviewItem}
+        onGenerateOutline={handleGenerateOutline}
+        onCreateSubTasks={handleCreateSubTasks}
+        onAddRecommendation={handleAddRecommendation}
       />
 
       {/* 登录弹窗 */}
@@ -635,6 +887,106 @@ export default function Dashboard() {
         onOpenChange={setShowLoginDialog}
         onSuccess={loadData}
       />
+
+      {/* 预览/加载弹窗 */}
+      <Dialog open={previewDialogOpen} onOpenChange={setPreviewDialogOpen}>
+        <DialogContent className="max-w-3xl max-h-[80vh] overflow-hidden flex flex-col">
+          <DialogHeader>
+            <DialogTitle className="flex items-center justify-between">
+              <span>{previewItem?.title || '预览'}</span>
+              {previewItem && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    // 复制内容到剪贴板
+                    const content = previewItem.raw_text || previewItem.description || '';
+                    navigator.clipboard.writeText(content).then(() => {
+                      toast.success('内容已复制到剪贴板，可以粘贴到输入框');
+                    }).catch(() => {
+                      toast.error('复制失败');
+                    });
+                  }}
+                  className="ml-2"
+                >
+                  复制内容
+                </Button>
+              )}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="flex-1 overflow-y-auto space-y-4">
+            {previewItem && (
+              <>
+                {/* 基本信息 */}
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <span>类型：{previewItem.type}</span>
+                    {previewItem.created_at && (
+                      <span>• 创建时间：{new Date(previewItem.created_at).toLocaleString('zh-CN')}</span>
+                    )}
+                  </div>
+                  {previewItem.tags && previewItem.tags.length > 0 && (
+                    <div className="flex flex-wrap gap-2">
+                      {previewItem.tags.map((tag, idx) => (
+                        <span
+                          key={idx}
+                          className="text-xs px-2 py-1 bg-muted rounded-md"
+                        >
+                          {tag}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* 内容 */}
+                <div className="space-y-2">
+                  <h3 className="font-semibold">内容</h3>
+                  <div className="p-4 bg-muted/50 rounded-lg">
+                    <div className="text-sm whitespace-pre-wrap leading-relaxed">
+                      {previewItem.raw_text || previewItem.description || '无内容'}
+                    </div>
+                  </div>
+                </div>
+
+                {/* 描述（如果有） */}
+                {previewItem.description && previewItem.description !== previewItem.raw_text && (
+                  <div className="space-y-2">
+                    <h3 className="font-semibold">描述</h3>
+                    <div className="p-4 bg-muted/50 rounded-lg">
+                      <div className="text-sm whitespace-pre-wrap leading-relaxed">
+                        {previewItem.description}
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* URL 信息（如果是链接类型） */}
+                {previewItem.type === 'url' && previewItem.url && (
+                  <div className="space-y-2">
+                    <h3 className="font-semibold">链接</h3>
+                    <div className="p-4 bg-muted/50 rounded-lg">
+                      <a
+                        href={previewItem.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-sm text-primary hover:underline break-all"
+                      >
+                        {previewItem.url}
+                      </a>
+                      {previewItem.url_summary && (
+                        <div className="mt-2 text-sm text-muted-foreground">
+                          {previewItem.url_summary}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

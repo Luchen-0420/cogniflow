@@ -528,7 +528,12 @@ router.put('/:id', async (req: AuthRequest, res, next) => {
     }
 
     // 如果更新了时间信息或者是事项类型，重新检测冲突
-    if (result.rows[0].type === 'event' && (req.body.start_time !== undefined || req.body.end_time !== undefined)) {
+    // 包括 start_time、end_time 和 due_date（对于事件类型，due_date 可能影响 end_time）
+    if (result.rows[0].type === 'event' && (
+      req.body.start_time !== undefined || 
+      req.body.end_time !== undefined || 
+      req.body.due_date !== undefined
+    )) {
       await updateConflictStatus(userId);
       // 重新获取更新后的数据（包含最新的冲突状态）
       const updatedResult = await query(
