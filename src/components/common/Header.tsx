@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { Shield, Download, Upload, User, LogOut } from "lucide-react";
+import { Shield, Download, Upload, User, LogOut, BookOpen, FileText, Github, ExternalLink, Menu } from "lucide-react";
 import { useAuth, exportData, importData } from "@/db/api";
 import { toast } from "sonner";
 
@@ -77,13 +77,88 @@ export default function Header() {
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container flex h-14 max-w-screen-2xl items-center px-2 sm:px-4">
+        {/* Logo */}
         <div className="mr-2 sm:mr-4 flex">
-          <Link to="/" className="mr-2 sm:mr-6 flex items-center space-x-2">
-            <span className="font-bold text-sm sm:text-base sm:inline-block">
+          <Link to="/" className="mr-2 sm:mr-6 flex items-center space-x-2 hover:opacity-80 transition-opacity">
+            <span className="font-bold text-base sm:text-lg bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
               CogniFlow
             </span>
           </Link>
         </div>
+
+        {/* 导航链接 - 参考 Revornix 设计 */}
+        {/* 桌面端导航 */}
+        <nav className="hidden md:flex items-center space-x-1 lg:space-x-2 mr-4">
+          <Link
+            to="/docs"
+            className="px-3 py-1.5 text-sm font-medium text-foreground/70 hover:text-foreground transition-colors rounded-md hover:bg-accent/50"
+          >
+            <div className="flex items-center gap-1.5">
+              <BookOpen className="h-3.5 w-3.5" />
+              <span>文档</span>
+            </div>
+          </Link>
+          <Link
+            to="/blog"
+            className="px-3 py-1.5 text-sm font-medium text-foreground/70 hover:text-foreground transition-colors rounded-md hover:bg-accent/50"
+          >
+            <div className="flex items-center gap-1.5">
+              <FileText className="h-3.5 w-3.5" />
+              <span>博客</span>
+            </div>
+          </Link>
+          <a
+            href="https://github.com/your-repo/cogniflow"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="px-3 py-1.5 text-sm font-medium text-foreground/70 hover:text-foreground transition-colors rounded-md hover:bg-accent/50"
+          >
+            <div className="flex items-center gap-1.5">
+              <Github className="h-3.5 w-3.5" />
+              <span className="hidden lg:inline">GitHub</span>
+              <ExternalLink className="h-3 w-3 hidden lg:inline" />
+            </div>
+          </a>
+        </nav>
+
+        {/* 移动端导航菜单 */}
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" size="sm" className="md:hidden px-2">
+              <Menu className="h-5 w-5" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-48">
+            <DropdownMenuLabel>导航</DropdownMenuLabel>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem asChild>
+              <Link to="/docs" className="flex items-center gap-2 w-full">
+                <BookOpen className="h-4 w-4" />
+                <span>文档</span>
+              </Link>
+            </DropdownMenuItem>
+            <DropdownMenuItem asChild>
+              <Link to="/blog" className="flex items-center gap-2 w-full">
+                <FileText className="h-4 w-4" />
+                <span>博客</span>
+              </Link>
+            </DropdownMenuItem>
+            <DropdownMenuItem asChild>
+              <a
+                href="https://github.com/your-repo/cogniflow"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-2 w-full"
+              >
+                <Github className="h-4 w-4" />
+                <span>GitHub</span>
+                <ExternalLink className="h-3 w-3 ml-auto" />
+              </a>
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+
+        {/* 右侧操作区 */}
         <div className="flex flex-1 items-center justify-end space-x-1 sm:space-x-2">
           <nav className="flex items-center space-x-1 sm:space-x-2">
             {user && isAdmin && (

@@ -5,6 +5,8 @@ import ProfilePage from './pages/ProfilePage';
 import DevToolsPage from './pages/DevToolsPage';
 import Admin from './pages/Admin';
 import NotFound from './pages/NotFound';
+import DocsPage from './pages/DocsPage';
+import BlogPage from './pages/BlogPage';
 import { ProtectedRoute, PublicRoute } from './components/auth/ProtectedRoute';
 import type { ReactNode } from 'react';
 
@@ -72,6 +74,18 @@ const routes: RouteConfig[] = [
       </ProtectedRoute>
     ),
     visible: false
+  },
+  {
+    name: '文档',
+    path: '/docs',
+    element: <DocsPage />,
+    visible: true
+  },
+  {
+    name: '博客',
+    path: '/blog',
+    element: <BlogPage />,
+    visible: true
   },
   {
     name: '404',

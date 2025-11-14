@@ -9,6 +9,7 @@ All colors MUST be HSL.
 
 @layer base {
   :root {
+    /* 优化背景色 - 参考 Revornix 的浅色主题 */
     --background: 0 0% 100%;
     --foreground: 222.2 84% 4.9%;
 
@@ -18,8 +19,9 @@ All colors MUST be HSL.
     --popover: 0 0% 100%;
     --popover-foreground: 222.2 84% 4.9%;
 
-    --primary: 222.2 47.4% 11.2%;
-    --primary-foreground: 210 40% 98%;
+    /* 优化主色调 - 更现代的蓝色系 */
+    --primary: 217.2 91.2% 59.8%;
+    --primary-foreground: 0 0% 100%;
 
     --secondary: 210 40% 96.1%;
     --secondary-foreground: 222.2 47.4% 11.2%;
@@ -33,9 +35,10 @@ All colors MUST be HSL.
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 210 40% 98%;
 
+    /* 优化边框和输入框 - 更柔和的灰色 */
     --border: 214.3 31.8% 91.4%;
     --input: 214.3 31.8% 91.4%;
-    --ring: 222.2 84% 4.9%;
+    --ring: 217.2 91.2% 59.8%;
 
     --radius: 0.5rem;
 
@@ -137,6 +140,7 @@ All colors MUST be HSL.
   }
 
   .dark {
+    /* 优化暗色主题 - 参考 Revornix 的深色模式 */
     --background: 222.2 84% 4.9%;
     --foreground: 210 40% 98%;
 
@@ -146,7 +150,8 @@ All colors MUST be HSL.
     --popover: 222.2 84% 4.9%;
     --popover-foreground: 210 40% 98%;
 
-    --primary: 224.3 76.3% 48%;
+    /* 优化暗色主题的主色调 - 更亮的蓝色 */
+    --primary: 217.2 91.2% 59.8%;
     --primary-foreground: 0 0% 100%;
 
     --secondary: 217.2 32.6% 17.5%;
@@ -163,10 +168,10 @@ All colors MUST be HSL.
 
     --border: 217.2 32.6% 17.5%;
     --input: 217.2 32.6% 17.5%;
-    --ring: 212.7 26.8% 83.9%;
+    --ring: 217.2 91.2% 59.8%;
     --sidebar-background: 240 5.9% 10%;
     --sidebar-foreground: 240 4.8% 95.9%;
-    --sidebar-primary: 224.3 76.3% 48%;
+    --sidebar-primary: 217.2 91.2% 59.8%;
     --sidebar-primary-foreground: 0 0% 100%;
     --sidebar-accent: 240 3.7% 15.9%;
     --sidebar-accent-foreground: 240 4.8% 95.9%;
