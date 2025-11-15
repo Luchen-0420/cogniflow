@@ -16,8 +16,14 @@
 打开项目根目录的 `.env` 文件，添加：
 
 ```env
-VITE_GLM_API_KEY=your_api_key_here
-VITE_GLM_MODEL=glm-4-flash
+VITE_ZHIPUAI_API_KEY=your_api_key_here
+VITE_ZHIPUAI_MODEL=glm-4-flash
+# 兼容旧变量：VITE_GLM_API_KEY / VITE_GLM_MODEL
+
+# 智谱网络搜索 API 配置（AI 主动辅助功能需要）
+# 搜索引擎选项：search_std（基础版）、search_pro（高阶版）、search_pro_sogou（搜狗）、search_pro_quark（夸克）
+VITE_ZHIPUAI_SEARCH_ENGINE=search_std
+# 兼容旧变量：VITE_GLM_SEARCH_ENGINE
 ```
 
 **重要提示：**
@@ -62,23 +68,31 @@ yarn dev
    - 笔记："今天学到了一个新技巧"
    - 资料："https://example.com"（会识别为链接）
 
+4. **测试 AI 主动辅助功能**
+   - 输入："今天要写一篇关于React Hooks的文章"
+   - 系统会自动在后台搜索相关信息，并生成辅助子卡片
+   - 输入："调研一下最新的AI技术趋势"
+   - 系统会自动提供相关知识点和参考信息
+
 ## 🎯 模型选择
 
 根据你的需求选择合适的模型：
 
 | 使用场景 | 推荐模型 | 配置 |
 |---------|---------|------|
-| **日常使用（推荐）** | GLM-4-Flash | `VITE_GLM_MODEL=glm-4-flash` |
-| 复杂任务处理 | GLM-4 | `VITE_GLM_MODEL=glm-4` |
-| 高难度分析 | GLM-4-Plus | `VITE_GLM_MODEL=glm-4-plus` |
-| 简单快速响应 | GLM-4-Air | `VITE_GLM_MODEL=glm-4-air` |
+| **日常使用（推荐）** | GLM-4-Flash | `VITE_ZHIPUAI_MODEL=glm-4-flash` |
+| 复杂任务处理 | GLM-4 | `VITE_ZHIPUAI_MODEL=glm-4` |
+| 高难度分析 | GLM-4-Plus | `VITE_ZHIPUAI_MODEL=glm-4-plus` |
+| 简单快速响应 | GLM-4-Air | `VITE_ZHIPUAI_MODEL=glm-4-air` |
+
+> 提示：旧变量 `VITE_GLM_MODEL` 依然有效，系统会自动兼容。
 
 ## 🐛 常见问题
 
-### Q1: 提示 "GLM API Key 未配置"
+### Q1: 提示 "ZHIPUAI API Key 未配置"
 
 **解决方案：**
-1. 确认 `.env` 文件中已添加 `VITE_GLM_API_KEY`
+1. 确认 `.env` 文件中已添加 `VITE_ZHIPUAI_API_KEY`（或兼容的 `VITE_GLM_API_KEY`）
 2. 确认环境变量名称正确（注意大小写）
 3. 重启开发服务器（修改 `.env` 后需要重启）
 
@@ -155,4 +169,4 @@ yarn dev
 
 配置完成后，你的 CogniFlow 应用就可以使用 GLM 强大的 AI 能力了！
 
-有问题随时查看 `GLM_API_MIGRATION.md` 获取详细的迁移文档。
+如需更多帮助，可随时查看本指南或联系维护者获取支持。

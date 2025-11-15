@@ -82,6 +82,12 @@ echo -e "  • 注册用户默认 40 次 API 调用"
 echo -e "  • 快速登录用户默认 10 次 API 调用"
 echo -e "  • 配置个人 API Key 后无限制使用"
 echo ""
+echo -e "${MAGENTA}🤖 v1.3.0 新功能:${NC}"
+echo -e "  • AI 主动辅助功能"
+echo -e "  • 自动检测关键词并生成辅助信息"
+echo -e "  • 定时轮询处理任务（每30分钟）"
+echo -e "  • 任务完成后显示气泡提示"
+echo ""
 echo -e "${RED}警告: 此操作将删除所有现有数据！${NC}"
 echo ""
 read -p "确认继续部署? (输入 yes 继续): " -r
@@ -211,10 +217,10 @@ log_success "数据库表和数据初始化完成"
 # 验证表是否创建成功
 log_step "验证数据库表..."
 TABLE_COUNT=$(docker exec "$CONTAINER_NAME" psql -U "$DB_USER" -d "$DB_NAME" -t -c "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = 'public';" | tr -d ' ')
-if [ "$TABLE_COUNT" -ge 12 ]; then
+if [ "$TABLE_COUNT" -ge 13 ]; then
     log_success "数据库表验证通过 ($TABLE_COUNT 个表)"
 else
-    log_error "数据库表验证失败，仅找到 $TABLE_COUNT 个表"
+    log_error "数据库表验证失败，仅找到 $TABLE_COUNT 个表（期望至少 13 个）"
     exit 1
 fi
 
@@ -233,6 +239,14 @@ if [ "$MESSAGES_TABLE" == "messages" ]; then
     log_success "留言板功能已部署"
 else
     log_warning "留言板表未找到，可能需要手动迁移"
+fi
+
+log_step "验证 AI 辅助任务功能..."
+AI_ASSIST_TABLE=$(docker exec "$CONTAINER_NAME" psql -U "$DB_USER" -d "$DB_NAME" -t -c "SELECT table_name FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'ai_assist_tasks';" | tr -d ' ')
+if [ "$AI_ASSIST_TABLE" == "ai_assist_tasks" ]; then
+    log_success "AI 辅助任务功能已部署"
+else
+    log_warning "AI 辅助任务表未找到，可能需要手动迁移"
 fi
 
 # ============================================

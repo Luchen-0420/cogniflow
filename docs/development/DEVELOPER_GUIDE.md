@@ -134,8 +134,9 @@ cp .env.example .env
 配置必需的环境变量：
 ```env
 # 智谱 AI API 配置（必需）
-VITE_GLM_API_KEY=your_api_key_here
-VITE_GLM_MODEL=glm-4-flash
+VITE_ZHIPUAI_API_KEY=your_api_key_here
+VITE_ZHIPUAI_MODEL=glm-4-flash
+# 兼容旧变量：VITE_GLM_API_KEY / VITE_GLM_MODEL
 ```
 
 ### 启动开发服务器
@@ -217,8 +218,9 @@ Dashboard 展示
 #### 2. 配置环境变量
 
 ```env
-VITE_GLM_API_KEY=your_api_key_here
-VITE_GLM_MODEL=glm-4-flash
+VITE_ZHIPUAI_API_KEY=your_api_key_here
+VITE_ZHIPUAI_MODEL=glm-4-flash
+# 兼容旧变量：VITE_GLM_API_KEY / VITE_GLM_MODEL
 ```
 
 #### 3. API 调用

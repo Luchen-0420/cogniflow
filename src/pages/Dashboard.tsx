@@ -109,6 +109,13 @@ export default function Dashboard() {
 
   useEffect(() => {
     loadData();
+    
+    // 定时刷新数据，确保获取到最新的 AI 辅助结果（每2分钟刷新一次）
+    const refreshInterval = setInterval(() => {
+      loadData();
+    }, 2 * 60 * 1000);
+    
+    return () => clearInterval(refreshInterval);
   }, []);
 
   useEffect(() => {

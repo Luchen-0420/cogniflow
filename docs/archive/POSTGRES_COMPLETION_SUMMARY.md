@@ -267,9 +267,10 @@ VITE_STORAGE_MODE=local    # 或 postgres
 # API 地址（仅 postgres 模式）
 VITE_API_URL=http://localhost:3001/api
 
-# GLM API（AI 功能）
-VITE_GLM_API_KEY=your_key
-VITE_GLM_MODEL=glm-4-flash
+# 智谱（GLM）API（AI 功能）
+VITE_ZHIPUAI_API_KEY=your_key
+VITE_ZHIPUAI_MODEL=glm-4-flash
+# 兼容旧变量：VITE_GLM_API_KEY / VITE_GLM_MODEL
 ```
 
 ### 服务器配置（server/.env）

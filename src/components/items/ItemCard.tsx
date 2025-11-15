@@ -2,13 +2,14 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { CheckCircle2, Circle, Edit, Archive, ArchiveRestore, Trash2, Calendar, AlertCircle, AlertTriangle } from 'lucide-react';
+import { Checkbox } from '@/components/ui/checkbox';
+import { CheckCircle2, Circle, Edit, Archive, ArchiveRestore, Trash2, Calendar, AlertCircle, AlertTriangle, Sparkles } from 'lucide-react';
 import { format, isToday } from 'date-fns';
 import { zhCN } from 'date-fns/locale';
-import type { Item } from '@/types/types';
+import type { Item, SubItem } from '@/types/types';
 import { itemApi } from '@/db/api';
 import { toast } from 'sonner';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import EditItemDialog from './EditItemDialog';
 import URLCard from './URLCard';
 import { AttachmentImages } from '@/components/attachments/AttachmentImages';
@@ -66,6 +67,51 @@ export default function ItemCard({ item, onUpdate }: ItemCardProps) {
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
   const [isNoteViewOpen, setIsNoteViewOpen] = useState(false);
+  const [isSubItemsExpanded, setIsSubItemsExpanded] = useState(false); // 子卡片折叠/展开状态
+  const [assistStatus, setAssistStatus] = useState<{
+    hasAssist: boolean;
+    status: 'pending' | 'processing' | 'completed' | 'failed' | null;
+    completedAt: string | null;
+  } | null>(null);
+
+  // 获取 AI 辅助状态并自动刷新数据
+  useEffect(() => {
+    // 检查是否使用 PostgreSQL API（有 getItemAssistStatus 方法）
+    const postgresApi = itemApi as any;
+    if (postgresApi.getItemAssistStatus) {
+      let lastStatus: string | null = null;
+      
+      const checkAssistStatus = async () => {
+        try {
+          const status = await postgresApi.getItemAssistStatus(item.id);
+          
+          // 如果状态从非 completed 变为 completed，立即刷新数据
+          if (lastStatus !== 'completed' && status.status === 'completed') {
+            console.log('✅ 检测到 AI 辅助完成，刷新数据...');
+            // 延迟刷新，确保后端数据已更新
+            setTimeout(() => {
+              onUpdate?.();
+            }, 1000);
+          }
+          
+          setAssistStatus(status);
+          lastStatus = status.status;
+        } catch {
+          // 静默失败
+        }
+      };
+      
+      // 立即检查一次
+      checkAssistStatus();
+      
+      // 每15秒检查一次辅助状态（如果还在处理中或已完成但需要显示）
+      const interval = setInterval(() => {
+        checkAssistStatus();
+      }, 15000);
+      
+      return () => clearInterval(interval);
+    }
+  }, [item.id, onUpdate]);
 
   // 如果是 URL 类型，使用专门的 URLCard 组件
   if (item.type === 'url') {
@@ -210,6 +256,27 @@ export default function ItemCard({ item, onUpdate }: ItemCardProps) {
                 )}>
                   {item.title || '无标题'}
                 </CardTitle>
+                {/* AI 辅助完成提示气泡 */}
+                {assistStatus?.hasAssist && assistStatus.status === 'completed' && (
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <div className="flex items-center gap-1 px-1.5 sm:px-2 py-0.5 rounded-md bg-blue-100 dark:bg-blue-900/30 border border-blue-300 dark:border-blue-700">
+                          <Sparkles className="h-3 w-3 sm:h-3.5 sm:w-3.5 text-blue-600 dark:text-blue-400 flex-shrink-0" />
+                          <span className="text-[10px] sm:text-xs font-medium text-blue-600 dark:text-blue-400">AI辅助</span>
+                        </div>
+                      </TooltipTrigger>
+                      <TooltipContent className="bg-blue-50 dark:bg-blue-900/50 border-blue-200 dark:border-blue-800">
+                        <p className="text-blue-900 dark:text-blue-100 font-medium text-xs sm:text-sm">✨ AI 已为您补充相关信息</p>
+                        <p className="text-[10px] sm:text-xs text-blue-700 dark:text-blue-300/80 mt-1">
+                          {assistStatus.completedAt 
+                            ? `完成时间: ${format(new Date(assistStatus.completedAt), 'MM-dd HH:mm', { locale: zhCN })}`
+                            : '已自动添加相关知识点和参考信息'}
+                        </p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                )}
                 {hasConflict && (
                   <TooltipProvider>
                     <Tooltip>
@@ -398,6 +465,62 @@ export default function ItemCard({ item, onUpdate }: ItemCardProps) {
             <AttachmentImages itemId={item.id} maxDisplay={4} />
           </div>
 
+          {/* 显示子卡片（AI辅助生成的内容） */}
+          {item.sub_items && item.sub_items.length > 0 && (
+            <div className="pl-7 space-y-2">
+              <div className="flex items-center justify-between mb-1">
+                <div className="text-xs font-medium text-muted-foreground">
+                  AI 辅助信息 ({item.sub_items.length})
+                </div>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setIsSubItemsExpanded(!isSubItemsExpanded)}
+                  className="h-6 px-2 text-xs text-muted-foreground hover:text-foreground"
+                >
+                  {isSubItemsExpanded ? '收起' : '展开'}
+                </Button>
+              </div>
+              {isSubItemsExpanded && (
+                <div className="space-y-2">
+                  {item.sub_items.map((subItem: SubItem) => (
+                    <div
+                      key={subItem.id}
+                      className="flex items-start gap-2 p-2 rounded-md bg-muted/30 border border-border/50 hover:bg-muted/50 transition-colors"
+                    >
+                      <Checkbox
+                        checked={subItem.status === 'done'}
+                        onCheckedChange={async (checked) => {
+                          if (!onUpdate) return;
+                          const updatedSubItems = (item.sub_items || []).map((si: SubItem) =>
+                            si.id === subItem.id
+                              ? { ...si, status: checked ? 'done' : 'pending' }
+                              : si
+                          );
+                          const success = await itemApi.updateItem(item.id, { sub_items: updatedSubItems });
+                          if (success) {
+                            onUpdate();
+                          }
+                        }}
+                        className="mt-0.5"
+                      />
+                      <span
+                        className={cn(
+                          'flex-1 text-sm leading-relaxed',
+                          subItem.status === 'done'
+                            ? 'line-through text-muted-foreground'
+                            : 'text-foreground'
+                        )}
+                      >
+                        {subItem.text}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
           {item.tags && item.tags.length > 0 && (
             <div className="flex flex-wrap gap-1.5 pl-7">
               {item.tags.map((tag, index) => (
@@ -411,11 +534,14 @@ export default function ItemCard({ item, onUpdate }: ItemCardProps) {
               ))}
             </div>
           )}
-          <div className="pt-0.5 pl-7">
-            <span className="text-xs text-muted-foreground/70">
-              {format(parseLocalDateTime(item.created_at), 'yyyy-MM-dd HH:mm', { locale: zhCN })}
-            </span>
-          </div>
+          {/* 显示创建时间 - 所有类型都显示 */}
+          {item.created_at && (
+            <div className="pt-0.5 pl-7">
+              <span className="text-xs text-muted-foreground/70">
+                创建于 {format(parseLocalDateTime(item.created_at), 'yyyy-MM-dd HH:mm', { locale: zhCN })}
+              </span>
+            </div>
+          )}
         </CardContent>
       </Card>
 

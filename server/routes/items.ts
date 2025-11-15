@@ -6,6 +6,7 @@
 import { Router } from 'express';
 import { query } from '../db/pool.js';
 import { AuthRequest } from '../middleware/auth.js';
+import { cancelAssistTasksForItem } from '../services/aiAssistTaskService.js';
 
 const router = Router();
 
@@ -249,6 +250,32 @@ router.post('/', async (req: AuthRequest, res, next) => {
       await updateConflictStatus(userId);
     }
     
+    // 检查是否需要创建 AI 辅助任务
+    if (raw_text && result.rows.length > 0) {
+      const { shouldTriggerAssist } = await import('../../src/utils/aiAssist.js');
+      const { createAIAssistTask } = await import('../services/aiAssistTaskService.js');
+      
+      if (shouldTriggerAssist(raw_text)) {
+        const { extractSearchKeywords } = await import('../../src/utils/aiAssist.js');
+        const searchKeywords = extractSearchKeywords(raw_text);
+        
+        // 异步创建任务，不阻塞响应
+        createAIAssistTask({
+          itemId: result.rows[0].id,
+          userId,
+          taskText: raw_text,
+          searchKeywords,
+        }).catch((error) => {
+          console.error('创建 AI 辅助任务失败:', error);
+        });
+      }
+    }
+    
+    // 如果条目状态被标记为完成，取消 AI 辅助任务
+    if (req.body.status && typeof req.body.status === 'string' && req.body.status.toLowerCase() === 'completed') {
+      await cancelAssistTasksForItem(id);
+    }
+
     // 记录活动日志
     await query(
       'INSERT INTO activity_logs (user_id, action, entity_type, entity_id, details) VALUES ($1, $2, $3, $4, $5)',
@@ -499,13 +526,35 @@ router.put('/:id', async (req: AuthRequest, res, next) => {
     const allowedFields = [
       'title', 'description', 'due_date', 'priority', 'status', 'tags',
       'entities', 'url', 'url_title', 'url_summary', 'url_thumbnail',
-      'start_time', 'end_time', 'recurrence_rule', 'recurrence_end_date'
+      'start_time', 'end_time', 'recurrence_rule', 'recurrence_end_date',
+      'collection_type', 'sub_items'
     ];
 
     for (const field of allowedFields) {
       if (req.body[field] !== undefined) {
-        updates.push(`${field} = $${paramIndex++}`);
-        params.push(req.body[field]);
+        // 对于 JSONB 字段，使用类型转换确保正确解析
+        if (field === 'sub_items' || field === 'entities') {
+          updates.push(`${field} = $${paramIndex}::jsonb`);
+          // 确保数据是有效的 JSON 字符串
+          const value = req.body[field];
+          if (typeof value === 'string') {
+            // 如果已经是字符串，验证是否为有效 JSON
+            try {
+              JSON.parse(value);
+              params.push(value);
+            } catch {
+              // 如果不是有效 JSON，尝试序列化
+              params.push(JSON.stringify(value));
+            }
+          } else {
+            // 如果是对象/数组，序列化为 JSON
+            params.push(JSON.stringify(value));
+          }
+        } else {
+          updates.push(`${field} = $${paramIndex}`);
+          params.push(req.body[field]);
+        }
+        paramIndex++;
       }
     }
 
@@ -584,6 +633,9 @@ router.delete('/:id', async (req: AuthRequest, res, next) => {
       await updateConflictStatus(userId);
     }
 
+    // 删除条目时，清理 AI 辅助任务记录
+    await cancelAssistTasksForItem(id);
+
     // 记录活动日志
     await query(
       'INSERT INTO activity_logs (user_id, action, entity_type, entity_id) VALUES ($1, $2, $3, $4)',
@@ -622,6 +674,9 @@ router.post('/:id/archive', async (req: AuthRequest, res, next) => {
     if (result.rows[0].type === 'event') {
       await updateConflictStatus(userId);
     }
+
+    // 归档后取消 AI 辅助任务
+    await cancelAssistTasksForItem(id);
 
     res.json({ success: true });
   } catch (error) {

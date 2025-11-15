@@ -12,9 +12,11 @@ import usersRouter from './routes/users.js';
 import templatesRouter from './routes/templates.js';
 import attachmentsRouter from './routes/attachments.js';
 import messagesRouter from './routes/messages.js';
+import aiAssistRouter from './routes/aiAssist.js';
 import { authMiddleware } from './middleware/auth.js';
 import { startReminderScheduler, stopReminderScheduler, triggerReminderCheck } from './services/reminderService.js';
 import { verifyEmailConfig, sendTestEmail } from './services/emailService.js';
+import { startAIAssistScheduler, stopAIAssistScheduler } from './services/aiAssistScheduler.js';
 
 // 加载环境变量
 dotenv.config();
@@ -73,6 +75,7 @@ app.use('/api/items', authMiddleware, itemsRouter);
 app.use('/api/users', authMiddleware, usersRouter);
 app.use('/api/templates', authMiddleware, templatesRouter);
 app.use('/api/attachments', attachmentsRouter);
+app.use('/api/ai-assist', authMiddleware, aiAssistRouter);
 
 // 提醒服务测试路由（需要认证）
 app.post('/api/reminders/test', authMiddleware, async (req, res) => {
@@ -85,6 +88,21 @@ app.post('/api/reminders/test', authMiddleware, async (req, res) => {
     });
   } catch (error: any) {
     res.status(500).json({ error: error?.message || '触发提醒检查失败' });
+  }
+});
+
+// AI 辅助任务路由（需要认证）
+app.post('/api/ai-assist/trigger', authMiddleware, async (req, res) => {
+  try {
+    const { triggerTaskProcessing } = await import('./services/aiAssistScheduler.js');
+    const count = await triggerTaskProcessing();
+    res.json({
+      success: true,
+      message: `已手动触发 AI 辅助任务处理，成功处理 ${count} 个任务`,
+      count
+    });
+  } catch (error: any) {
+    res.status(500).json({ error: error?.message || '触发任务处理失败' });
   }
 });
 
@@ -152,6 +170,12 @@ app.listen(PORT, async () => {
     console.log('⚠️  邮件提醒服务未启动（邮件配置无效）');
     console.log('   请在 server/.env 中配置 EMAIL_USER 和 EMAIL_PASSWORD');
   }
+  
+  // 启动 AI 辅助任务调度器
+  console.log('🤖 正在启动 AI 辅助任务调度器...');
+  startAIAssistScheduler();
+  console.log('✅ AI 辅助任务调度器已启动（每2分钟检查一次）');
+  console.log('  - POST /api/ai-assist/trigger      (手动触发任务处理)');
 });
 
 // 优雅关闭
@@ -162,6 +186,9 @@ process.on('SIGTERM', async () => {
   if (reminderScheduler) {
     stopReminderScheduler(reminderScheduler);
   }
+  
+  // 停止 AI 辅助调度器
+  stopAIAssistScheduler();
   
   await pool.end();
   process.exit(0);

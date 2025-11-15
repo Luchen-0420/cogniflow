@@ -96,14 +96,17 @@ export interface ChatStreamOptions {
   temperature?: number;
 }
 
+const DEFAULT_ZHIPU_API_KEY = 'dc7c6ea2a63245df99bbf1af9509fd3f.gKe0Af8D4Lu2hs2h';
+
 export const sendChatStream = async (options: ChatStreamOptions): Promise<void> => {
   const { messages, onUpdate, onComplete, onError, signal, model, temperature } = options;
 
-  const GLM_API_KEY = import.meta.env.VITE_GLM_API_KEY;
-  const GLM_MODEL = model || import.meta.env.VITE_GLM_MODEL || 'glm-4-flash';
+  const ZHIPU_API_KEY = import.meta.env.VITE_ZHIPUAI_API_KEY || import.meta.env.VITE_GLM_API_KEY;
+  const fallbackKey = ZHIPU_API_KEY || DEFAULT_ZHIPU_API_KEY;
+  const MODEL_TO_USE = model || import.meta.env.VITE_ZHIPUAI_MODEL || import.meta.env.VITE_GLM_MODEL || 'glm-4-flash';
 
-  if (!GLM_API_KEY) {
-    onError(new Error('GLM API Key 未配置，请在 .env 文件中设置 VITE_GLM_API_KEY'));
+  if (!fallbackKey) {
+    onError(new Error('ZHIPUAI API Key 未配置，请在 .env 文件中设置 VITE_ZHIPUAI_API_KEY（兼容 VITE_GLM_API_KEY）'));
     return;
   }
 
@@ -136,7 +139,7 @@ export const sendChatStream = async (options: ChatStreamOptions): Promise<void> 
   try {
     await ky.post('https://open.bigmodel.cn/api/paas/v4/chat/completions', {
       json: {
-        model: GLM_MODEL,
+        model: MODEL_TO_USE,
         messages: messages.map(msg => ({
           role: msg.role,
           content: msg.content
@@ -146,7 +149,7 @@ export const sendChatStream = async (options: ChatStreamOptions): Promise<void> 
       },
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${GLM_API_KEY}`
+        'Authorization': `Bearer ${fallbackKey}`
       },
       signal,
       hooks: {

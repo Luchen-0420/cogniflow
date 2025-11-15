@@ -27,15 +27,22 @@ DB_USER=postgres
 DB_PASSWORD=postgres123
 ```
 
-### GLM API 配置
+### 智谱（GLM）API 配置
 
 ```env
 # 智谱 AI API 配置（AI 功能必需）
-VITE_GLM_API_KEY=your_api_key_here
-VITE_GLM_API_URL=https://open.bigmodel.cn/api/paas/v4/chat/completions
+VITE_ZHIPUAI_API_KEY=your_api_key_here
+VITE_ZHIPUAI_API_URL=https://open.bigmodel.cn/api/paas/v4/chat/completions
+VITE_ZHIPUAI_MODEL=glm-4-flash
+# 兼容旧变量：VITE_GLM_API_KEY / VITE_GLM_API_URL / VITE_GLM_MODEL
+
+# 智谱网络搜索 API 配置（AI 主动辅助功能需要）
+# 搜索引擎选项：search_std（基础版）、search_pro（高阶版）、search_pro_sogou（搜狗）、search_pro_quark（夸克）
+VITE_ZHIPUAI_SEARCH_ENGINE=search_std
+# 兼容旧变量：VITE_GLM_SEARCH_ENGINE
 ```
 
-获取 API Key：查看 [GLM API 配置文档](./GLM_SETUP.md)
+获取 API Key：查看 [智谱（GLM）API 配置文档](./GLM_SETUP.md)
 
 ---
 
@@ -110,7 +117,7 @@ DB_HOST=127.0.0.1  # 仅本地访问
 ```env
 NODE_ENV=development
 DB_HOST=localhost
-VITE_GLM_API_KEY=test_key
+VITE_ZHIPUAI_API_KEY=test_key
 ```
 
 **生产环境：**
@@ -118,7 +125,7 @@ VITE_GLM_API_KEY=test_key
 NODE_ENV=production
 DB_HOST=your_db_host
 DB_PASSWORD=strong_password
-VITE_GLM_API_KEY=production_key
+VITE_ZHIPUAI_API_KEY=production_key
 ```
 
 ---
@@ -144,7 +151,7 @@ code .env
 
 至少配置以下项目：
 - ✅ 数据库连接信息
-- ✅ GLM API Key
+- ✅ ZHIPUAI API Key（兼容 VITE_GLM_API_KEY）
 
 ### 4. 验证配置
 
@@ -178,7 +185,7 @@ Error: Invalid API key
 
 **解决方案：**
 1. 验证 API Key 是否正确
-2. 检查环境变量名称：`VITE_GLM_API_KEY`
+2. 检查环境变量名称：`VITE_ZHIPUAI_API_KEY`（兼容 `VITE_GLM_API_KEY`）
 3. 重启开发服务器
 
 ### 环境变量未生效
@@ -200,7 +207,7 @@ pnpm run dev:postgres
 ## 📚 相关文档
 
 - [快速开始](../quickstart/QUICK_START.md)
-- [GLM API 配置](./GLM_SETUP.md)
+- [智谱（GLM）API 配置](./GLM_SETUP.md)
 - [部署指南](../deployment/DEPLOYMENT_GUIDE.md)
 - [安全指南](../deployment/SECURITY_GUIDE.md)
 

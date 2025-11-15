@@ -8,6 +8,7 @@ import { processTextWithAI, generateNoteTitle, extractBlogMetadata } from '@/uti
 import { detectURL, isMainlyURL, fetchURLContent, generateURLSummary } from '@/utils/urlProcessor';
 import { detectQueryIntent, removeQueryPrefix, parseQueryIntent, generateQuerySummary } from '@/utils/queryProcessor';
 import { uploadAttachment, updateAttachmentItemId } from '@/utils/attachmentUtils';
+import { shouldTriggerAssist, performAIAssist } from '@/utils/aiAssist';
 import { isImageFile, readMultipleDocuments } from '@/utils/fileReader';
 import { itemApi, auth, templateApi } from '@/db/api';
 import { useAuth } from '@/db/apiAdapter';
@@ -700,9 +701,85 @@ export default function QuickInput({
       console.log('🏷️ 提取的标签:', extractedTags);
       console.log('📝 去除标签后的文本:', textWithoutTags);
 
-      // 检测是否为URL（使用去除标签后的文本）
+      // 优先检测是否为URL（使用去除标签后的文本）
+      // URL检测优先级最高，如果检测到URL且主要是URL，应该优先处理为URL类型
       const detectedURL = detectURL(textWithoutTags);
       const isURL = detectedURL && isMainlyURL(textWithoutTags);
+      
+      // 如果检测到URL且主要是URL，直接处理为URL类型，跳过后续的类型检测
+      if (isURL && detectedURL) {
+        // 处理URL类型
+        console.log('🔗 检测到URL,开始抓取内容...');
+        toast.info('正在抓取网页内容...');
+
+        try {
+          const urlResult = await fetchURLContent(detectedURL);
+
+          // 使用 AI 生成更智能的梗概（传入实际抓取的网页内容）
+          toast.info('正在生成智能梗概...');
+          const aiSummary = await generateURLSummary(
+            urlResult.url,
+            urlResult.title,
+            urlResult.content, // 传入实际抓取的网页内容
+            inputText
+          );
+
+          // 创建URL类型的条目（合并提取的标签）
+          const urlRawText = textWithoutTags;
+          const newItem = await itemApi.createItem({
+            raw_text: urlRawText,
+            type: 'url',
+            title: urlResult.title,
+            description: urlResult.summary,
+            due_date: null,
+            priority: 'medium',
+            status: 'pending',
+            tags: [...extractedTags, '链接', '网页'],
+            entities: {},
+            archived_at: null,
+            url: urlResult.url,
+            url_title: urlResult.title,
+            url_summary: aiSummary, // 使用 AI 生成的梗概
+            url_thumbnail: urlResult.thumbnail || null,
+            url_fetched_at: new Date().toISOString(),
+            has_conflict: false,
+            start_time: null,
+            end_time: null,
+            recurrence_rule: null,
+            recurrence_end_date: null,
+            master_item_id: null,
+            is_master: false
+          });
+
+          if (newItem) {
+            toast.success('链接已保存到链接库');
+            onProcessingComplete?.(processingId);
+            onItemCreated?.();
+            
+            // 触发智能输入助手（如果满足条件）
+            if (onSmartAssistTrigger) {
+              onSmartAssistTrigger({
+                title: newItem.title || '',
+                tags: newItem.tags || [],
+                type: newItem.type || '',
+                content: newItem.raw_text || inputText,
+              });
+            }
+            
+            return newItem;
+          } else {
+            console.error('❌ 创建URL条目返回 null');
+            toast.error('保存链接失败,请重试');
+            onProcessingError?.(processingId);
+            return null;
+          }
+        } catch (error: any) {
+          console.error('❌ 处理URL失败:', error);
+          toast.error(`处理链接失败: ${error.message || '未知错误'}`);
+          onProcessingError?.(processingId);
+          return null;
+        }
+      }
 
       // 检测用户声明的类型（支持多种前缀）
       const typePatterns = {
@@ -790,79 +867,8 @@ export default function QuickInput({
       const isData = userSpecifiedType === 'data';
       let noteContent = contentWithoutPrefix;
 
-      if (isURL && detectedURL) {
-        // 处理URL类型
-        console.log('🔗 检测到URL,开始抓取内容...');
-        toast.info('正在抓取网页内容...');
-
-        try {
-          const urlResult = await fetchURLContent(detectedURL);
-
-          // 使用 AI 生成更智能的梗概（传入实际抓取的网页内容）
-          toast.info('正在生成智能梗概...');
-          const aiSummary = await generateURLSummary(
-            urlResult.url,
-            urlResult.title,
-            urlResult.content, // 传入实际抓取的网页内容
-            inputText
-          );
-
-          // 创建URL类型的条目（合并提取的标签）
-          // 使用去除类型前缀和标签后的内容作为 raw_text
-          const urlRawText = contentWithoutPrefix || textWithoutTags;
-          const newItem = await itemApi.createItem({
-            raw_text: urlRawText, // 保存去除类型前缀和标签后的内容
-            type: 'url',
-            title: urlResult.title,
-            description: urlResult.summary,
-            due_date: null,
-            priority: 'medium',
-            status: 'pending',
-            tags: [...extractedTags, '链接', '网页'],
-            entities: {},
-            archived_at: null,
-            url: urlResult.url,
-            url_title: urlResult.title,
-            url_summary: aiSummary, // 使用 AI 生成的梗概
-            url_thumbnail: urlResult.thumbnail || null,
-            url_fetched_at: new Date().toISOString(),
-            has_conflict: false,
-            start_time: null,
-            end_time: null,
-            recurrence_rule: null,
-            recurrence_end_date: null,
-            master_item_id: null,
-            is_master: false
-          });
-
-          if (newItem) {
-            toast.success('链接已保存到链接库');
-            onProcessingComplete?.(processingId);
-            onItemCreated?.();
-            
-            // 触发智能输入助手（如果满足条件）
-            if (onSmartAssistTrigger) {
-              onSmartAssistTrigger({
-                title: newItem.title || '',
-                tags: newItem.tags || [],
-                type: newItem.type || '',
-                content: newItem.raw_text || inputText,
-              });
-            }
-            
-            return newItem;
-          } else {
-            toast.error('保存失败,请重试');
-            onProcessingError?.(processingId);
-            return null;
-          }
-        } catch (error) {
-          console.error('URL处理失败:', error);
-          toast.error('抓取网页内容失败,请检查URL是否有效');
-          onProcessingError?.(processingId);
-          return null;
-        }
-      } else if (isNote) {
+      // 注意：URL处理已在前面优先处理，这里不再重复处理
+      if (isNote) {
         // 笔记类型：使用 AI 生成标题，但内容保持原文
         console.log('📝 检测到笔记，生成标题...');
         
@@ -1105,6 +1111,43 @@ export default function QuickInput({
             });
           }
           
+          // 检测是否需要AI主动辅助（在后台静默执行，不打扰用户）
+          if (shouldTriggerAssist(inputText)) {
+            console.log('🤖 检测到需要AI辅助的关键词，开始后台辅助...');
+            // 异步执行，不阻塞主流程
+            performAIAssist(inputText, {
+              onProgress: (message) => {
+                // 静默执行，不显示toast，只记录日志
+                console.log(`[AI辅助] ${message}`);
+              },
+            })
+              .then((assistResult) => {
+                if (assistResult && assistResult.subItems.length > 0) {
+                  console.log('✅ AI辅助完成，添加子卡片:', assistResult.subItems);
+                  // 获取当前卡片的sub_items，合并新的子卡片
+                  const currentSubItems = newItem.sub_items || [];
+                  const updatedSubItems = [...currentSubItems, ...assistResult.subItems];
+                  
+                  // 更新卡片的sub_items
+                  itemApi.updateItem(newItem.id, {
+                    sub_items: updatedSubItems,
+                  }).then((success) => {
+                    if (success) {
+                      console.log('✅ 子卡片已添加到主卡片');
+                      // 静默刷新数据，不显示提示
+                      onItemCreated?.();
+                    } else {
+                      console.warn('⚠️ 更新子卡片失败');
+                    }
+                  });
+                }
+              })
+              .catch((error) => {
+                console.error('❌ AI辅助执行失败:', error);
+                // 静默失败，不打扰用户
+              });
+          }
+          
           return newItem;
         } else {
           console.error('❌ 创建条目返回 null');
@@ -1211,18 +1254,18 @@ export default function QuickInput({
             </div>
           )}
           
-          <div className="flex gap-2">
+          <div className="flex items-center gap-2">
             {/* 附件上传按钮 */}
-            <div className="flex items-start gap-2">
+            <div className="flex items-center gap-2">
               <Button
                 type="button"
                 variant="outline"
                 size="lg"
                 onClick={() => fileInputRef.current?.click()}
-                className="h-[60px] px-3"
+                className="h-[40px] w-[40px] p-0"
                 disabled={isQuerying || isUploading}
               >
-                <Paperclip className="h-5 w-5" />
+                <Paperclip className="h-4 w-4" />
               </Button>
               
               {/* 语音输入按钮 */}
@@ -1236,7 +1279,7 @@ export default function QuickInput({
                 }}
                 disabled={isQuerying || isUploading}
                 size="lg"
-                className="h-[60px] px-3"
+                className="h-[40px] w-[40px] p-0"
               />
               
               {/* 隐藏的文件输入 */}
@@ -1250,22 +1293,22 @@ export default function QuickInput({
               />
             </div>
             
-            <div className="flex-1 flex flex-col gap-2">
+            <div className="flex-1 flex flex-col gap-1.5">
               {/* 已选择的文件预览 */}
               {selectedFiles.length > 0 && (
-                <div className="flex flex-wrap gap-2 p-2 bg-muted rounded-lg">
+                <div className="flex flex-wrap gap-1.5 p-1.5 bg-muted rounded-lg">
                   {selectedFiles.map((file, index) => (
                     <div
                       key={index}
-                      className="relative flex items-center gap-2 bg-background rounded px-2 py-1 pr-6"
+                      className="relative flex items-center gap-1.5 bg-background rounded px-1.5 py-0.5 pr-5"
                     >
-                      <span className="text-xs truncate max-w-[150px]">
+                      <span className="text-xs truncate max-w-[120px]">
                         {file.name}
                       </span>
                       <button
                         type="button"
                         onClick={() => handleRemoveFile(index)}
-                        className="absolute top-0 right-0 p-1 hover:bg-destructive hover:text-destructive-foreground rounded"
+                        className="absolute top-0 right-0 p-0.5 hover:bg-destructive hover:text-destructive-foreground rounded"
                       >
                         <X className="h-3 w-3" />
                       </button>
@@ -1281,11 +1324,12 @@ export default function QuickInput({
                 placeholder={
                   isQueryMode 
                     ? "🔍 查询模式: 输入查询内容 (如: 今天有什么事? 查询本周的会议)" 
-                    : "输入任何想法、任务、日程或URL链接... (输入 /blog 写博客, / 使用智能模板, ? 或 /q 开启查询模式, @help 查看帮助, /报告 @整理 自动添加标签, Enter发送)"
+                    : "输入任何想法、任务、日程或URL链接..."
                 }
-                className={`min-h-[60px] max-h-[120px] resize-none ${
+                className={`min-h-[40px] max-h-[40px] h-[40px] resize-none overflow-y-auto ${
                   isQueryMode ? 'border-primary' : ''
                 }`}
+                rows={1}
               />
             </div>
             
@@ -1306,11 +1350,11 @@ export default function QuickInput({
                     }, true);
                   }
                 }}
-                className="h-[60px] px-3"
+                className="h-[40px] w-[40px] p-0"
                 disabled={isQuerying || isUploading}
                 title="查看关联内容"
               >
-                <Sparkles className="h-5 w-5" />
+                <Sparkles className="h-4 w-4" />
               </Button>
             )}
             
@@ -1318,14 +1362,14 @@ export default function QuickInput({
               onClick={handleSubmit}
               disabled={(!text.trim() && selectedFiles.length === 0) || isQuerying || isUploading}
               size="lg"
-              className="px-6 h-[60px]"
+              className="px-4 h-[40px]"
             >
               {isUploading ? (
-                <Loader2 className="h-5 w-5 animate-spin" />
+                <Loader2 className="h-4 w-4 animate-spin" />
               ) : isQueryMode ? (
-                <Search className="h-5 w-5" />
+                <Search className="h-4 w-4" />
               ) : (
-                <Send className="h-5 w-5" />
+                <Send className="h-4 w-4" />
               )}
             </Button>
           </div>

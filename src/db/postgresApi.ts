@@ -197,6 +197,29 @@ export class PostgresItemApi {
   }
 
   /**
+   * 获取卡片的 AI 辅助状态
+   */
+  async getItemAssistStatus(itemId: string): Promise<{
+    hasAssist: boolean;
+    status: 'pending' | 'processing' | 'completed' | 'failed' | null;
+    completedAt: string | null;
+  }> {
+    try {
+      const data = await fetchAPI(`/ai-assist/status/${itemId}`, {
+        method: 'GET',
+      });
+      return data;
+    } catch (error) {
+      console.error('获取辅助状态失败:', error);
+      return {
+        hasAssist: false,
+        status: null,
+        completedAt: null,
+      };
+    }
+  }
+
+  /**
    * 更新条目
    */
   async updateItem(id: string, updates: Partial<Item>): Promise<boolean> {

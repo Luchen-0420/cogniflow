@@ -62,8 +62,9 @@ npm install
 在 `.env` 文件中配置智谱 AI API：
 
 ```env
-VITE_GLM_API_KEY=your_api_key_here
-VITE_GLM_MODEL=glm-4-flash
+VITE_ZHIPUAI_API_KEY=your_api_key_here
+VITE_ZHIPUAI_MODEL=glm-4-flash
+# 兼容旧变量：VITE_GLM_API_KEY / VITE_GLM_MODEL
 ```
 
 **获取 API Key**：

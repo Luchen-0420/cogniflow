@@ -146,8 +146,8 @@ pnpm run dev:postgres             # 同时启动前端 + API 服务
 |------|------|-------------|------|
 | `VITE_STORAGE_MODE` | 存储模式 | `local` / `postgres` | `postgres` 时会启用全部 API 功能 |
 | `VITE_API_URL` | API 根地址 | `http://127.0.0.1:3001/api` | PostgreSQL 模式必填 |
-| `VITE_GLM_API_KEY` | 系统级智谱 Key | `sk-xxxxx` | 个人 Key 可在前端设置中覆盖 |
-| `VITE_GLM_MODEL` | 默认文本模型 | `glm-4-flash` | 支持热切换 |
+| `VITE_ZHIPUAI_API_KEY` | 系统级智谱 Key（兼容 `VITE_GLM_API_KEY`） | `sk-xxxxx` | 个人 Key 可在前端设置中覆盖 |
+| `VITE_ZHIPUAI_MODEL` | 默认文本模型（兼容 `VITE_GLM_MODEL`） | `glm-4-flash` | 支持热切换 |
 | `VITE_SUPABASE_URL` / `VITE_SUPABASE_ANON_KEY` | 历史遗留的对象存储/认证支持 | - | 可留空 |
 | `VITE_PRIVACY_POLICY_URL` / `VITE_USER_POLICY_URL` | 隐私/用户协议链接 | 可选 | 登录页开关由 `VITE_SHOW_POLICY` 控制 |
 
@@ -162,7 +162,7 @@ pnpm run dev:postgres             # 同时启动前端 + API 服务
 | `FRONTEND_URL` | CORS 白名单 | `http://127.0.0.1:5173` |
 | `JWT_SECRET` | JWT 加密密钥 | 自动生成 |
 | `EMAIL_USER`, `EMAIL_PASSWORD` | 邮件提醒账号 & 授权码 | 需要手动补充 |
-| `ZHIPU_API_KEY` | 默认智谱 Key | 可与前端一致 |
+| `ZHIPUAI_API_KEY` | 默认智谱 Key（兼容 `ZHIPU_API_KEY`） | 可与前端一致 |
 | `UPLOAD_DIR` | 附件根目录 | 默认 `server/uploads` |
 
 ---
