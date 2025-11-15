@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -6,7 +6,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from 'sonner';
-import { Loader2, CheckCircle2, Clock, Calendar, Save, Edit, AlertCircle } from 'lucide-react';
+import { Loader2, CheckCircle2, Clock, Calendar, Save, Edit, AlertCircle, FileText } from 'lucide-react';
 import type { Item, ItemType } from '@/types/types';
 import { itemApi } from '@/db/api';
 
@@ -41,6 +41,7 @@ const formatToISOWithoutTimezone = (dateTimeLocal: string): string => {
 
 export default function EditItemDialog({ item, open, onOpenChange, onUpdate }: EditItemDialogProps) {
   const [formData, setFormData] = useState({
+    raw_text: item.raw_text || '',
     title: item.title || '',
     description: item.description || '',
     type: item.type,
@@ -54,26 +55,46 @@ export default function EditItemDialog({ item, open, onOpenChange, onUpdate }: E
   const [isSaving, setIsSaving] = useState(false);
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'success' | 'error'>('idle');
   const [lastSavedAt, setLastSavedAt] = useState<Date | null>(null);
+  const previousItemIdRef = useRef<string | null>(null);
+  const isSavingRef = useRef(false);
 
+  // 只在对话框打开时或 item.id 变化时重置表单数据，避免在编辑过程中被覆盖
   useEffect(() => {
-    setFormData({
-      title: item.title || '',
-      description: item.description || '',
-      type: item.type,
-      priority: item.priority,
-      start_time: item.start_time ? formatDateTimeLocal(item.start_time) : '',
-      end_time: item.end_time ? formatDateTimeLocal(item.end_time) : '',
-      due_date: item.due_date ? formatDateTimeLocal(item.due_date) : '',
-      tags: item.tags.join(', ')
-    });
-    setSaveStatus('idle');
-    setLastSavedAt(null);
-  }, [item]);
+    // 如果正在保存，不重置表单
+    if (isSavingRef.current) {
+      return;
+    }
+    
+    // 对话框关闭时，重置引用以便下次打开时能正确初始化
+    if (!open) {
+      previousItemIdRef.current = null;
+      return;
+    }
+    
+    // 只在对话框打开时或 item.id 变化时重置
+    if (previousItemIdRef.current !== item.id) {
+      setFormData({
+        raw_text: item.raw_text || '',
+        title: item.title || '',
+        description: item.description || '',
+        type: item.type,
+        priority: item.priority,
+        start_time: item.start_time ? formatDateTimeLocal(item.start_time) : '',
+        end_time: item.end_time ? formatDateTimeLocal(item.end_time) : '',
+        due_date: item.due_date ? formatDateTimeLocal(item.due_date) : '',
+        tags: item.tags.join(', ')
+      });
+      setSaveStatus('idle');
+      setLastSavedAt(null);
+      previousItemIdRef.current = item.id;
+    }
+  }, [item, open]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     setIsSaving(true);
+    isSavingRef.current = true;
     setSaveStatus('saving');
 
     // 对于事件类型，如果设置了 due_date 但没有设置 end_time，将 end_time 设置为 due_date
@@ -86,6 +107,7 @@ export default function EditItemDialog({ item, open, onOpenChange, onUpdate }: E
     }
 
     const updates = {
+      raw_text: formData.raw_text,
       title: formData.title,
       description: formData.description,
       type: formData.type,
@@ -109,11 +131,13 @@ export default function EditItemDialog({ item, open, onOpenChange, onUpdate }: E
           console.log('事件时间已更新，将重新检测时间冲突');
         }
         
-        // 延迟关闭对话框，让用户看到成功状态
+        // 先关闭对话框，避免数据更新导致表单被重置
+        onOpenChange(false);
+        
+        // 延迟触发更新，确保卡片显示立即刷新（在对话框关闭后）
         setTimeout(() => {
-          onOpenChange(false);
-          onUpdate?.(); // 这会触发数据刷新，后端应该已经重新检测了冲突
-        }, 800);
+          onUpdate?.();
+        }, 100);
       } else {
         setSaveStatus('error');
         toast.error('保存失败，请重试');
@@ -124,6 +148,10 @@ export default function EditItemDialog({ item, open, onOpenChange, onUpdate }: E
       toast.error('保存失败，请重试');
     } finally {
       setIsSaving(false);
+      // 延迟重置保存标志，确保 useEffect 不会立即重置表单
+      setTimeout(() => {
+        isSavingRef.current = false;
+      }, 500);
     }
   };
 
@@ -139,6 +167,23 @@ export default function EditItemDialog({ item, open, onOpenChange, onUpdate }: E
         
         <form id="edit-item-form" onSubmit={handleSubmit} className="flex-1 flex flex-col overflow-hidden">
           <div className="flex-1 overflow-y-auto px-1 space-y-5 pt-5 pb-4">
+          {/* 原始内容 */}
+          <div className="space-y-2">
+            <Label htmlFor="raw_text" className="text-sm font-medium text-foreground flex items-center gap-2">
+              <FileText className="h-4 w-4 text-muted-foreground" />
+              <span>原始内容</span>
+            </Label>
+            <Textarea
+              id="raw_text"
+              value={formData.raw_text}
+              onChange={(e) => setFormData({ ...formData, raw_text: e.target.value })}
+              placeholder="输入原始内容"
+              rows={4}
+              className="resize-none bg-background border-input focus:ring-2 focus:ring-ring focus:ring-offset-1 font-mono text-sm"
+            />
+            <p className="text-xs text-muted-foreground">这是您最初输入的内容，可以随时编辑</p>
+          </div>
+
           {/* 标题 */}
           <div className="space-y-2">
             <Label htmlFor="title" className="text-sm font-medium text-foreground flex items-center gap-2">

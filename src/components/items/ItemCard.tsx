@@ -3,7 +3,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Checkbox } from '@/components/ui/checkbox';
-import { CheckCircle2, Circle, Edit, Archive, ArchiveRestore, Trash2, Calendar, AlertCircle, AlertTriangle, Sparkles } from 'lucide-react';
+import { CheckCircle2, Circle, Edit, Archive, ArchiveRestore, Trash2, Calendar, AlertCircle, AlertTriangle, Sparkles, FileText } from 'lucide-react';
 import { format, isToday } from 'date-fns';
 import { zhCN } from 'date-fns/locale';
 import type { Item, SubItem } from '@/types/types';
@@ -200,6 +200,18 @@ export default function ItemCard({ item, onUpdate }: ItemCardProps) {
       )}>
         {/* 悬浮操作按钮 */}
         <div className="absolute top-2 right-2 sm:top-2.5 sm:right-2.5 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-all duration-200 flex gap-1 z-10">
+          {/* 笔记类型：Markdown 编辑器按钮 */}
+          {item.type === 'note' && (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-6 w-6 sm:h-7 sm:w-7 p-0 bg-card/90 backdrop-blur hover:bg-primary/10 hover:text-primary rounded-lg shadow-sm"
+              onClick={() => setIsNoteViewOpen(true)}
+              title="在 Markdown 编辑器中打开"
+            >
+              <FileText className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
+            </Button>
+          )}
           {canEdit && (
             <Button
               variant="ghost"
@@ -403,10 +415,71 @@ export default function ItemCard({ item, onUpdate }: ItemCardProps) {
           </div>
         </CardHeader>
         <CardContent className="py-0 pb-2.5 px-3 sm:px-4 space-y-1.5">
-          {item.description && (
+          {/* 笔记类型：即使没有描述也显示内容区域 */}
+          {item.type === 'note' && (
+            <div className="pl-7">
+              {item.raw_text || item.description ? (
+                <>
+                  {!isExpanded && item.raw_text && item.raw_text.split('\n').length > 3 ? (
+                    // 折叠状态：显示前3行
+                    <>
+                      <div 
+                        className="text-sm text-foreground leading-relaxed whitespace-pre-wrap line-clamp-3 cursor-pointer hover:bg-muted/30 rounded p-1 transition-colors"
+                        onClick={() => setIsNoteViewOpen(true)}
+                        title="点击在 Markdown 编辑器中打开"
+                      >
+                        {item.raw_text || item.description}
+                      </div>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setIsNoteViewOpen(true)}
+                        className="mt-1 h-6 px-2 text-xs text-primary hover:text-primary/80 hover:bg-primary/5"
+                      >
+                        在编辑器中查看
+                      </Button>
+                    </>
+                  ) : (
+                    // 展开状态：显示完整内容，支持滚动
+                    <div className="space-y-2">
+                      <div 
+                        className="text-sm text-foreground leading-relaxed whitespace-pre-wrap max-h-[400px] overflow-y-auto pr-2 scrollbar-thin cursor-pointer hover:bg-muted/30 rounded p-1 transition-colors"
+                        onClick={() => setIsNoteViewOpen(true)}
+                        title="点击在 Markdown 编辑器中打开"
+                      >
+                        {item.raw_text || item.description}
+                      </div>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setIsNoteViewOpen(true)}
+                        className="h-6 px-2 text-xs text-primary hover:text-primary/80 hover:bg-primary/5"
+                      >
+                        在 Markdown 编辑器中打开
+                      </Button>
+                    </div>
+                  )}
+                </>
+              ) : (
+                // 没有内容时，显示一个按钮打开编辑器
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setIsNoteViewOpen(true)}
+                  className="h-8 px-3 text-xs text-primary hover:text-primary/80 hover:bg-primary/5 border-primary/20"
+                >
+                  <FileText className="h-3 w-3 mr-1.5" />
+                  在 Markdown 编辑器中打开
+                </Button>
+              )}
+            </div>
+          )}
+          
+          {/* 其他类型：显示描述 */}
+          {item.description && item.type !== 'note' && (
             <>
-              {(item.type === 'note' || item.type === 'data') ? (
-                // 笔记和资料类型：显示原始内容，支持折叠展开
+              {item.type === 'data' ? (
+                // 资料类型：显示原始内容，支持折叠展开
                 <div className="pl-7">
                   {!isExpanded && item.raw_text && item.raw_text.split('\n').length > 3 ? (
                     // 折叠状态：显示前3行
@@ -417,31 +490,19 @@ export default function ItemCard({ item, onUpdate }: ItemCardProps) {
                       <Button
                         variant="ghost"
                         size="sm"
-                        onClick={() => {
-                          // 如果是笔记类型，打开 Markdown 编辑器
-                          if (item.type === 'note') {
-                            setIsNoteViewOpen(true);
-                          } else {
-                            // 资料类型，展开显示（支持滚动）
-                            setIsExpanded(true);
-                          }
-                        }}
+                        onClick={() => setIsExpanded(true)}
                         className="mt-1 h-6 px-2 text-xs text-primary hover:text-primary/80 hover:bg-primary/5"
                       >
-                        {item.type === 'note' 
-                          ? '在编辑器中查看' 
-                          : '展开全部'}
+                        展开全部
                       </Button>
                     </>
                   ) : (
                     // 展开状态：显示完整内容，支持滚动
                     <div className="space-y-2">
-                      <div 
-                        className="text-sm text-foreground leading-relaxed whitespace-pre-wrap max-h-[400px] overflow-y-auto pr-2 scrollbar-thin"
-                      >
+                      <div className="text-sm text-foreground leading-relaxed whitespace-pre-wrap max-h-[400px] overflow-y-auto pr-2 scrollbar-thin">
                         {item.raw_text || item.description}
                       </div>
-                      {item.type === 'data' && item.raw_text && item.raw_text.split('\n').length > 3 && (
+                      {item.raw_text && item.raw_text.split('\n').length > 3 && (
                         <Button
                           variant="ghost"
                           size="sm"

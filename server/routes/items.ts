@@ -524,7 +524,7 @@ router.put('/:id', async (req: AuthRequest, res, next) => {
     let paramIndex = 1;
 
     const allowedFields = [
-      'title', 'description', 'due_date', 'priority', 'status', 'tags',
+      'raw_text', 'title', 'description', 'due_date', 'priority', 'status', 'tags',
       'entities', 'url', 'url_title', 'url_summary', 'url_thumbnail',
       'start_time', 'end_time', 'recurrence_rule', 'recurrence_end_date',
       'collection_type', 'sub_items'
