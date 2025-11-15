@@ -17,7 +17,7 @@ import {
 } from 'lucide-react';
 import { format, isToday } from 'date-fns';
 import { zhCN } from 'date-fns/locale';
-import type { Item, TaskStatus, SubItem } from '@/types/types';
+import type { Item, TaskStatus, SubItem, SubItemStatus } from '@/types/types';
 import { itemApi } from '@/db/api';
 import { toast } from 'sonner';
 import { useState, useEffect } from 'react';
@@ -59,18 +59,6 @@ const statusLabels = {
   'in-progress': '进行中',
   blocked: '已阻塞',
   completed: '已完成'
-};
-
-const priorityColors = {
-  high: 'bg-red-100 dark:bg-red-900/20 text-red-600 dark:text-red-400 border-red-200 dark:border-red-800',
-  medium: 'bg-yellow-100 dark:bg-yellow-900/20 text-yellow-600 dark:text-yellow-400 border-yellow-200 dark:border-yellow-800',
-  low: 'bg-green-100 dark:bg-green-900/20 text-green-600 dark:text-green-400 border-green-200 dark:border-green-800'
-};
-
-const priorityLabels = {
-  high: '高优先级',
-  medium: '中优先级',
-  low: '低优先级'
 };
 
 export default function TodoCard({ item, onUpdate }: TodoCardProps) {
@@ -422,9 +410,10 @@ export default function TodoCard({ item, onUpdate }: TodoCardProps) {
                         checked={subItem.status === 'done'}
                         onCheckedChange={async (checked) => {
                           if (!onUpdate) return;
-                          const updatedSubItems = (item.sub_items || []).map((si: SubItem) =>
+                          const newStatus: SubItemStatus = checked === true ? 'done' : 'pending';
+                          const updatedSubItems: SubItem[] = (item.sub_items || []).map((si: SubItem) =>
                             si.id === subItem.id
-                              ? { ...si, status: checked ? 'done' : 'pending' }
+                              ? { ...si, status: newStatus }
                               : si
                           );
                           const success = await itemApi.updateItem(item.id, { sub_items: updatedSubItems });

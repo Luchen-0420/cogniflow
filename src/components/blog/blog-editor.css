@@ -73,15 +73,50 @@
     aspect-ratio: auto;
   }
 
-  /* 编辑区和预览区平分 */
+  /* 编辑区和预览区平分 - 默认 live 模式（有预览区） */
   .w-md-editor-content {
     display: flex;
   }
 
+  /* 默认情况：live 模式，编辑区和预览区各占50% */
   .w-md-editor-input,
   .w-md-editor-preview {
     flex: 1;
     min-width: 0;
+    box-sizing: border-box !important;
+    flex-shrink: 1 !important;
+    flex-grow: 1 !important;
+    flex-basis: 0% !important;
+  }
+
+  /* 关键：当有预览区时（live模式），编辑区和预览区各占50% */
+  /* 注意：show-preview 模式下预览区显示但编辑区隐藏，所以这里只处理 live 模式 */
+  .w-md-editor:not(.w-md-editor-show-edit):not(.w-md-editor-show-preview) .w-md-editor-input,
+  .w-md-editor:not(.w-md-editor-show-edit):not(.w-md-editor-show-preview) .w-md-editor-preview {
+    max-width: 50% !important;
+    flex: 1 1 50% !important;
+  }
+
+  /* 关键：当只有编辑区时（show-edit模式），编辑区占100%，预览区被隐藏 */
+  .w-md-editor-show-edit .w-md-editor-input {
+    max-width: 100% !important;
+    flex: 1 1 100% !important;
+    width: 100% !important;
+  }
+
+  /* show-preview 模式下，预览区占100%，编辑区被隐藏 */
+  .w-md-editor-show-preview .w-md-editor-preview {
+    max-width: 100% !important;
+    flex: 1 1 100% !important;
+    width: 100% !important;
+  }
+
+  /* 确保编辑区内的所有容器元素都限制在编辑区宽度内 */
+  .w-md-editor-input > *,
+  .w-md-editor-input .w-md-editor-text,
+  .w-md-editor-input .w-md-editor-textarea {
+    max-width: 100% !important;
+    box-sizing: border-box !important;
   }
 
   /* 预览区样式优化 */
@@ -165,14 +200,30 @@
 
 /* 自动换行优化 */
 /* 编辑器输入区域 - 自动换行 */
+/* 关键：确保 textarea 基于其父容器（.w-md-editor-input）的实际宽度换行 */
+/* 当有预览区时，.w-md-editor-input 占50%，textarea 应该基于这50%的宽度换行 */
+/* 当只有编辑区时，.w-md-editor-input 占100%，textarea 应该基于这100%的宽度换行 */
 .w-md-editor-text,
 .w-md-editor-textarea,
-.w-md-editor-input textarea {
+.w-md-editor-input textarea,
+.w-md-editor-input .w-md-editor-text-text,
+textarea.w-md-editor-text-text,
+.w-md-editor textarea,
+.w-md-editor-input textarea[wrap],
+.blog-editor-container textarea,
+.note-view-container textarea {
   word-wrap: break-word !important;
   word-break: break-word !important;
   white-space: pre-wrap !important;
   overflow-wrap: break-word !important;
   hyphens: auto !important;
+  overflow-x: hidden !important;
+  /* 关键：width: 100% 是相对于 .w-md-editor-input 的，确保填充父容器 */
+  /* textarea 会自动根据父容器的实际宽度（50%或100%）进行换行 */
+  width: 100% !important;
+  max-width: 100% !important;
+  box-sizing: border-box !important;
+  min-width: 0 !important;
 }
 
 /* 预览区域 - 自动换行 */
@@ -200,6 +251,39 @@
 .w-md-editor-input {
   overflow-x: hidden !important;
   overflow-y: auto !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
+  /* 确保 flex 布局时正确计算宽度 */
+  flex-shrink: 1 !important;
+  flex-grow: 1 !important;
+  flex-basis: 0% !important;
+}
+
+/* PC端：根据预览区状态动态调整编辑区宽度 */
+@media (min-width: 641px) {
+  /* 有预览区时（live模式），编辑区占50% */
+  .w-md-editor:not(.w-md-editor-show-edit):not(.w-md-editor-show-preview) .w-md-editor-input {
+    max-width: 50% !important;
+    flex: 1 1 50% !important;
+  }
+
+  /* 只有编辑区时（show-edit模式），编辑区占100%，预览区被隐藏 */
+  .w-md-editor-show-edit .w-md-editor-input {
+    max-width: 100% !important;
+    flex: 1 1 100% !important;
+    width: 100% !important;
+  }
+}
+
+/* 编辑器输入区域容器 */
+/* 关键：确保这个容器也限制在 .w-md-editor-input 的宽度内 */
+.w-md-editor-input .w-md-editor-text {
+  width: 100% !important;
+  max-width: 100% !important;
+  min-width: 0 !important;
+  overflow-x: hidden !important;
+  overflow-y: auto !important;
+  box-sizing: border-box !important;
 }
 
 .w-md-editor-preview {

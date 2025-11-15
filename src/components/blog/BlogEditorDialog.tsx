@@ -34,7 +34,7 @@ export function BlogEditorDialog({
   // 初始化内容
   useEffect(() => {
     if (open) {
-      setContent(initialContent || '# 标题\n\n在这里开始写作...\n\n');
+      setContent(initialContent || '');
     }
   }, [open, initialContent]);
 
@@ -193,6 +193,9 @@ export function BlogEditorDialog({
                   wordBreak: 'break-word',
                   whiteSpace: 'pre-wrap',
                   overflowWrap: 'break-word',
+                  overflowX: 'hidden',
+                  maxWidth: '100%',
+                  boxSizing: 'border-box',
                 },
               }}
               className="shadow-sm border rounded-lg overflow-hidden"
