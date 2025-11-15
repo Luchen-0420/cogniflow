@@ -8,7 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Search, Inbox, Tag, CalendarDays, Link as LinkIcon, History, Archive, Calendar, Filter, X, CheckCircle2, FileText } from 'lucide-react';
+import { Search, Inbox, Tag, CalendarDays, Link as LinkIcon, History, Archive, Calendar, Filter, X, CheckCircle2, FileText, Plus } from 'lucide-react';
 import QuickInput from '@/components/items/QuickInput';
 import ItemCard from '@/components/items/ItemCard';
 import TodoCard from '@/components/items/TodoCard';
@@ -20,8 +20,8 @@ import CalendarView from '@/components/calendar/CalendarView';
 import ReportView from '@/components/report/ReportView';
 import { LoginDialog } from '@/components/auth/LoginDialog';
 import { useAuth } from '@/db/apiAdapter';
-import { itemApi, templateApi, auth } from '@/db/api';
-import type { Item, TagStats, UserTemplate } from '@/types/types';
+import { itemApi, templateApi, auth, userSettingsApi } from '@/db/api';
+import type { Item, TagStats, UserTemplate, ItemType } from '@/types/types';
 import { format } from 'date-fns';
 import { zhCN } from 'date-fns/locale';
 import { FloatingActionMenu } from '@/components/common/FloatingActionMenu';
@@ -69,6 +69,12 @@ export default function Dashboard() {
   const [isSearching, setIsSearching] = useState(false);
   const [processingItems, setProcessingItems] = useState<ProcessingItem[]>([]);
   
+  // 归档分类相关状态
+  const [archivedSubTab, setArchivedSubTab] = useState<string>('all'); // 'all' | ItemType | 'tag:标签名'
+  const [customArchiveCategories, setCustomArchiveCategories] = useState<string[]>([]); // 用户自定义的标签分类
+  const [showAddCategoryDialog, setShowAddCategoryDialog] = useState(false);
+  const [newCategoryName, setNewCategoryName] = useState('');
+  
   // 浮动按钮相关状态
   const [showWeeklyReport, setShowWeeklyReport] = useState(false);
   const [showDailyReport, setShowDailyReport] = useState(false);
@@ -106,6 +112,20 @@ export default function Dashboard() {
     setTagStats(tags);
     setHistoryItems(history);
   };
+
+  // 加载自定义归档分类
+  useEffect(() => {
+    const loadCustomCategories = async () => {
+      try {
+        const settings = await userSettingsApi.getSettings();
+        const categories = settings.archiveCategories || [];
+        setCustomArchiveCategories(categories);
+      } catch (error) {
+        console.error('加载自定义归档分类失败:', error);
+      }
+    };
+    loadCustomCategories();
+  }, []);
 
   useEffect(() => {
     loadData();
@@ -158,6 +178,66 @@ export default function Dashboard() {
     const success = await itemApi.deleteItem(id);
     if (success) {
       loadData();
+    }
+  };
+
+  // 筛选归档项
+  const getFilteredArchivedItems = (): Item[] => {
+    if (archivedSubTab === 'all') {
+      return archivedItems;
+    }
+    
+    if (archivedSubTab.startsWith('tag:')) {
+      const tag = archivedSubTab.replace('tag:', '');
+      return archivedItems.filter(item => item.tags && item.tags.includes(tag));
+    }
+    
+    // 按类型筛选
+    return archivedItems.filter(item => item.type === archivedSubTab);
+  };
+
+  // 添加自定义归档分类
+  const handleAddCustomCategory = async () => {
+    if (!newCategoryName.trim()) {
+      toast.error('请输入标签名');
+      return;
+    }
+
+    const tag = newCategoryName.trim();
+    if (customArchiveCategories.includes(tag)) {
+      toast.error('该标签分类已存在');
+      return;
+    }
+
+    try {
+      const updatedCategories = [...customArchiveCategories, tag];
+      setCustomArchiveCategories(updatedCategories);
+      await userSettingsApi.updateSettings({ archiveCategories: updatedCategories });
+      setShowAddCategoryDialog(false);
+      setNewCategoryName('');
+      toast.success('已添加归档分类');
+    } catch (error) {
+      console.error('添加归档分类失败:', error);
+      toast.error('添加失败');
+    }
+  };
+
+  // 删除自定义归档分类
+  const handleDeleteCustomCategory = async (tag: string) => {
+    try {
+      const updatedCategories = customArchiveCategories.filter(cat => cat !== tag);
+      setCustomArchiveCategories(updatedCategories);
+      await userSettingsApi.updateSettings({ archiveCategories: updatedCategories });
+      
+      // 如果当前选中的是该分类，切换到全部
+      if (archivedSubTab === `tag:${tag}`) {
+        setArchivedSubTab('all');
+      }
+      
+      toast.success('已删除归档分类');
+    } catch (error) {
+      console.error('删除归档分类失败:', error);
+      toast.error('删除失败');
     }
   };
 
@@ -826,35 +906,125 @@ export default function Dashboard() {
               ) : (
                 <div>
                   <div className="mb-4">
-                    <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-1">
-                      已归档的内容
-                    </h3>
+                    <div className="flex items-center justify-between mb-2">
+                      <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+                        已归档的内容
+                      </h3>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setShowAddCategoryDialog(true)}
+                        className="flex items-center gap-1"
+                      >
+                        <Plus className="h-4 w-4" />
+                        添加分类
+                      </Button>
+                    </div>
                     <p className="text-sm text-gray-600 dark:text-gray-400">
                       共 {archivedItems.length} 条记录，点击可恢复
                     </p>
                   </div>
-                  <div className="space-y-3">
-                    {archivedItems.map((item) => (
-                      item.type === 'collection' ? (
-                        <CollectionCard 
-                          key={item.id} 
-                          item={item} 
-                          onUpdate={async (id, updates) => {
-                            await itemApi.updateItem(id, updates);
-                            await loadData();
-                          }}
-                          onDelete={async (id) => {
-                            await itemApi.deleteItem(id);
-                            await loadData();
-                          }}
-                        />
-                      ) : item.type === 'url' ? (
-                        <URLCard key={item.id} item={item} onDelete={handleDeleteURL} />
-                      ) : (
-                        <ItemCard key={item.id} item={item} onUpdate={loadData} />
-                      )
-                    ))}
-                  </div>
+                  
+                  {/* 归档子 tabs */}
+                  <Tabs value={archivedSubTab} onValueChange={setArchivedSubTab} className="mb-4">
+                    <TabsList className="flex-wrap h-auto">
+                      <TabsTrigger value="all">全部</TabsTrigger>
+                      <TabsTrigger value="task">任务</TabsTrigger>
+                      <TabsTrigger value="event">日程</TabsTrigger>
+                      <TabsTrigger value="note">笔记</TabsTrigger>
+                      <TabsTrigger value="data">资料</TabsTrigger>
+                      <TabsTrigger value="url">链接</TabsTrigger>
+                      <TabsTrigger value="collection">合集</TabsTrigger>
+                      {customArchiveCategories.map((tag) => (
+                        <TabsTrigger 
+                          key={tag} 
+                          value={`tag:${tag}`}
+                          className="flex items-center gap-1"
+                        >
+                          <span>#{tag}</span>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleDeleteCustomCategory(tag);
+                            }}
+                            className="ml-1 hover:text-red-500"
+                          >
+                            <X className="h-3 w-3" />
+                          </button>
+                        </TabsTrigger>
+                      ))}
+                    </TabsList>
+                    
+                    {/* 渲染归档内容的辅助函数 */}
+                    {(() => {
+                      const renderArchivedContent = (filteredItems: Item[], emptyMessage?: string) => {
+                        if (filteredItems.length === 0) {
+                          return (
+                            <div className="text-center py-8">
+                              <p className="text-gray-500 dark:text-gray-400">
+                                {emptyMessage || '暂无归档内容'}
+                              </p>
+                            </div>
+                          );
+                        }
+                        return (
+                          <div className="space-y-3">
+                            {filteredItems.map((item) => (
+                              item.type === 'collection' ? (
+                                <CollectionCard 
+                                  key={item.id} 
+                                  item={item} 
+                                  onUpdate={async (id, updates) => {
+                                    await itemApi.updateItem(id, updates);
+                                    await loadData();
+                                  }}
+                                  onDelete={async (id) => {
+                                    await itemApi.deleteItem(id);
+                                    await loadData();
+                                  }}
+                                />
+                              ) : item.type === 'url' ? (
+                                <URLCard key={item.id} item={item} onDelete={handleDeleteURL} />
+                              ) : (
+                                <ItemCard key={item.id} item={item} onUpdate={loadData} />
+                              )
+                            ))}
+                          </div>
+                        );
+                      };
+                      
+                      return (
+                        <>
+                          <TabsContent value="all" className="mt-4">
+                            {renderArchivedContent(archivedItems, '暂无归档内容')}
+                          </TabsContent>
+                          <TabsContent value="task" className="mt-4">
+                            {renderArchivedContent(archivedItems.filter(item => item.type === 'task'), '暂无任务类型的归档内容')}
+                          </TabsContent>
+                          <TabsContent value="event" className="mt-4">
+                            {renderArchivedContent(archivedItems.filter(item => item.type === 'event'), '暂无日程类型的归档内容')}
+                          </TabsContent>
+                          <TabsContent value="note" className="mt-4">
+                            {renderArchivedContent(archivedItems.filter(item => item.type === 'note'), '暂无笔记类型的归档内容')}
+                          </TabsContent>
+                          <TabsContent value="data" className="mt-4">
+                            {renderArchivedContent(archivedItems.filter(item => item.type === 'data'), '暂无资料类型的归档内容')}
+                          </TabsContent>
+                          <TabsContent value="url" className="mt-4">
+                            {renderArchivedContent(archivedItems.filter(item => item.type === 'url'), '暂无链接类型的归档内容')}
+                          </TabsContent>
+                          <TabsContent value="collection" className="mt-4">
+                            {renderArchivedContent(archivedItems.filter(item => item.type === 'collection'), '暂无合集类型的归档内容')}
+                          </TabsContent>
+                          {customArchiveCategories.map((tag) => (
+                            <TabsContent key={tag} value={`tag:${tag}`} className="mt-4">
+                              {renderArchivedContent(archivedItems.filter(item => item.tags && item.tags.includes(tag)), `标签 #${tag} 下暂无归档内容`)}
+                            </TabsContent>
+                          ))}
+                        </>
+                      );
+                    })()}
+                  </Tabs>
                 </div>
               )}
             </TabsContent>
@@ -1147,6 +1317,49 @@ export default function Dashboard() {
         open={showHelpDialog}
         onOpenChange={setShowHelpDialog}
       />
+
+      {/* 添加归档分类对话框 */}
+      <Dialog open={showAddCategoryDialog} onOpenChange={setShowAddCategoryDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>添加归档分类</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div>
+              <label className="text-sm font-medium mb-2 block">
+                标签名
+              </label>
+              <Input
+                value={newCategoryName}
+                onChange={(e) => setNewCategoryName(e.target.value)}
+                placeholder="输入标签名，例如：工作、学习、项目等"
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    handleAddCustomCategory();
+                  }
+                }}
+              />
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
+                将创建一个新的归档分类，显示包含该标签的所有归档内容
+              </p>
+            </div>
+            <div className="flex justify-end gap-2">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setShowAddCategoryDialog(false);
+                  setNewCategoryName('');
+                }}
+              >
+                取消
+              </Button>
+              <Button onClick={handleAddCustomCategory}>
+                添加
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* 预览/加载弹窗 */}
       <Dialog open={previewDialogOpen} onOpenChange={setPreviewDialogOpen}>
