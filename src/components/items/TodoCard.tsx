@@ -195,6 +195,8 @@ export default function TodoCard({ item, onUpdate }: TodoCardProps) {
   };
 
   const isCompleted = item.status === 'completed';
+  const isArchived = item.archived_at !== null;
+  const canEdit = !isCompleted && !isArchived;
 
   return (
     <>
@@ -208,15 +210,17 @@ export default function TodoCard({ item, onUpdate }: TodoCardProps) {
       )}>
         {/* 悬浮操作按钮 */}
         <div className="absolute top-1.5 right-1.5 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-all duration-200 flex gap-0.5 z-10">
-          <Button
-            variant="ghost"
-            size="sm"
-            className="h-5 w-5 p-0 bg-card/90 backdrop-blur hover:bg-muted rounded-lg shadow-sm"
-            onClick={() => setShowEditDialog(true)}
-            title="编辑"
-          >
-            <Edit className="h-2.5 w-2.5" />
-          </Button>
+          {canEdit && (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-5 w-5 p-0 bg-card/90 backdrop-blur hover:bg-muted rounded-lg shadow-sm"
+              onClick={() => setShowEditDialog(true)}
+              title="编辑"
+            >
+              <Edit className="h-2.5 w-2.5" />
+            </Button>
+          )}
           <Button
             variant="ghost"
             size="sm"

@@ -134,15 +134,17 @@ export default function URLCard({ item, onUpdate }: URLCardProps) {
         
         {/* 悬浮操作按钮 */}
         <div className="absolute top-3 right-3 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-all duration-200 flex gap-1 z-10">
-          <Button
-            variant="ghost"
-            size="sm"
-            className="h-7 w-7 p-0 bg-white/90 dark:bg-gray-800/90 backdrop-blur hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg shadow-sm"
-            onClick={() => setIsEditOpen(true)}
-            title="编辑"
-          >
-            <Edit className="h-3.5 w-3.5" />
-          </Button>
+          {!isArchived && (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-7 w-7 p-0 bg-white/90 dark:bg-gray-800/90 backdrop-blur hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg shadow-sm"
+              onClick={() => setIsEditOpen(true)}
+              title="编辑"
+            >
+              <Edit className="h-3.5 w-3.5" />
+            </Button>
+          )}
           <Button
             variant="ghost"
             size="sm"

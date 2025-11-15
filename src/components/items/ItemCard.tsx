@@ -129,6 +129,7 @@ export default function ItemCard({ item, onUpdate }: ItemCardProps) {
   })();
   const hasConflict = item.has_conflict && item.type === 'event';
   const isArchived = item.archived_at !== null;
+  const canEdit = !isCompleted && !isArchived;
 
   const handleToggleComplete = async () => {
     const newStatus = isCompleted ? 'pending' : 'completed';
@@ -199,15 +200,17 @@ export default function ItemCard({ item, onUpdate }: ItemCardProps) {
       )}>
         {/* 悬浮操作按钮 */}
         <div className="absolute top-2 right-2 sm:top-2.5 sm:right-2.5 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-all duration-200 flex gap-1 z-10">
-          <Button
-            variant="ghost"
-            size="sm"
-            className="h-6 w-6 sm:h-7 sm:w-7 p-0 bg-card/90 backdrop-blur hover:bg-muted rounded-lg shadow-sm"
-            onClick={() => setIsEditOpen(true)}
-            title="编辑"
-          >
-            <Edit className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
-          </Button>
+          {canEdit && (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-6 w-6 sm:h-7 sm:w-7 p-0 bg-card/90 backdrop-blur hover:bg-muted rounded-lg shadow-sm"
+              onClick={() => setIsEditOpen(true)}
+              title="编辑"
+            >
+              <Edit className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
+            </Button>
+          )}
           <Button
             variant="ghost"
             size="sm"

@@ -129,18 +129,19 @@ export default function EditItemDialog({ item, open, onOpenChange, onUpdate }: E
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader className="border-b pb-4">
-          <DialogTitle className="text-xl font-semibold flex items-center gap-2">
-            <Edit className="h-5 w-5" />
+      <DialogContent className="max-w-3xl max-h-[85vh] overflow-hidden flex flex-col bg-card/95 backdrop-blur-sm border-border shadow-xl">
+        <DialogHeader className="border-b border-border/50 pb-4 mb-0 flex-shrink-0">
+          <DialogTitle className="text-lg font-semibold flex items-center gap-2 text-foreground">
+            <Edit className="h-4 w-4 text-primary" />
             编辑条目
           </DialogTitle>
         </DialogHeader>
         
-        <form onSubmit={handleSubmit} className="space-y-5 pt-4">
+        <form id="edit-item-form" onSubmit={handleSubmit} className="flex-1 flex flex-col overflow-hidden">
+          <div className="flex-1 overflow-y-auto px-1 space-y-5 pt-5 pb-4">
           {/* 标题 */}
           <div className="space-y-2">
-            <Label htmlFor="title" className="text-sm font-medium flex items-center gap-2">
+            <Label htmlFor="title" className="text-sm font-medium text-foreground flex items-center gap-2">
               <span>标题</span>
             </Label>
             <Input
@@ -148,35 +149,35 @@ export default function EditItemDialog({ item, open, onOpenChange, onUpdate }: E
               value={formData.title}
               onChange={(e) => setFormData({ ...formData, title: e.target.value })}
               placeholder="输入标题"
-              className="h-10"
+              className="h-10 bg-background border-input focus:ring-2 focus:ring-ring focus:ring-offset-1"
             />
           </div>
 
           {/* 描述 */}
           <div className="space-y-2">
-            <Label htmlFor="description" className="text-sm font-medium">描述</Label>
+            <Label htmlFor="description" className="text-sm font-medium text-foreground">描述</Label>
             <Textarea
               id="description"
               value={formData.description}
               onChange={(e) => setFormData({ ...formData, description: e.target.value })}
               placeholder="输入描述"
-              rows={4}
-              className="resize-none"
+              rows={5}
+              className="resize-none bg-background border-input focus:ring-2 focus:ring-ring focus:ring-offset-1"
             />
           </div>
 
           {/* 类型和优先级 */}
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="type" className="text-sm font-medium">类型</Label>
+              <Label htmlFor="type" className="text-sm font-medium text-foreground">类型</Label>
               <Select
                 value={formData.type}
                 onValueChange={(value) => setFormData({ ...formData, type: value as ItemType })}
               >
-                <SelectTrigger id="type" className="h-10">
+                <SelectTrigger id="type" className="h-10 bg-background border-input focus:ring-2 focus:ring-ring focus:ring-offset-1">
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="bg-popover border-border">
                   <SelectItem value="task">任务</SelectItem>
                   <SelectItem value="event">日程</SelectItem>
                   <SelectItem value="note">笔记</SelectItem>
@@ -186,15 +187,15 @@ export default function EditItemDialog({ item, open, onOpenChange, onUpdate }: E
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="priority" className="text-sm font-medium">优先级</Label>
+              <Label htmlFor="priority" className="text-sm font-medium text-foreground">优先级</Label>
               <Select
                 value={formData.priority}
                 onValueChange={(value) => setFormData({ ...formData, priority: value })}
               >
-                <SelectTrigger id="priority" className="h-10">
+                <SelectTrigger id="priority" className="h-10 bg-background border-input focus:ring-2 focus:ring-ring focus:ring-offset-1">
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="bg-popover border-border">
                   <SelectItem value="high">高</SelectItem>
                   <SelectItem value="medium">中</SelectItem>
                   <SelectItem value="low">低</SelectItem>
@@ -204,16 +205,16 @@ export default function EditItemDialog({ item, open, onOpenChange, onUpdate }: E
           </div>
 
           {/* 时间设置 */}
-          <div className="space-y-4 p-4 bg-muted/50 rounded-lg border">
+          <div className="space-y-4 p-4 bg-muted/30 rounded-lg border border-border/50">
             <div className="flex items-center gap-2 mb-3">
-              <Calendar className="h-4 w-4 text-muted-foreground" />
-              <Label className="text-sm font-semibold">时间设置</Label>
+              <Calendar className="h-4 w-4 text-primary" />
+              <Label className="text-sm font-semibold text-foreground">时间设置</Label>
             </div>
             
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="start_time" className="text-sm font-medium flex items-center gap-2">
-                  <Clock className="h-3.5 w-3.5" />
+                <Label htmlFor="start_time" className="text-sm font-medium text-foreground flex items-center gap-2">
+                  <Clock className="h-3.5 w-3.5 text-muted-foreground" />
                   开始时间
                 </Label>
                 <Input
@@ -221,13 +222,13 @@ export default function EditItemDialog({ item, open, onOpenChange, onUpdate }: E
                   type="datetime-local"
                   value={formData.start_time}
                   onChange={(e) => setFormData({ ...formData, start_time: e.target.value })}
-                  className="h-10"
+                  className="h-10 bg-background border-input focus:ring-2 focus:ring-ring focus:ring-offset-1"
                 />
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="end_time" className="text-sm font-medium flex items-center gap-2">
-                  <Clock className="h-3.5 w-3.5" />
+                <Label htmlFor="end_time" className="text-sm font-medium text-foreground flex items-center gap-2">
+                  <Clock className="h-3.5 w-3.5 text-muted-foreground" />
                   结束时间
                 </Label>
                 <Input
@@ -235,13 +236,13 @@ export default function EditItemDialog({ item, open, onOpenChange, onUpdate }: E
                   type="datetime-local"
                   value={formData.end_time}
                   onChange={(e) => setFormData({ ...formData, end_time: e.target.value })}
-                  className="h-10"
+                  className="h-10 bg-background border-input focus:ring-2 focus:ring-ring focus:ring-offset-1"
                 />
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="due_date" className="text-sm font-medium flex items-center gap-2">
-                  <Calendar className="h-3.5 w-3.5" />
+                <Label htmlFor="due_date" className="text-sm font-medium text-foreground flex items-center gap-2">
+                  <Calendar className="h-3.5 w-3.5 text-muted-foreground" />
                   截止时间
                 </Label>
                 <Input
@@ -249,7 +250,7 @@ export default function EditItemDialog({ item, open, onOpenChange, onUpdate }: E
                   type="datetime-local"
                   value={formData.due_date}
                   onChange={(e) => setFormData({ ...formData, due_date: e.target.value })}
-                  className="h-10"
+                  className="h-10 bg-background border-input focus:ring-2 focus:ring-ring focus:ring-offset-1"
                 />
               </div>
             </div>
@@ -257,30 +258,30 @@ export default function EditItemDialog({ item, open, onOpenChange, onUpdate }: E
 
           {/* 标签 */}
           <div className="space-y-2">
-            <Label htmlFor="tags" className="text-sm font-medium">标签</Label>
+            <Label htmlFor="tags" className="text-sm font-medium text-foreground">标签</Label>
             <Input
               id="tags"
               value={formData.tags}
               onChange={(e) => setFormData({ ...formData, tags: e.target.value })}
               placeholder="标签1, 标签2, 标签3"
-              className="h-10"
+              className="h-10 bg-background border-input focus:ring-2 focus:ring-ring focus:ring-offset-1"
             />
             <p className="text-xs text-muted-foreground">多个标签请用逗号分隔</p>
           </div>
 
           {/* 同步状态显示 */}
           {(saveStatus !== 'idle' || lastSavedAt) && (
-            <div className="flex items-center gap-2 p-3 bg-muted/30 rounded-md border">
+            <div className="flex items-center gap-2 p-3 bg-muted/40 rounded-md border border-border/50">
               {saveStatus === 'saving' && (
                 <>
-                  <Loader2 className="h-4 w-4 animate-spin text-blue-500" />
+                  <Loader2 className="h-4 w-4 animate-spin text-primary" />
                   <span className="text-sm text-muted-foreground">正在同步到数据库...</span>
                 </>
               )}
               {saveStatus === 'success' && (
                 <>
-                  <CheckCircle2 className="h-4 w-4 text-green-500" />
-                  <span className="text-sm text-green-600 dark:text-green-400">已同步到数据库</span>
+                  <CheckCircle2 className="h-4 w-4 text-status-success-text" />
+                  <span className="text-sm text-status-success-text">已同步到数据库</span>
                   {lastSavedAt && (
                     <span className="text-xs text-muted-foreground ml-auto">
                       {lastSavedAt.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
@@ -290,28 +291,29 @@ export default function EditItemDialog({ item, open, onOpenChange, onUpdate }: E
               )}
               {saveStatus === 'error' && (
                 <>
-                  <AlertCircle className="h-4 w-4 text-red-500" />
-                  <span className="text-sm text-red-600 dark:text-red-400">同步失败，请重试</span>
+                  <AlertCircle className="h-4 w-4 text-status-error-text" />
+                  <span className="text-sm text-status-error-text">同步失败，请重试</span>
                 </>
               )}
             </div>
           )}
+          </div>
 
-          {/* 操作按钮 */}
-          <div className="flex justify-end gap-3 pt-4 border-t">
+          {/* 操作按钮 - 固定在底部 */}
+          <div className="flex justify-end gap-3 pt-4 border-t border-border/50 mt-4 flex-shrink-0">
             <Button 
               type="button" 
               variant="outline" 
               onClick={() => onOpenChange(false)}
               disabled={isSaving}
-              className="h-10"
+              className="h-10 px-6 border-border hover:bg-muted"
             >
               取消
             </Button>
             <Button 
               type="submit" 
               disabled={isSaving}
-              className="h-10 min-w-[100px]"
+              className="h-10 min-w-[100px] bg-primary hover:bg-primary/90 text-primary-foreground"
             >
               {isSaving ? (
                 <>
