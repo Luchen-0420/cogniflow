@@ -1,7 +1,7 @@
 /* Cogniflow 快捷菜单栏样式 */
 
 #cogniflow-quick-menu {
-  position: absolute;
+  position: fixed !important;
   display: flex;
   align-items: center;
   gap: 0;
@@ -10,7 +10,7 @@
   border-radius: 8px;
   padding: 4px;
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
-  z-index: 10000;
+  z-index: 2147483647;
   opacity: 0;
   transform: translateY(-10px) scale(0.95);
   pointer-events: none;
@@ -18,6 +18,8 @@
   user-select: none;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
   min-width: 60px;
+  left: 0;
+  top: 0;
 }
 
 #cogniflow-quick-menu.show {
@@ -114,7 +116,6 @@
 }
 
 /* 确保菜单在页面内容之上 */
-#cogniflow-quick-menu,
 #cogniflow-toast {
   position: fixed !important;
 }

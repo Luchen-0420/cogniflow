@@ -35,7 +35,7 @@ export function NoteViewDialog({
     if (open) {
       setContent(item.raw_text || item.description || '');
     }
-  }, [open, item]);
+  }, [open, item.id, item.raw_text, item.description]); // 只依赖必要的字段，避免整个 item 对象变化导致重新执行
 
   // 处理保存
   const handleSave = async () => {

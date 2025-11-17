@@ -114,21 +114,34 @@ function showQuickMenu() {
       return; // 无效的选中区域
     }
     
-    // 获取菜单的实际尺寸（如果还没有显示，使用默认值）
-    // 先让菜单可见以获取实际尺寸
+    // 确保菜单已添加到 DOM 并获取实际尺寸
+    if (!document.body.contains(quickMenu)) {
+      document.body.appendChild(quickMenu);
+    }
+    
+    // 临时显示菜单以获取实际尺寸
+    quickMenu.style.position = 'fixed';
+    quickMenu.style.left = '-9999px';
+    quickMenu.style.top = '-9999px';
     quickMenu.style.visibility = 'hidden';
     quickMenu.style.display = 'flex';
-    quickMenu.classList.add('show');
+    quickMenu.style.opacity = '0';
+    
+    // 强制重排以获取准确尺寸
+    void quickMenu.offsetWidth;
+    
     const menuWidth = quickMenu.offsetWidth || 80;
     const menuHeight = quickMenu.offsetHeight || 50;
-    quickMenu.classList.remove('show');
+    
+    // 恢复样式
     quickMenu.style.visibility = 'visible';
+    quickMenu.style.opacity = '';
     
     // 使用视口坐标（getBoundingClientRect 返回的是相对于视口的坐标）
+    // 因为菜单使用 fixed 定位，所以直接使用视口坐标
     const viewportTop = rect.top;
     const viewportBottom = rect.bottom;
     const viewportLeft = rect.left;
-    const viewportRight = rect.right;
     const viewportWidth = window.innerWidth;
     const viewportHeight = window.innerHeight;
     
@@ -136,43 +149,52 @@ function showQuickMenu() {
     let menuLeft = viewportLeft + (rect.width / 2) - (menuWidth / 2);
     
     // 确保菜单不超出屏幕左右边界
-    if (menuLeft < 10) {
-      menuLeft = 10;
-    } else if (menuLeft + menuWidth > viewportWidth - 10) {
-      menuLeft = viewportWidth - menuWidth - 10;
+    const padding = 10;
+    if (menuLeft < padding) {
+      menuLeft = padding;
+    } else if (menuLeft + menuWidth > viewportWidth - padding) {
+      menuLeft = viewportWidth - menuWidth - padding;
     }
     
     // 计算菜单垂直位置
     // 优先显示在选中文本上方，如果上方空间不够，显示在下方
     let menuTop;
+    const gap = 8; // 菜单与文本的间距
     const spaceAbove = viewportTop; // 上方可用空间
     const spaceBelow = viewportHeight - viewportBottom; // 下方可用空间
-    const menuWithGap = menuHeight + 8; // 菜单高度 + 间距
+    const menuWithGap = menuHeight + gap; // 菜单高度 + 间距
     
     if (spaceAbove >= menuWithGap) {
       // 上方空间足够，显示在上方
-      menuTop = viewportTop - menuHeight - 8;
+      menuTop = viewportTop - menuHeight - gap;
     } else if (spaceBelow >= menuWithGap) {
       // 下方空间足够，显示在下方
-      menuTop = viewportBottom + 8;
+      menuTop = viewportBottom + gap;
     } else {
       // 上下空间都不够，显示在选中文本中间（覆盖文本）
       menuTop = viewportTop + (rect.height / 2) - (menuHeight / 2);
       
       // 确保不超出视口
-      if (menuTop < 10) {
-        menuTop = 10;
-      } else if (menuTop + menuHeight > viewportHeight - 10) {
-        menuTop = viewportHeight - menuHeight - 10;
+      if (menuTop < padding) {
+        menuTop = padding;
+      } else if (menuTop + menuHeight > viewportHeight - padding) {
+        menuTop = viewportHeight - menuHeight - padding;
       }
     }
     
-    // 使用 fixed 定位，直接使用视口坐标
-    quickMenu.style.left = `${menuLeft}px`;
-    quickMenu.style.top = `${menuTop}px`;
+    // 使用 fixed 定位，直接使用视口坐标（像素值）
+    quickMenu.style.position = 'fixed';
+    quickMenu.style.left = `${Math.round(menuLeft)}px`;
+    quickMenu.style.top = `${Math.round(menuTop)}px`;
+    quickMenu.style.display = 'flex';
     quickMenu.classList.add('show');
   } catch (error) {
     console.error('显示快捷菜单失败:', error);
+    console.error('错误详情:', {
+      selectedRange: !!selectedRange,
+      rect: selectedRange ? selectedRange.getBoundingClientRect() : null,
+      quickMenu: !!quickMenu
+    });
   }
 }
 

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useLocation } from 'react-router-dom';
 import { SmartInputAssistant, RelatedItem, GapAnalysis, ExternalRecommendation } from '@/components/smart-assist/SmartInputAssistant';
 import { shouldTriggerSmartAssist, getRelatedItems, analyzeKnowledgeGap, getExternalRecommendations } from '@/features/smart-assist';
@@ -82,7 +82,7 @@ export default function Dashboard() {
   const [showHelpDialog, setShowHelpDialog] = useState(false);
   const [dailyReportTemplate, setDailyReportTemplate] = useState<UserTemplate | null>(null);
 
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     console.log('🔄 开始加载数据...');
     const [upcoming, todos, inbox, urls, archived, tags, history] = await Promise.all([
       itemApi.getUpcomingItems(),
@@ -111,7 +111,7 @@ export default function Dashboard() {
     setArchivedItems(archived);
     setTagStats(tags);
     setHistoryItems(history);
-  };
+  }, []);
 
   // 加载自定义归档分类
   useEffect(() => {
@@ -136,7 +136,7 @@ export default function Dashboard() {
     }, 2 * 60 * 1000);
     
     return () => clearInterval(refreshInterval);
-  }, []);
+  }, [loadData]);
 
   useEffect(() => {
     const searchItems = async () => {

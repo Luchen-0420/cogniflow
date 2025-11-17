@@ -20,7 +20,7 @@ import { zhCN } from 'date-fns/locale';
 import type { Item, TaskStatus, SubItem, SubItemStatus } from '@/types/types';
 import { itemApi } from '@/db/api';
 import { toast } from 'sonner';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import EditItemDialog from './EditItemDialog';
 import { AttachmentImages } from '@/components/attachments/AttachmentImages';
 import { cn } from '@/lib/utils';
@@ -71,6 +71,14 @@ export default function TodoCard({ item, onUpdate }: TodoCardProps) {
     completedAt: string | null;
   } | null>(null);
 
+  // 使用 useRef 存储 onUpdate 回调，避免依赖变化导致 useEffect 重新执行
+  const onUpdateRef = useRef(onUpdate);
+  
+  // 当 onUpdate 变化时更新 ref，但不触发 useEffect 重新执行
+  useEffect(() => {
+    onUpdateRef.current = onUpdate;
+  }, [onUpdate]);
+
   // 获取 AI 辅助状态并自动刷新数据
   useEffect(() => {
     // 检查是否使用 PostgreSQL API（有 getItemAssistStatus 方法）
@@ -87,7 +95,7 @@ export default function TodoCard({ item, onUpdate }: TodoCardProps) {
             console.log('✅ 检测到 AI 辅助完成，刷新数据...');
             // 延迟刷新，确保后端数据已更新
             setTimeout(() => {
-              onUpdate?.();
+              onUpdateRef.current?.();
             }, 1000);
           }
           
@@ -108,7 +116,7 @@ export default function TodoCard({ item, onUpdate }: TodoCardProps) {
       
       return () => clearInterval(interval);
     }
-  }, [item.id, onUpdate]);
+  }, [item.id]); // 只依赖 item.id，不依赖 onUpdate
   
   // 过期判断：只有截止日期在今天之前（不包括今天）才算过期
   const isOverdue = item.due_date && (() => {
