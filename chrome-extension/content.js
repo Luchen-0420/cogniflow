@@ -8,6 +8,133 @@ let quickMenu = null;
 let toast = null;
 let selectedText = '';
 let selectedRange = null;
+let stylesInjected = false;
+
+/**
+ * 读取同步存储
+ */
+function getStoredConfig() {
+  return new Promise((resolve) => {
+    chrome.storage?.sync?.get(['apiUrl', 'authToken'], (result) => {
+      resolve({
+        apiUrl: result?.apiUrl || 'http://localhost:3001/api',
+        authToken: result?.authToken || null
+      });
+    });
+  });
+}
+
+/**
+ * 注入最新的样式文件，确保 UI 更新
+ */
+function ensureStylesInjected() {
+  if (stylesInjected) return;
+  
+  const existingLink = document.getElementById('cogniflow-style-link');
+  if (existingLink) {
+    existingLink.parentElement.removeChild(existingLink);
+  }
+  
+  const link = document.createElement('link');
+  link.id = 'cogniflow-style-link';
+  link.rel = 'stylesheet';
+  link.type = 'text/css';
+  link.href = chrome.runtime.getURL('content.css');
+  
+  const target = document.head || document.documentElement;
+  target.appendChild(link);
+  stylesInjected = true;
+}
+
+/**
+ * 安全发送消息到 background（带重试）
+ */
+function sendRuntimeMessage(payload) {
+  return new Promise((resolve, reject) => {
+    if (!chrome.runtime || !chrome.runtime.id) {
+      reject(new Error('插件上下文不可用，请刷新页面后重试'));
+      return;
+    }
+    
+    try {
+      chrome.runtime.sendMessage(payload, (response) => {
+        if (chrome.runtime.lastError) {
+          reject(new Error(chrome.runtime.lastError.message));
+          return;
+        }
+        resolve(response);
+      });
+    } catch (error) {
+      reject(error);
+    }
+  });
+}
+
+async function sendMessageWithRetry(payload, retries = 1) {
+  try {
+    return await sendRuntimeMessage(payload);
+  } catch (error) {
+    const message = error?.message || '';
+    if (retries > 0 && message.includes('Extension context invalidated')) {
+      await new Promise((resolve) => setTimeout(resolve, 200));
+      return sendMessageWithRetry(payload, retries - 1);
+    }
+    throw error;
+  }
+}
+
+/**
+ * 直接在 content script 中调用 API，作为兜底
+ */
+async function saveNoteDirectly({ content, title, url }) {
+  const config = await getStoredConfig();
+  if (!config.authToken) {
+    throw new Error('未登录，请先点击插件图标登录');
+  }
+  
+  const response = await fetch(`${config.apiUrl}/items`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${config.authToken}`
+    },
+    body: JSON.stringify({
+      raw_text: content,
+      type: 'note',
+      title: title || '来自网页的笔记',
+      description: content.slice(0, 200),
+      url: url || null,
+      url_title: title || null,
+      priority: 'medium',
+      status: 'pending',
+      tags: ['网页保存'],
+      entities: {},
+      due_date: null,
+      archived_at: null,
+      url_summary: null,
+      url_thumbnail: null,
+      url_fetched_at: null,
+      has_conflict: false,
+      start_time: null,
+      end_time: null,
+      recurrence_rule: null,
+      recurrence_end_date: null,
+      master_item_id: null,
+      is_master: false
+    })
+  });
+  
+  if (!response.ok) {
+    if (response.status === 401) {
+      chrome.storage?.sync?.remove(['authToken', 'username']);
+      throw new Error('登录已过期，请重新登录');
+    }
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(errorData.error || `HTTP ${response.status}: ${response.statusText}`);
+  }
+  
+  return response.json();
+}
 
 /**
  * 处理来自 background 的消息（右键菜单）
@@ -34,9 +161,29 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 function createQuickMenu() {
   if (quickMenu) return;
 
+  const existingMenu = document.getElementById('cogniflow-quick-menu');
+  if (existingMenu) {
+    existingMenu.remove();
+  }
+
   quickMenu = document.createElement('div');
   quickMenu.id = 'cogniflow-quick-menu';
   quickMenu.innerHTML = `
+    <div class="menu-visual" aria-hidden="true">
+      <div class="menu-logo">
+        <svg width="24" height="24" viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="16" cy="16" r="12" opacity="0.4"></circle>
+          <path d="M22 12.5a6.5 6.5 0 1 0 0 6.5" stroke-linecap="round"></path>
+          <path d="M10 9l2.5 2.5" stroke-linecap="round"></path>
+        </svg>
+        <div class="logo-glow"></div>
+      </div>
+      <div class="menu-copy">
+        <span class="menu-title">Cogniflow</span>
+        <span class="menu-subtitle">智能笔记</span>
+      </div>
+    </div>
+    <div class="menu-divider" role="presentation"></div>
     <div class="menu-item" data-action="note" title="保存到笔记">
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
         <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
@@ -237,12 +384,27 @@ async function handleSaveToNote() {
     const pageUrl = window.location.href;
 
     // 发送保存请求到 background script
-    const response = await chrome.runtime.sendMessage({
-      action: 'createNote',
-      content: selectedText,
-      title: pageTitle,
-      url: pageUrl
-    });
+    let response;
+    try {
+      response = await sendMessageWithRetry({
+        action: 'createNote',
+        content: selectedText,
+        title: pageTitle,
+        url: pageUrl
+      }, 1);
+    } catch (messageError) {
+      const message = messageError?.message || '';
+      if (message.includes('Extension context invalidated')) {
+        const data = await saveNoteDirectly({
+          content: selectedText,
+          title: pageTitle,
+          url: pageUrl
+        });
+        response = { success: true, data };
+      } else {
+        throw messageError;
+      }
+    }
 
     if (response && response.success) {
       showToast('✓ 已保存到笔记', 'success');
@@ -355,6 +517,9 @@ function init() {
     setTimeout(init, 100);
     return;
   }
+  
+  // 注入样式
+  ensureStylesInjected();
   
   // 监听文本选择
   document.addEventListener('mouseup', handleTextSelection, true);
