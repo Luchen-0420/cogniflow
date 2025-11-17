@@ -1,0 +1,141 @@
+/* Cogniflow 快捷菜单栏样式 */
+
+#cogniflow-quick-menu {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  gap: 0;
+  background: rgba(60, 60, 60, 0.95);
+  backdrop-filter: blur(10px);
+  border-radius: 8px;
+  padding: 4px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+  z-index: 10000;
+  opacity: 0;
+  transform: translateY(-10px) scale(0.95);
+  pointer-events: none;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  user-select: none;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  min-width: 60px;
+}
+
+#cogniflow-quick-menu.show {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+  pointer-events: all;
+}
+
+#cogniflow-quick-menu .menu-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 8px 12px;
+  color: white;
+  cursor: pointer;
+  border-radius: 6px;
+  transition: all 0.15s ease;
+  min-width: 60px;
+  position: relative;
+}
+
+#cogniflow-quick-menu .menu-item:hover {
+  background: rgba(255, 255, 255, 0.15);
+}
+
+#cogniflow-quick-menu .menu-item:active {
+  background: rgba(255, 255, 255, 0.25);
+  transform: scale(0.95);
+}
+
+#cogniflow-quick-menu .menu-item.loading {
+  opacity: 0.7;
+  cursor: wait;
+  pointer-events: none;
+}
+
+#cogniflow-quick-menu .menu-item svg {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+  stroke: currentColor;
+}
+
+#cogniflow-quick-menu .menu-item span {
+  font-size: 12px;
+  font-weight: 500;
+  white-space: nowrap;
+  line-height: 1;
+}
+
+/* 提示消息样式 */
+#cogniflow-toast {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  padding: 12px 20px;
+  background: white;
+  color: #333;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  font-size: 14px;
+  font-weight: 500;
+  z-index: 10001;
+  opacity: 0;
+  transform: translateX(100px);
+  pointer-events: none;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  min-width: 200px;
+  text-align: center;
+}
+
+#cogniflow-toast.show {
+  opacity: 1;
+  transform: translateX(0);
+  pointer-events: all;
+}
+
+#cogniflow-toast.success {
+  background: #10b981;
+  color: white;
+}
+
+#cogniflow-toast.error {
+  background: #ef4444;
+  color: white;
+}
+
+#cogniflow-toast.info {
+  background: #3b82f6;
+  color: white;
+}
+
+/* 确保菜单在页面内容之上 */
+#cogniflow-quick-menu,
+#cogniflow-toast {
+  position: fixed !important;
+}
+
+/* 响应式调整 */
+@media (max-width: 768px) {
+  #cogniflow-quick-menu {
+    min-width: 50px;
+  }
+  
+  #cogniflow-quick-menu .menu-item {
+    padding: 6px 10px;
+    min-width: 50px;
+  }
+  
+  #cogniflow-quick-menu .menu-item svg {
+    width: 16px;
+    height: 16px;
+  }
+  
+  #cogniflow-quick-menu .menu-item span {
+    font-size: 11px;
+  }
+}

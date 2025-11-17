@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cogniflow 登录</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <div class="container">
+    <!-- 登录界面 -->
+    <div id="loginView" class="view">
+      <div class="header">
+        <h2>Cogniflow</h2>
+        <p class="subtitle">智能流笔记</p>
+      </div>
+      <div class="content">
+        <div class="form-group">
+          <label for="username">用户名：</label>
+          <input type="text" id="username" placeholder="请输入用户名" autocomplete="username" />
+        </div>
+        <div class="form-group">
+          <label for="password">密码：</label>
+          <input type="password" id="password" placeholder="请输入密码" autocomplete="current-password" />
+        </div>
+        <div class="form-group">
+          <label for="apiUrl">API 地址：</label>
+          <input type="text" id="apiUrl" placeholder="http://localhost:3001/api" />
+          <small class="hint">默认：http://localhost:3001/api</small>
+        </div>
+        <div class="form-group">
+          <button id="loginBtn" class="btn btn-primary">登录</button>
+        </div>
+        <div id="loginStatus" class="status"></div>
+      </div>
+    </div>
+
+    <!-- 已登录界面 -->
+    <div id="loggedInView" class="view hidden">
+      <div class="header">
+        <h2>已登录</h2>
+      </div>
+      <div class="content">
+        <div class="user-info">
+          <div class="info-item">
+            <span class="label">用户名：</span>
+            <span id="loggedUsername" class="value"></span>
+          </div>
+          <div class="info-item">
+            <span class="label">状态：</span>
+            <span class="value success">✓ 已登录</span>
+          </div>
+        </div>
+        <div class="form-group">
+          <button id="logoutBtn" class="btn btn-secondary">退出登录</button>
+        </div>
+        <div class="tips">
+          <p>💡 提示：选中网页文本后，点击快捷菜单中的"笔记"即可保存</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- 加载状态 -->
+    <div id="loadingView" class="view hidden">
+      <div class="loading">
+        <div class="spinner"></div>
+        <p>登录中...</p>
+      </div>
+    </div>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>
+

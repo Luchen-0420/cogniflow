@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>生成插件图标</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 800px;
+      margin: 50px auto;
+      padding: 20px;
+    }
+    canvas {
+      border: 1px solid #ddd;
+      margin: 10px;
+    }
+    button {
+      padding: 10px 20px;
+      margin: 10px;
+      font-size: 16px;
+      cursor: pointer;
+    }
+    .canvas-container {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 20px;
+    }
+  </style>
+</head>
+<body>
+  <h1>Cogniflow 插件图标生成器</h1>
+  <p>点击按钮生成图标，然后右键点击画布保存图片。</p>
+  
+  <div class="canvas-container">
+    <div>
+      <h3>16x16</h3>
+      <canvas id="canvas16" width="16" height="16"></canvas>
+      <button onclick="downloadIcon(16)">下载 16x16</button>
+    </div>
+    <div>
+      <h3>48x48</h3>
+      <canvas id="canvas48" width="48" height="48"></canvas>
+      <button onclick="downloadIcon(48)">下载 48x48</button>
+    </div>
+    <div>
+      <h3>128x128</h3>
+      <canvas id="canvas128" width="128" height="128"></canvas>
+      <button onclick="downloadIcon(128)">下载 128x128</button>
+    </div>
+  </div>
+
+  <script>
+    function drawIcon(canvas, size) {
+      const ctx = canvas.getContext('2d');
+      
+      // 清空画布
+      ctx.clearRect(0, 0, size, size);
+      
+      // 绘制背景（蓝色渐变）
+      const gradient = ctx.createLinearGradient(0, 0, size, size);
+      gradient.addColorStop(0, '#4a90e2');
+      gradient.addColorStop(1, '#357abd');
+      ctx.fillStyle = gradient;
+      ctx.fillRect(0, 0, size, size);
+      
+      // 绘制圆形（代表笔记/卡片）
+      ctx.fillStyle = 'white';
+      ctx.beginPath();
+      const centerX = size / 2;
+      const centerY = size / 2;
+      const radius = size * 0.3;
+      ctx.arc(centerX, centerY, radius, 0, Math.PI * 2);
+      ctx.fill();
+      
+      // 绘制线条（代表文本）
+      ctx.strokeStyle = '#4a90e2';
+      ctx.lineWidth = size * 0.05;
+      ctx.lineCap = 'round';
+      
+      const lineY1 = centerY - size * 0.1;
+      const lineY2 = centerY;
+      const lineY3 = centerY + size * 0.1;
+      const lineX1 = centerX - size * 0.15;
+      const lineX2 = centerX + size * 0.15;
+      
+      ctx.beginPath();
+      ctx.moveTo(lineX1, lineY1);
+      ctx.lineTo(lineX2, lineY1);
+      ctx.stroke();
+      
+      ctx.beginPath();
+      ctx.moveTo(lineX1, lineY2);
+      ctx.lineTo(lineX2 * 0.8, lineY2);
+      ctx.stroke();
+      
+      ctx.beginPath();
+      ctx.moveTo(lineX1, lineY3);
+      ctx.lineTo(lineX2, lineY3);
+      ctx.stroke();
+    }
+    
+    function downloadIcon(size) {
+      const canvas = document.getElementById(`canvas${size}`);
+      const link = document.createElement('a');
+      link.download = `icon${size}.png`;
+      link.href = canvas.toDataURL('image/png');
+      link.click();
+    }
+    
+    // 初始化所有图标
+    window.onload = function() {
+      drawIcon(document.getElementById('canvas16'), 16);
+      drawIcon(document.getElementById('canvas48'), 48);
+      drawIcon(document.getElementById('canvas128'), 128);
+    };
+  </script>
+</body>
+</html>
+
