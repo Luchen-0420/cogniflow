@@ -4,16 +4,19 @@
  */
 
 // DOM 元素
+const DEFAULT_API_URL = 'http://localhost:3001/api';
+
 const loginView = document.getElementById('loginView');
 const loggedInView = document.getElementById('loggedInView');
 const loadingView = document.getElementById('loadingView');
 const usernameInput = document.getElementById('username');
 const passwordInput = document.getElementById('password');
-const apiUrlInput = document.getElementById('apiUrl');
 const loginBtn = document.getElementById('loginBtn');
 const logoutBtn = document.getElementById('logoutBtn');
 const loginStatus = document.getElementById('loginStatus');
 const loggedUsername = document.getElementById('loggedUsername');
+
+let cachedApiUrl = DEFAULT_API_URL;
 
 /**
  * 显示状态消息
@@ -62,12 +65,7 @@ function showLoggedInView(username) {
 async function loadConfig() {
   try {
     chrome.storage.sync.get(['apiUrl', 'authToken', 'username'], (result) => {
-      // 设置 API 地址
-      if (result.apiUrl) {
-        apiUrlInput.value = result.apiUrl;
-      } else {
-        apiUrlInput.value = 'http://localhost:3001/api';
-      }
+      cachedApiUrl = result.apiUrl || DEFAULT_API_URL;
 
       // 如果已登录，显示已登录界面
       if (result.authToken && result.username) {
@@ -88,7 +86,7 @@ async function loadConfig() {
 async function login() {
   const username = usernameInput.value.trim();
   const password = passwordInput.value.trim();
-  const apiUrl = apiUrlInput.value.trim() || 'http://localhost:3001/api';
+  const apiUrl = cachedApiUrl || DEFAULT_API_URL;
 
   if (!username) {
     showStatus('请输入用户名', 'error');
@@ -99,12 +97,6 @@ async function login() {
   if (!password) {
     showStatus('请输入密码', 'error');
     passwordInput.focus();
-    return;
-  }
-
-  if (!apiUrl) {
-    showStatus('请输入 API 地址', 'error');
-    apiUrlInput.focus();
     return;
   }
 
@@ -178,12 +170,6 @@ usernameInput.addEventListener('keypress', (e) => {
 });
 
 passwordInput.addEventListener('keypress', (e) => {
-  if (e.key === 'Enter') {
-    login();
-  }
-});
-
-apiUrlInput.addEventListener('keypress', (e) => {
   if (e.key === 'Enter') {
     login();
   }
